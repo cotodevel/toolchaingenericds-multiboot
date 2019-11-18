@@ -255,8 +255,42 @@ bool fillNDSLoaderContext(char * filename){
 		free(NDSHeader);
 		fclose(fh);
 		
-		int ret=FS_deinit();
+		//int ret=FS_deinit();
+		
+		
+		
+		// Assign back VRAM to ARM9
+		u8 * VRAM_D_ARM9 = (u8*)0x06860000;
+		VRAMBLOCK_SETBANK_D(VRAM_D_LCDC_MODE); //LCDC -- VRAM D       128K  0    -     6860000h-687FFFFh
+		
+		// Clear VRAM
+		dmaFillHalfWord(3, 0, (uint32)VRAM_D_ARM9, (uint32)(128*1024));
+		
+		// Load the loader/patcher into the correct address
+		coherent_user_range_by_size((uint32)(outBuf7 - 0x400000), (int)arm7BootCodeSize);					
+		dmaTransferWord(3, (uint32)(outBuf7 - 0x400000), (uint32)VRAM_D_ARM9, arm7BootCodeSize);
+		
+		/*
+		u32 * vramPtr = (u32*)VRAM_D_ARM9;
+		printf("VRAM D:");
+		printf(" %x[%x] - %x[%x] ", (u32)&vramPtr[0], *(u32*)&vramPtr[0], (u32)&vramPtr[1], *(u32*)&vramPtr[1] );
+		printf(" %x[%x] - %x[%x] ", (u32)&vramPtr[2], *(u32*)&vramPtr[2], (u32)&vramPtr[3], *(u32*)&vramPtr[3] );
+		*/
+		
+		// Give the VRAM to the ARM7
+		VRAMBLOCK_SETBANK_D(VRAM_D_0x06000000_ARM7);
+		
+		reloadARM7();	//wait until ARM7.bin is copied back to IWRAM's target address
 		setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);
+		
+		while(getNDSLoaderInitStatus() != NDSLOADER_START){
+		}
+		
+		//OK, safe to reload now.
+		
+		//todo: reload into target address now.
+		
+		reloadARMCore(NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress);
 	}
 	return false;
 }
@@ -309,7 +343,6 @@ int main(int _argc, sint8 **_argv) {
 				scanKeys();
 			}
 			fillNDSLoaderContext(curChosenBrowseFile);
-			boot_nds();
 		}
 		
 		if (keysPressed() & KEY_SELECT){

@@ -21,6 +21,7 @@ USA
 #include "loader.h"
 #include "busTGDS.h"
 #include "dldi.h"
+#include "dmaTGDS.h"
 
 static inline void enterGDBFromARM7(void){
 	SendFIFOWords(NDSLOADER_ENTERGDB_FROM_ARM7, 0);
@@ -121,13 +122,26 @@ int main(int _argc, sint8 **_argv) {
 	
 	}
 	
+	//ARM7's VRAM D @0x06000000 should have the ARM7.bin bootcode now
+	int arm7BootCodeSize = NDS_LOADER_IPC_CTX_UNCACHED->bootCode7FileSize;
+	u32 arm7entryaddress = NDS_LOADER_IPC_CTX_UNCACHED->arm7EntryAddress;
+	dmaTransferWord(3, (uint32)0x06000000, (uint32)arm7entryaddress, (uint32)arm7BootCodeSize);	//copy back
+	
+	
 	SendFIFOWords(0xff11ff22, 0);	//if we get a signal out of this, means bootcode works!
 	
 	//init dldi properly @ ARM7
-	initDLDI7();
+	//initDLDI7();
 	
 	//redirect DLDI calls here
 	ARM7ExecuteNDSLoader();
+	
+	
+	setNDSLoaderInitStatus(NDSLOADER_START);	//OK, safe to reload now
+	
+	//todo: reload into target address now.
+	
+	reloadARMCore(NDS_LOADER_IPC_CTX_UNCACHED->arm7EntryAddress);
 	
 	enterGDBFromARM7();	//debug
 	

@@ -27,7 +27,7 @@ USA
 #include "InterruptsARMCores_h.h"
 #include "biosTGDS.h"
 
-void boot_nds(void)
+void reloadARM7(void)
 {
 	//ori: logic should help
 	/*
@@ -69,6 +69,19 @@ void boot_nds(void)
 	
 }
 
+void reloadARMCore(u32 targetAddress){
+	#ifdef ARM7
+	*((vu32*)0x027FFE34) = (u32)targetAddress;
+	#endif
+	#ifdef ARM9
+	*((vu32*)0x027FFE24) = (u32)targetAddress;
+	#endif
+	
+	REG_IME = IME_DISABLE;	// Disable interrupts
+	REG_IF = REG_IF;	// Acknowledge interrupt
+	
+	swiSoftReset();	// Jump to boot loader
+}
 
 int getNDSLoaderInitStatus(){
 	return (NDS_LOADER_IPC_CTX_UNCACHED->ndsloaderInitStatus);
