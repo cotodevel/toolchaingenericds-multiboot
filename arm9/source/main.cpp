@@ -1,5 +1,4 @@
 /*
-
 			Copyright (C) 2017  Coto
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -38,7 +37,6 @@ USA
 #include <stdio.h>
 
 bool GDBEnabled = false;
-
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 
 void menuShow(){
@@ -48,12 +46,10 @@ void menuShow(){
 	printf("Select: this menu");
 }
 
-
-
 static inline void initNDSLoader(){
 	if(getNDSLoaderInitStatus() == NDSLOADER_INIT_WAIT){
-		coherent_user_range_by_size((uint32)0x023DC000, (int)0x24000);
-		dmaFillHalfWord(3, 0, (uint32)0x023DC000, (uint32)0x24000);	//setNDSLoaderInitStatus(NDSLOADER_INIT_WAIT);  (0);
+		coherent_user_range_by_size((uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (64*1024) + (64*1024) + (16*1024));
+		dmaFillHalfWord(3, 0, (uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (64*1024) + (64*1024) + (16*1024));	//setNDSLoaderInitStatus(NDSLOADER_INIT_WAIT);  (0);
 		
 		//copy loader code (arm7bootldr.bin) to ARM7's EWRAM portion while preventing Cache issues
 		coherent_user_range_by_size((uint32)&arm7bootldr[0], (int)arm7bootldr_size);					
@@ -172,8 +168,8 @@ bool fillNDSLoaderContext(char * filename){
 		u8 * outBuf = (u8 *)malloc(sectorSize * sectorsPerCluster);
 		
 		//Uncached to prevent cache issues right at once
-		outBuf7 = (u8 *)(NDS_LOADER_IPC_PAGEFILEARM7_UNCACHED);	//malloc(arm7BootCodeSize);
-		outBuf9 = (u8 *)(0x02000000 + 0x400000); //malloc(arm9BootCodeSize);
+		outBuf7 = (u8 *)(NDS_LOADER_IPC_PAGEFILEARM7_UNCACHED);	//will not be higher than: arm7BootCodeSize
+		outBuf9 = (u8 *)(0x02000000 + 0x400000); //will not be higher than: arm9BootCodeSize or 2.5MB
 		
 		printf("ARM7/ARM9 Memory allocation OK.");
 		
@@ -318,22 +314,20 @@ int main(int _argc, sint8 **_argv) {
 		
 		if (keysPressed() & KEY_SELECT){
 			menuShow();
+			while(keysPressed() & KEY_SELECT){
+				scanKeys();
+			}
 		}
-		
 		
 		if (keysPressed() & KEY_B){
-			
-			
+			while(keysPressed() & KEY_B){
+				scanKeys();
+			}
 		}
-		
-		
-	
-		
 		
 		//GDB Debugging start
 		//#ifdef NDSGDB_DEBUG_ENABLE
 		if(GDBEnabled == true){
-		
 			//GDB Stub Process must run here
 			int retGDBVal = remoteStubMain();
 			if(retGDBVal == remoteStubMainWIFINotConnected){
@@ -394,10 +388,8 @@ int main(int _argc, sint8 **_argv) {
 			
 			//GDB Debugging end
 			//#endif
-		}
-		
+		}	
 		IRQVBlankWait();
 	}
-	
 }
 

@@ -18,7 +18,6 @@ USA
 
 */
 
-
 #ifndef __loader_common_h__
 #define __loader_common_h__
 
@@ -87,12 +86,6 @@ struct ndsloader_s
 //ARM7 DLDI section code
 #define NDS_LOADER_DLDISECTION_CACHED		(NDS_LOADER_IPC_HIGHCODEARM7_CACHED - (16*1024))	//0x022D0000
 #define NDS_LOADER_DLDISECTION_UNCACHED 	(NDS_LOADER_DLDISECTION_CACHED | 0x400000)
-
-//overall used 0x24000 (147,456?) bytes
-
-
-
-//MAX ARM9 Binary size = 0x02400000 - 48K - 32K - 64K - 16K = 0x3D8000 (4,030,464) bytes left 
 
 #endif
 
