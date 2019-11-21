@@ -35,6 +35,8 @@ USA
 #include "dswnifi.h"
 #include "utilsTGDS.h"
 
+#define ARM7COMMAND_RELOADNDS (uint32)(0xFFFFFF01)
+
 //---------------------------------------------------------------------------------
 struct sIPCSharedTGDSSpecific {
 //---------------------------------------------------------------------------------
@@ -51,6 +53,8 @@ extern "C" {
 //NOT weak symbols : the implementation of these is project-defined (here)
 extern void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
+
+extern void boot_nds(void);
 
 #ifdef __cplusplus
 }
