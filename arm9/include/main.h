@@ -47,13 +47,6 @@ extern "C" {
 
 extern int main(int _argc, sint8 **_argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
-extern bool ShowBrowser(char * Path);
-
-#ifdef __cplusplus
-extern std::string getDldiDefaultPath();
-extern std::string parseDirNameTGDS(std::string dirName);
-extern std::string parsefileNameTGDS(std::string fileName);
-#endif
 
 #ifdef __cplusplus
 }
