@@ -27,6 +27,16 @@ USA
 #include "fileBrowse.hpp"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
 #include "TGDSLogoLZSSCompressed.h"
 
+static void boot_nds(void)
+{
+	//resetMemory_ARM7();
+	
+	REG_IME = IME_DISABLE;	// Disable interrupts
+	REG_IF = REG_IF;	// Acknowledge interrupt
+	*((vu32*)0x027FFE34) = (u32)0x02000000;	// Bootloader start address
+	swiSoftReset();	// Jump to boot loader
+}
+
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 
 void menuShow(){
@@ -81,6 +91,7 @@ int main(int _argc, sint8 **_argv) {
 			while(keysPressed() & KEY_START){
 				scanKeys();
 			}
+			boot_nds();
 			menuShow();
 		}
 		
