@@ -37,6 +37,34 @@ USA
 
 #define ARM7COMMAND_RELOADNDS (uint32)(0xFFFFFF01)
 
+struct ndsloader_s
+{
+	//raw NDS Binary
+	u32 sectorTableBootCode[(4 * 1024 * 1024)/512];	//32K bytes in sectors = 4MB file addressed (NDS max binary size)
+	int fileSize;
+	
+	//ARM7 BootCode
+	int bootCode7FileSize;
+	u32 arm7EntryAddress;
+	int sectorOffsetStart7;
+	int sectorOffsetEnd7;
+	
+	//ARM9 BootCode
+	int bootCode9FileSize;
+	u32 arm9EntryAddress;
+	int sectorOffsetStart9;
+	int sectorOffsetEnd9;
+	
+	//SD specific
+	int sectorsPerCluster;
+};
+
+//reserve 40K from bottom EWRAM as shared IPC buffer: ndsloader_t = 4*3 + 512 + 32768 = exactly 33292 bytes -> EWRAM - 40K shared IPC
+#define NDS_LOADER_IPC_CTX_SIZE (40*1024)
+#define NDS_LOADER_IPC_CTXADDR		(0x02400000 - (int)NDS_LOADER_IPC_CTX_SIZE)
+#define NDS_LOADER_IPC_CTX_CACHED ((struct ndsloader_s*)NDS_LOADER_IPC_CTXADDR)
+#define NDS_LOADER_IPC_CTX_UNCACHED ((struct ndsloader_s*)(NDS_LOADER_IPC_CTXADDR | 0x400000))
+
 //---------------------------------------------------------------------------------
 struct sIPCSharedTGDSSpecific {
 //---------------------------------------------------------------------------------
