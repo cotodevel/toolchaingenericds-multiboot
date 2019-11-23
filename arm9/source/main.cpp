@@ -31,6 +31,7 @@ USA
 #include "cartHeader.h"
 #include "ff.h"
 #include "dldi.h"
+#include "loader.h"
 #include <stdio.h>
 
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
@@ -43,7 +44,10 @@ void menuShow(){
 }
 
 static inline void initNDSLoader(){
+	NDS_LOADER_IPC_CTX_UNCACHED->enabled = false;
 	memset((u32*)NDS_LOADER_IPC_CTX_UNCACHED, 0, (int)NDS_LOADER_IPC_CTX_SIZE);	//memset(void *str, int c, size_t n)
+	//set WORKRAM 32K to ARM7
+	WRAM_CR = WRAM_0KARM9_32KARM7;
 }
 
 //generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
@@ -78,7 +82,7 @@ bool fillNDSLoaderContext(char * filename){
 		int clusterSizeBytes = getDiskClusterSizeBytes();
 		int sectorsPerCluster = dldiFs.csize;
 		NDS_LOADER_IPC_CTX_UNCACHED->sectorsPerCluster = sectorsPerCluster;
-		
+		NDS_LOADER_IPC_CTX_UNCACHED->sectorSize = sectorSize;
 		//ARM7
 		int arm7BootCodeSize = NDSHdr->arm7size;
 		u32 arm7BootCodeOffsetInFile = NDSHdr->arm7romoffset;
@@ -133,7 +137,10 @@ bool fillNDSLoaderContext(char * filename){
 		}
 		*(cluster_table) = 0xFFFFFFFF;
 		
+		NDS_LOADER_IPC_CTX_UNCACHED->enabled = true;
 		
+		//test code already implemented in loader.h
+		/*
 		//Test: read ARM7/ARM9 BootCode into .bin
 		printf("test init.");
 		
@@ -192,12 +199,14 @@ bool fillNDSLoaderContext(char * filename){
 		fclose(fout9);
 		fclose(fout7);
 		printf("test end.");
+		free(outBuf);
 		//Test end
+		*/
 		
 		//todo:
 		//1) Enable DLDI at ARM7
 		//2) then relocate Test code into ARM7's highcode section: 0x03800000 + 64K = 0x03810000 + 32K (highcode), and instead, write from the DLDI driver to ARM7'sarm7BootCodeEntryAddress and ARM9's arm9BootCodeEntryAddress
-		//3) When 2) done, copy high code to EWRAM's end - 32K(NDSBinary ctx) - 32K(ARM7 highcode section) from ARM9 to ARM7, ARM9 triggers ARM7 highcode reloading code (fifo irq), then ARM9 does 4)
+		//3) When 2) done, copy high code to EWRAM's end - 32K(NDSBinary ctx) - 32K(ARM7 highcode section) - 32K(ARM7 pagefile) from ARM9 to ARM7, ARM9 triggers ARM7 highcode reloading code (fifo irq), then ARM9 does 4)
 		//4) ITCM Call: Let ARM9 jump, disable Interrupts, and wait loop for value in IPC region. When loop value is met, ARM9 triggers swi soft reset
 		//5) Once ARM7 highcode is executed, write the wait loop value in IPC, disable Interrupts and ARM7 triggers swi soft reset
 		
@@ -241,8 +250,8 @@ int main(int _argc, sint8 **_argv) {
 
 	menuShow();
 	
-	//set up NDSLoader
-	initNDSLoader();
+	
+	initNDSLoader();	//set up NDSLoader
 	
 	while (1){
 		scanKeys();
@@ -268,5 +277,6 @@ int main(int _argc, sint8 **_argv) {
 		
 		IRQVBlankWait();
 	}
-
+	
 }
+

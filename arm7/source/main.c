@@ -18,6 +18,11 @@ USA
 
 #include "main.h"
 #include "biosTGDS.h"
+#include "loader.h"
+
+static inline sint32 get_highcode_size(){
+	return (sint32)((uint8*)(uint32*)&__highcode_vma_end__ - (sint32)(&__highcode_vma_start));
+}
 
 //---------------------------------------------------------------------------------
 int main(int _argc, sint8 **_argv) {
@@ -25,6 +30,19 @@ int main(int _argc, sint8 **_argv) {
 	/*			TGDS 1.5 Standard ARM7 Init code start	*/
 	installWifiFIFO();		
 	/*			TGDS 1.5 Standard ARM7 Init code end	*/
+	
+	//set WORKRAM 32K to ARM7
+	WRAM_CR = WRAM_0KARM9_32KARM7;
+	
+	//before call set up highcode
+	memcpy ((u32*)0x03810000, (u32*)(&__highcode_vma_start), get_highcode_size());	//memcpy ( void * destination, const void * source, size_t num )
+	
+		
+	
+	void (*foo)(void) = 0x03810000;
+	foo();
+
+	ARM7ExecuteNDSLoader();	//prevent to execute this at this time. fillNDSLoaderContext() will set this call to true
 	
     while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */

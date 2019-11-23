@@ -33,6 +33,9 @@ extern "C" {
 
 extern int main(int _argc, sint8 **_argv);
 
+extern u32 __highcode_vma_start;
+extern u32 __highcode_vma_end__;
+
 #ifdef __cplusplus
 }
 #endif

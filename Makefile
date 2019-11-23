@@ -20,7 +20,7 @@
 
 #ToolchainGenericDS specific: 
 #Non FPIC Code: Use Makefiles from either TGDS, or custom
-export SOURCE_MAKEFILE7 = default
+export SOURCE_MAKEFILE7 = custom
 export SOURCE_MAKEFILE9 = default
 
 #FPIC code is always default TGDS Makefile
