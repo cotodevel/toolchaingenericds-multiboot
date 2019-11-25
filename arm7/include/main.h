@@ -32,6 +32,7 @@ extern "C" {
 #endif
 
 extern int main(int _argc, sint8 **_argv);
+extern void initDLDIARM7(u32 srcDLDIAddr);
 
 #ifdef __cplusplus
 }

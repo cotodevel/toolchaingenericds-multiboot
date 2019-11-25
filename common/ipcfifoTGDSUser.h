@@ -40,6 +40,7 @@ struct sIPCSharedTGDSSpecific {
 	uint32 frameCounter9;	//VBLANK counter9
 };
 
+
 #endif
 
 #ifdef __cplusplus
@@ -49,7 +50,6 @@ extern "C" {
 //NOT weak symbols : the implementation of these is project-defined (here)
 extern void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
-
 
 #ifdef __cplusplus
 }

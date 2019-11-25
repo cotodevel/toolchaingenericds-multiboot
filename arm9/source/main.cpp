@@ -37,6 +37,8 @@ USA
 #include "nds_cp15_misc.h"
 #include <stdio.h>
 
+bool GDBEnabled = false;
+
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 
 void menuShow(){
@@ -53,11 +55,10 @@ static inline void initNDSLoader(){
 		coherent_user_range_by_size((uint32)0x023DC000, (int)0x24000);
 		dmaFillHalfWord(3, 0, (uint32)0x023DC000, (uint32)0x24000);	//setNDSLoaderInitStatus(NDSLOADER_INIT_WAIT);  (0);
 		
-		
 		//copy loader code (arm7bootldr.bin) to ARM7's EWRAM portion while preventing Cache issues
 		coherent_user_range_by_size((uint32)&arm7bootldr[0], (int)arm7bootldr_size);					
 		memcpy ((void *)NDS_LOADER_IPC_HIGHCODEARM7_CACHED, (u32*)&arm7bootldr[0], arm7bootldr_size); 	//memcpy ( void * destination, const void * source, size_t num );	//memset(void *str, int c, size_t n)
-		
+	
 		setNDSLoaderInitStatus(NDSLOADER_INIT_OK);
 	}
 }
@@ -224,6 +225,7 @@ bool fillNDSLoaderContext(char * filename){
 		free(NDSHeader);
 		fclose(fh);
 		
+		setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);
 	}
 	return false;
 }
@@ -284,69 +286,73 @@ int main(int _argc, sint8 **_argv) {
 		}
 		
 		
+		
+		
 		//GDB Debugging start
-		#ifdef NDSGDB_DEBUG_ENABLE
+		//#ifdef NDSGDB_DEBUG_ENABLE
+		if(GDBEnabled == true){
 		
-		//GDB Stub Process must run here
-		int retGDBVal = remoteStubMain();
-		if(retGDBVal == remoteStubMainWIFINotConnected){
-			if (switch_dswnifi_mode(dswifi_gdbstubmode) == true){
-				clrscr();
-				//Show IP and port here
-				printf("    ");
-				printf("    ");
-				printf("[Connect to GDB]: %s", ((getValidGDBMapFile() == true) ? " GDBFile Mode!" : "NDSMemory Mode!"));
-				char IP[16];
-				printf("Port:%d GDB IP:%s",remotePort, print_ip((uint32)Wifi_GetIP(), IP));
-				remoteInit();
-			}
-			else{
-				//GDB Client Reconnect:ERROR
-			}
-		}
-		else if(retGDBVal == remoteStubMainWIFIConnectedGDBDisconnected){
-			setWIFISetup(false);
-			clrscr();
-			printf("    ");
-			printf("    ");
-			printf("Remote GDB Client disconnected. ");
-			printf("Press A to retry this GDB Session. ");
-			printf("Press B to reboot NDS GDB Server ");
-			
-			int keys = 0;
-			while(1){
-				scanKeys();
-				keys = keysPressed();
-				if (keys&KEY_A){
-					break;
+			//GDB Stub Process must run here
+			int retGDBVal = remoteStubMain();
+			if(retGDBVal == remoteStubMainWIFINotConnected){
+				if (switch_dswnifi_mode(dswifi_gdbstubmode) == true){
+					clrscr();
+					//Show IP and port here
+					printf("    ");
+					printf("    ");
+					printf("[Connect to GDB]: %s", ((getValidGDBMapFile() == true) ? " GDBFile Mode!" : "NDSMemory Mode!"));
+					char IP[16];
+					printf("Port:%d GDB IP:%s",remotePort, print_ip((uint32)Wifi_GetIP(), IP));
+					remoteInit();
 				}
+				else{
+					//GDB Client Reconnect:ERROR
+				}
+			}
+			else if(retGDBVal == remoteStubMainWIFIConnectedGDBDisconnected){
+				setWIFISetup(false);
+				clrscr();
+				printf("    ");
+				printf("    ");
+				printf("Remote GDB Client disconnected. ");
+				printf("Press A to retry this GDB Session. ");
+				printf("Press B to reboot NDS GDB Server ");
+				
+				int keys = 0;
+				while(1){
+					scanKeys();
+					keys = keysPressed();
+					if (keys&KEY_A){
+						break;
+					}
+					if (keys&KEY_B){
+						break;
+					}
+					IRQVBlankWait();
+				}
+				
 				if (keys&KEY_B){
-					break;
+					setValidGDBMapFile(false);
+					main(0, (sint8**)"");
 				}
-				IRQVBlankWait();
+				
+				if (switch_dswnifi_mode(dswifi_gdbstubmode) == true){ // gdbNdsStart() called
+					reconnectCount++;
+					clrscr();
+					//Show IP and port here
+					printf("    ");
+					printf("    ");
+					printf("[Re-Connect to GDB]: %s",((getValidGDBMapFile() == true) ? " GDBFile Mode!" : "NDSMemory Mode!"));
+					char IP[16];
+					printf("Retries: %d",reconnectCount);
+					printf("Port:%d GDB IP:%s", remotePort, print_ip((uint32)Wifi_GetIP(), IP));
+					remoteInit();
+				}
 			}
 			
-			if (keys&KEY_B){
-				setValidGDBMapFile(false);
-				main(0, (sint8**)"");
-			}
-			
-			if (switch_dswnifi_mode(dswifi_gdbstubmode) == true){ // gdbNdsStart() called
-				reconnectCount++;
-				clrscr();
-				//Show IP and port here
-				printf("    ");
-				printf("    ");
-				printf("[Re-Connect to GDB]: %s",((getValidGDBMapFile() == true) ? " GDBFile Mode!" : "NDSMemory Mode!"));
-				char IP[16];
-				printf("Retries: %d",reconnectCount);
-				printf("Port:%d GDB IP:%s", remotePort, print_ip((uint32)Wifi_GetIP(), IP));
-				remoteInit();
-			}
+			//GDB Debugging end
+			//#endif
 		}
-		
-		//GDB Debugging end
-		#endif
 		
 		IRQVBlankWait();
 	}

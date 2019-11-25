@@ -36,6 +36,8 @@ USA
 #define NDSLOADER_INIT_OK (int)(0xFF222218)	//bare minimum setup: OK (file not loaded yet)
 #define NDSLOADER_INIT_WAIT (int)(0)		//not set up
 #define NDSLOADER_LOAD_OK (int)(0xFF222219)	//file loaded OK
+#define NDSLOADER_ENTERGDB_FROM_ARM7 (int)(0xFF222220)	//file loaded OK
+#define NDSLOADER_SENDDLDIADDR_TO_ARM7 (int)(0xFF222221)	//file loaded OK
 
 struct ndsloader_s
 {
@@ -90,10 +92,6 @@ struct ndsloader_s
 
 #ifdef __cplusplus
 extern "C"{
-#endif
-
-#ifdef ARM7
-extern void ARM7ExecuteNDSLoader(void);
 #endif
 
 extern void boot_nds(void);

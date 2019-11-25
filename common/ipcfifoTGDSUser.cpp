@@ -33,14 +33,17 @@ USA
 #include "InterruptsARMCores_h.h"
 #include "biosTGDS.h"
 #include "loader.h"
+#include "dmaTGDS.h"
 
 #ifdef ARM7
 #include <string.h>
+#include "dldi.h"
 
 #include "main.h"
 #include "wifi_arm7.h"
 #include "spifwTGDS.h"
 
+extern void initDLDIARM7(u32 dldiSrc);	
 #endif
 
 #ifdef ARM9
@@ -64,6 +67,11 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			boot_nds();
 		}
 		break;
+		case(NDSLOADER_SENDDLDIADDR_TO_ARM7):{
+			initDLDIARM7(cmd2);	
+		}
+		break;
+		
 		#endif
 		
 		//NDS9: 
@@ -102,6 +110,11 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			printf("----");
 			
 			printf("ARM7 ALIVE!");
+		}
+		break;
+		
+		case(NDSLOADER_ENTERGDB_FROM_ARM7):{
+			GDBEnabled = true;
 		}
 		break;
 		

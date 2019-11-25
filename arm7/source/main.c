@@ -20,9 +20,14 @@ USA
 #include "biosTGDS.h"
 #include "loader.h"
 
+void initDLDIARM7(u32 srcDLDIAddr){	//stubbed
+	
+}
+
 //---------------------------------------------------------------------------------
 int main(int _argc, sint8 **_argv) {
 //---------------------------------------------------------------------------------
+		
 	/*			TGDS 1.5 Standard ARM7 Init code start	*/
 	installWifiFIFO();		
 	/*			TGDS 1.5 Standard ARM7 Init code end	*/
