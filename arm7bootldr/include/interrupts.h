@@ -1,4 +1,5 @@
 /*
+
 			Copyright (C) 2017  Coto
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -14,30 +15,32 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 USA
+
 */
 
-#include "main.h"
-#include "biosTGDS.h"
-#include "loader.h"
+#ifndef __interrupts7_h__
+#define __interrupts7_h__
 
-//---------------------------------------------------------------------------------
-int main(int _argc, sint8 **_argv) {
-//---------------------------------------------------------------------------------
-	/*			TGDS 1.5 Standard ARM7 Init code start	*/
-	installWifiFIFO();		
-	/*			TGDS 1.5 Standard ARM7 Init code end	*/
-	
-	
-	while(getNDSLoaderInitStatus() != NDSLOADER_INIT_OK){
-		//wait for init NDSLoader code 
-	}
-	
-    while (1) {
-		//up to this point, is free to reload the EWRAM code
-		
-		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQVBlankWait();
-	}
-   
-	return 0;
+#include "typedefsTGDS.h"
+#include "dsregs.h"
+
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern void IpcSynchandlerUser();
+extern void Timer0handlerUser();
+extern void Timer1handlerUser();
+extern void Timer2handlerUser();
+extern void Timer3handlerUser();
+extern void HblankUser();
+extern void VblankUser();
+extern void VcounterUser();
+extern void screenLidHasOpenedhandlerUser();
+extern void screenLidHasClosedhandlerUser();
+
+#ifdef __cplusplus
 }
+#endif

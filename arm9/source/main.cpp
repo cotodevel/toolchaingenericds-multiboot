@@ -32,6 +32,9 @@ USA
 #include "ff.h"
 #include "dldi.h"
 #include "loader.h"
+#include "dmaTGDS.h"
+#include "arm7bootldr.h"
+#include "nds_cp15_misc.h"
 #include <stdio.h>
 
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
@@ -44,10 +47,15 @@ void menuShow(){
 }
 
 static inline void initNDSLoader(){
-	NDS_LOADER_IPC_CTX_UNCACHED->enabled = false;
-	memset((u32*)NDS_LOADER_IPC_CTX_UNCACHED, 0, (int)NDS_LOADER_IPC_CTX_SIZE);	//memset(void *str, int c, size_t n)
-	//set WORKRAM 32K to ARM7
-	WRAM_CR = WRAM_0KARM9_32KARM7;
+	coherent_user_range_by_size((uint32)0x023DC000, (int)0x24000);
+	dmaFillHalfWord(3, 0, (uint32)0x023DC000, (uint32)0x24000);	//setNDSLoaderInitStatus(NDSLOADER_INIT_WAIT);  (0);
+	
+	
+	//copy loader code (arm7bootldr.bin) to ARM7's EWRAM portion while preventing Cache issues
+	coherent_user_range_by_size((uint32)&arm7bootldr[0], (int)arm7bootldr_size);					
+	memcpy ((void *)NDS_LOADER_IPC_HIGHCODEARM7_CACHED, (u32*)&arm7bootldr[0], arm7bootldr_size); 	//memcpy ( void * destination, const void * source, size_t num );	//memset(void *str, int c, size_t n)
+	
+	setNDSLoaderInitStatus(NDSLOADER_INIT_OK);
 }
 
 //generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
@@ -137,7 +145,6 @@ bool fillNDSLoaderContext(char * filename){
 		}
 		*(cluster_table) = 0xFFFFFFFF;
 		
-		NDS_LOADER_IPC_CTX_UNCACHED->enabled = true;
 		
 		//test code already implemented in loader.h
 		/*
@@ -241,6 +248,8 @@ int main(int _argc, sint8 **_argv) {
 	switch_dswnifi_mode(dswifi_idlemode);
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
 	
+	initNDSLoader();	//set up NDSLoader
+	
 	//load TGDS Logo (NDS BMP Image)
 	//VRAM A Used by console
 	//VRAM C Keyboard and/or TGDS Logo
@@ -249,9 +258,6 @@ int main(int _argc, sint8 **_argv) {
 	RenderTGDSLogoSubEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 
 	menuShow();
-	
-	
-	initNDSLoader();	//set up NDSLoader
 	
 	while (1){
 		scanKeys();
@@ -274,6 +280,71 @@ int main(int _argc, sint8 **_argv) {
 		if (keysPressed() & KEY_SELECT){
 			menuShow();
 		}
+		
+		
+		//GDB Debugging start
+		#ifdef NDSGDB_DEBUG_ENABLE
+		
+		//GDB Stub Process must run here
+		int retGDBVal = remoteStubMain();
+		if(retGDBVal == remoteStubMainWIFINotConnected){
+			if (switch_dswnifi_mode(dswifi_gdbstubmode) == true){
+				clrscr();
+				//Show IP and port here
+				printf("    ");
+				printf("    ");
+				printf("[Connect to GDB]: %s", ((getValidGDBMapFile() == true) ? " GDBFile Mode!" : "NDSMemory Mode!"));
+				char IP[16];
+				printf("Port:%d GDB IP:%s",remotePort, print_ip((uint32)Wifi_GetIP(), IP));
+				remoteInit();
+			}
+			else{
+				//GDB Client Reconnect:ERROR
+			}
+		}
+		else if(retGDBVal == remoteStubMainWIFIConnectedGDBDisconnected){
+			setWIFISetup(false);
+			clrscr();
+			printf("    ");
+			printf("    ");
+			printf("Remote GDB Client disconnected. ");
+			printf("Press A to retry this GDB Session. ");
+			printf("Press B to reboot NDS GDB Server ");
+			
+			int keys = 0;
+			while(1){
+				scanKeys();
+				keys = keysPressed();
+				if (keys&KEY_A){
+					break;
+				}
+				if (keys&KEY_B){
+					break;
+				}
+				IRQVBlankWait();
+			}
+			
+			if (keys&KEY_B){
+				setValidGDBMapFile(false);
+				main(0, (sint8**)"");
+			}
+			
+			if (switch_dswnifi_mode(dswifi_gdbstubmode) == true){ // gdbNdsStart() called
+				reconnectCount++;
+				clrscr();
+				//Show IP and port here
+				printf("    ");
+				printf("    ");
+				printf("[Re-Connect to GDB]: %s",((getValidGDBMapFile() == true) ? " GDBFile Mode!" : "NDSMemory Mode!"));
+				char IP[16];
+				printf("Retries: %d",reconnectCount);
+				printf("Port:%d GDB IP:%s", remotePort, print_ip((uint32)Wifi_GetIP(), IP));
+				remoteInit();
+			}
+		}
+		
+		//GDB Debugging end
+		#endif
 		
 		IRQVBlankWait();
 	}

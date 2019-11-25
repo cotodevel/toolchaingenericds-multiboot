@@ -16,28 +16,40 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 USA
 */
 
-/* Coto: linker file for NDS ARM7 processor, could be adapted for DSi-3DS */
+/* Coto: linker file for NDS ARM9 processor, could be adapted for DSi-3DS */
 
 /* attributes can actually help in debugging because if you try to move functions to DTCM, for example, compiler will rant since DTCM is DATA only path and not execution*/
 MEMORY
 {
-	IWRAM	(rwx)	: ORIGIN = 0x03800000, LENGTH = 64K
+	DTCM : ORIGIN = 0x0b000000, LENGTH = 16K	
+	ITCM : ORIGIN = 0x01000000, LENGTH = 32K	/* alternate 0x00000000 vectors here */
+	GBAROM : ORIGIN = 0x08000000, LENGTH = 32M
+	EWRAM : ORIGIN = 0x02000000, LENGTH = (4M)	/* must be 4MB */
 }
 
-_iwram_start = ORIGIN(IWRAM);
-_iwram_end = ORIGIN(IWRAM)	+	LENGTH(IWRAM);
+_itcm_start = ORIGIN(ITCM);
+_itcm_end = ORIGIN(ITCM)	+	LENGTH(ITCM);
 
-/* ARM7 Specific */
-_arm7_irqcheckbits = 0x04000000 - 8;	/* __irq_flags */
-_arm7_irqhandler = 0x04000000 - 4;	/* __irq_vector */
+_ewram_start = ORIGIN(EWRAM);
+_ewram_end = ORIGIN(EWRAM)	+	LENGTH(EWRAM);
+
+_gba_start = ORIGIN(GBAROM);
+_gba_end = ORIGIN(GBAROM)	+	LENGTH(GBAROM);
+
+_dtcm_start = ORIGIN(DTCM);
+_dtcm_end = ORIGIN(DTCM)	+	LENGTH(DTCM);
+
+/* ARM9 Specific */
+_arm9_irqcheckbits = ORIGIN(DTCM) + 0x3FF8;	/* __irq_flags */
+_arm9_irqhandler = ORIGIN(DTCM) + 0x3FFC;	/* __irq_vector */
 
 /* ARM ABI says stacks are full decreasing */
-sp_SVC	= _iwram_end - 0x100;	/* reset, swi exception*/
-sp_IRQ	= sp_SVC - 0x100;	/*irq exception*/
-sp_FIQ	= sp_IRQ - 0x100;	/* fiq exception */
-sp_ABT	= sp_FIQ - 0x100;	/* prefetch / data aborts exception */
-sp_UND	= sp_ABT - 0x100;	/* undefined exception */
-sp_USR	= sp_UND - 0x100;	/* usr / sys stacks */
+sp_SVC	= _dtcm_end  - 0x200;	/* reset, swi exception*/
+sp_IRQ	= sp_SVC - 0x200;	/*irq exception*/
+sp_FIQ	= sp_IRQ - 0x200;	/* fiq exception */
+sp_ABT	= sp_FIQ - 0x200;	/* prefetch / data aborts exception */
+sp_UND	= sp_ABT - 0x200;	/* undefined exception */
+sp_USR	= sp_UND - 0x200;	/* usr / sys stacks */
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm","elf32-littlearm")
 OUTPUT_ARCH(arm)
@@ -47,7 +59,7 @@ SECTIONS
 	.init      :	ALIGN(4)
 	{
 		KEEP(*(.init))
-	} > IWRAM = 0xFF
+	} > EWRAM = 0xFF
 	
 	.text      :	ALIGN(4)
 	{
@@ -59,7 +71,7 @@ SECTIONS
 		KEEP(*(COMMON))
 		KEEP(*(.text))
 		KEEP(*(.text.*))
-	} > IWRAM = 0xFF
+	} > EWRAM = 0xFF
 	
 	.data : ALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__data_start__ = ABSOLUTE(.));
@@ -68,7 +80,7 @@ SECTIONS
 		*(.gnu.linkonce.d*)
 		*(.gnu.linkonce.t*)
 		PROVIDE (__data_end__ = ABSOLUTE(.));
-	} > IWRAM = 0xff
+	} > EWRAM = 0xff
 	
 	.rodata : ALIGN(4) {			/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__rodata_start__ = ABSOLUTE(.));
@@ -77,7 +89,7 @@ SECTIONS
 		*(.rodata.*)
     	*(.gnu.linkonce.r.*)
 		PROVIDE (__rodata_end__ = ABSOLUTE(.));
-	} > IWRAM = 0xff
+	} > EWRAM = 0xff
 	
 	.bss (NOLOAD): {				/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__bss_vma_start = ABSOLUTE(.));
@@ -86,7 +98,7 @@ SECTIONS
 		*(.bss)
 		*(.gnu.linkonce.b*.)
 		PROVIDE (__bss_vma_end = ABSOLUTE(.));
-	} > IWRAM
+	} > EWRAM
 	
 	.ARM.exidx : ALIGN(4) {			/* not used at all, but some code rely on ARM debugging symbols */
 		PROVIDE (__exidx_start = ABSOLUTE(.));
@@ -95,8 +107,22 @@ SECTIONS
 		*(.gnu.linkonce.armexidx.)
 		*(.gnu.linkonce.armexidx.*)
 		PROVIDE (__exidx_end = ABSOLUTE(.));
-	} > IWRAM = 0xff
-
+	} > EWRAM = 0xff
+	
+	__itcm_vma_start = .;
+	.itcm      : 
+	{
+		KEEP (*(.itcm*))
+	} > ITCM AT > EWRAM
+	__itcm_vma_end__ = .;
+	
+	__dtcm_vma_start = .;
+	.dtcm      : 
+	{
+		KEEP (*(.dtcm*))
+	} > DTCM AT > EWRAM
+	__dtcm_vma_end__ = .;
+	
 	/*
      * Stabs le debugging sections.
      *
@@ -142,7 +168,7 @@ SECTIONS
 		PROVIDE (__fini_end__ = ABSOLUTE(.));
 		FILL(0x40);
 		. = ALIGN(4);
-	} > IWRAM = 0xff
+	} > EWRAM = 0xff
 	
 	PROVIDE (__lib__end__ = __fini_end__);
 	. = ALIGN(4);

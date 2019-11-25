@@ -27,14 +27,9 @@ int main(int _argc, sint8 **_argv) {
 	installWifiFIFO();		
 	/*			TGDS 1.5 Standard ARM7 Init code end	*/
 	
-	
-	while(getNDSLoaderInitStatus() != NDSLOADER_INIT_OK){
-		//wait for init NDSLoader code 
-	}
+	ARM7ExecuteNDSLoader();	//prevent to execute this at this time. fillNDSLoaderContext() will set this call to true
 	
     while (1) {
-		//up to this point, is free to reload the EWRAM code
-		
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
 		IRQVBlankWait();
 	}

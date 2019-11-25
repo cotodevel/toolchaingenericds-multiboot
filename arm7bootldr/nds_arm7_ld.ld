@@ -21,18 +21,18 @@ USA
 /* attributes can actually help in debugging because if you try to move functions to DTCM, for example, compiler will rant since DTCM is DATA only path and not execution*/
 MEMORY
 {
-	IWRAM	(rwx)	: ORIGIN = 0x03800000, LENGTH = 64K
+	IWRAMBOOTCODE	(rwx)	: ORIGIN = 0x023DC000, LENGTH = 64K
 }
 
-_iwram_start = ORIGIN(IWRAM);
-_iwram_end = ORIGIN(IWRAM)	+	LENGTH(IWRAM);
+_iwram_start = ORIGIN(IWRAMBOOTCODE);
+_iwram_end = ORIGIN(IWRAMBOOTCODE)	+	LENGTH(IWRAMBOOTCODE);
 
 /* ARM7 Specific */
 _arm7_irqcheckbits = 0x04000000 - 8;	/* __irq_flags */
 _arm7_irqhandler = 0x04000000 - 4;	/* __irq_vector */
 
 /* ARM ABI says stacks are full decreasing */
-sp_SVC	= _iwram_end - 0x100;	/* reset, swi exception*/
+sp_SVC	= 0x03810000 - 0x100;	/* reset, swi exception*/
 sp_IRQ	= sp_SVC - 0x100;	/*irq exception*/
 sp_FIQ	= sp_IRQ - 0x100;	/* fiq exception */
 sp_ABT	= sp_FIQ - 0x100;	/* prefetch / data aborts exception */
@@ -47,7 +47,7 @@ SECTIONS
 	.init      :	ALIGN(4)
 	{
 		KEEP(*(.init))
-	} > IWRAM = 0xFF
+	} > IWRAMBOOTCODE = 0xFF
 	
 	.text      :	ALIGN(4)
 	{
@@ -59,7 +59,7 @@ SECTIONS
 		KEEP(*(COMMON))
 		KEEP(*(.text))
 		KEEP(*(.text.*))
-	} > IWRAM = 0xFF
+	} > IWRAMBOOTCODE = 0xFF
 	
 	.data : ALIGN(4) {				/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__data_start__ = ABSOLUTE(.));
@@ -68,7 +68,7 @@ SECTIONS
 		*(.gnu.linkonce.d*)
 		*(.gnu.linkonce.t*)
 		PROVIDE (__data_end__ = ABSOLUTE(.));
-	} > IWRAM = 0xff
+	} > IWRAMBOOTCODE = 0xff
 	
 	.rodata : ALIGN(4) {			/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__rodata_start__ = ABSOLUTE(.));
@@ -77,7 +77,7 @@ SECTIONS
 		*(.rodata.*)
     	*(.gnu.linkonce.r.*)
 		PROVIDE (__rodata_end__ = ABSOLUTE(.));
-	} > IWRAM = 0xff
+	} > IWRAMBOOTCODE = 0xff
 	
 	.bss (NOLOAD): {				/* used by TGDS-Newlib C/C++ code */
 		PROVIDE (__bss_vma_start = ABSOLUTE(.));
@@ -86,7 +86,7 @@ SECTIONS
 		*(.bss)
 		*(.gnu.linkonce.b*.)
 		PROVIDE (__bss_vma_end = ABSOLUTE(.));
-	} > IWRAM
+	} > IWRAMBOOTCODE
 	
 	.ARM.exidx : ALIGN(4) {			/* not used at all, but some code rely on ARM debugging symbols */
 		PROVIDE (__exidx_start = ABSOLUTE(.));
@@ -95,7 +95,7 @@ SECTIONS
 		*(.gnu.linkonce.armexidx.)
 		*(.gnu.linkonce.armexidx.*)
 		PROVIDE (__exidx_end = ABSOLUTE(.));
-	} > IWRAM = 0xff
+	} > IWRAMBOOTCODE = 0xff
 
 	/*
      * Stabs le debugging sections.
@@ -142,7 +142,7 @@ SECTIONS
 		PROVIDE (__fini_end__ = ABSOLUTE(.));
 		FILL(0x40);
 		. = ALIGN(4);
-	} > IWRAM = 0xff
+	} > IWRAMBOOTCODE = 0xff
 	
 	PROVIDE (__lib__end__ = __fini_end__);
 	. = ALIGN(4);
