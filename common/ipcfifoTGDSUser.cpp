@@ -69,6 +69,42 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		//NDS9: 
 		#ifdef ARM9
 		
+		case(0xff11ff22):{
+			clrscr();
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			
+			printf("BOOTLOADER RUN OK @ ARM7");
+		}
+		break;
+		
+		case(0xff11ff44):{
+			clrscr();
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			
+			printf("ARM7 ALIVE!");
+		}
+		break;
+		
 		#endif
 	}
 	

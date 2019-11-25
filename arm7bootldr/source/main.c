@@ -29,7 +29,17 @@ int main(int _argc, sint8 **_argv) {
 	
 	ARM7ExecuteNDSLoader();	//prevent to execute this at this time. fillNDSLoaderContext() will set this call to true
 	
+	SendFIFOWords(0xff11ff22, 0);	//if we get a signal out of this, means bootcode works!
+	
+	
     while (1) {
+		
+		scanKeys();
+		
+		if (keysPressed() & KEY_DOWN){
+			SendFIFOWords(0xff11ff44, 0);	//printf("ARM7 ALIVE!");
+		}
+		
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
 		IRQVBlankWait();
 	}

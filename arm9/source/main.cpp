@@ -46,16 +46,20 @@ void menuShow(){
 	printf("Select: this menu");
 }
 
+
+
 static inline void initNDSLoader(){
-	coherent_user_range_by_size((uint32)0x023DC000, (int)0x24000);
-	dmaFillHalfWord(3, 0, (uint32)0x023DC000, (uint32)0x24000);	//setNDSLoaderInitStatus(NDSLOADER_INIT_WAIT);  (0);
-	
-	
-	//copy loader code (arm7bootldr.bin) to ARM7's EWRAM portion while preventing Cache issues
-	coherent_user_range_by_size((uint32)&arm7bootldr[0], (int)arm7bootldr_size);					
-	memcpy ((void *)NDS_LOADER_IPC_HIGHCODEARM7_CACHED, (u32*)&arm7bootldr[0], arm7bootldr_size); 	//memcpy ( void * destination, const void * source, size_t num );	//memset(void *str, int c, size_t n)
-	
-	setNDSLoaderInitStatus(NDSLOADER_INIT_OK);
+	if(getNDSLoaderInitStatus() == NDSLOADER_INIT_WAIT){
+		coherent_user_range_by_size((uint32)0x023DC000, (int)0x24000);
+		dmaFillHalfWord(3, 0, (uint32)0x023DC000, (uint32)0x24000);	//setNDSLoaderInitStatus(NDSLOADER_INIT_WAIT);  (0);
+		
+		
+		//copy loader code (arm7bootldr.bin) to ARM7's EWRAM portion while preventing Cache issues
+		coherent_user_range_by_size((uint32)&arm7bootldr[0], (int)arm7bootldr_size);					
+		memcpy ((void *)NDS_LOADER_IPC_HIGHCODEARM7_CACHED, (u32*)&arm7bootldr[0], arm7bootldr_size); 	//memcpy ( void * destination, const void * source, size_t num );	//memset(void *str, int c, size_t n)
+		
+		setNDSLoaderInitStatus(NDSLOADER_INIT_OK);
+	}
 }
 
 //generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
@@ -271,10 +275,8 @@ int main(int _argc, sint8 **_argv) {
 			while(keysPressed() & KEY_START){
 				scanKeys();
 			}
-			//boot_nds();
-			
-			
 			fillNDSLoaderContext(curChosenBrowseFile);
+			boot_nds();
 		}
 		
 		if (keysPressed() & KEY_SELECT){
