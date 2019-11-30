@@ -225,6 +225,8 @@ bool fillNDSLoaderContext(char * filename){
 		free(NDSHeader);
 		fclose(fh);
 		
+		int ret=FS_deinit();
+		
 		setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);
 	}
 	return false;
@@ -286,6 +288,13 @@ int main(int _argc, sint8 **_argv) {
 		}
 		
 		
+		if (keysPressed() & KEY_B){
+			
+			
+		}
+		
+		
+	
 		
 		
 		//GDB Debugging start

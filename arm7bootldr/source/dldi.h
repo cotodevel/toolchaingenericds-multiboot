@@ -1,5 +1,3 @@
-#ifdef ARM7
-
 #ifndef __DLDI_H__
 #define __DLDI_H__
 
@@ -110,17 +108,14 @@ typedef struct DLDI_INTERFACE {
 extern "C" {
 #endif
 
-//ARM7 IO to fecth DLDI data -> ARM9 resorts to callbacks through FIFO irqs from ARM7 to fecth DLDI data
-extern void read_sd_sectors_safe(sec_t sector, sec_t numSectors, void* buffer);
-extern void write_sd_sectors_safe(sec_t sector, sec_t numSectors, const void* buffer);
-
+// The only built in driver
+extern DLDI_INTERFACE _dldi_start;
+extern struct DISC_INTERFACE_STRUCT _io_dldi;
 
 extern FN_MEDIUM_STARTUP _DLDI_startup_ptr;
 extern FN_MEDIUM_READSECTORS _DLDI_readSectors_ptr;
 extern FN_MEDIUM_WRITESECTORS _DLDI_writeSectors_ptr;
 
-// The only built in driver
-extern u8 _dldi_start;
 extern uint8_t __vram_end;
 extern struct DLDI_INTERFACE* dldiGet(void);
 extern bool dldiPatchLoader(bool clearBSS, u32 DldiRelocatedAddress, u32 dldiSourceInRam);
@@ -131,17 +126,10 @@ extern bool dldi_handler_init();
 extern bool dldi_handler_read_sectors(sec_t sector, sec_t numSectors, void* buffer);
 extern bool dldi_handler_write_sectors(sec_t sector, sec_t numSectors, const void* buffer);
 
-extern uint8_t _io_dldi;
-
 extern void initDLDIARM7(u32 srcDLDIAddr);
-extern void SetSlot1Slot2ARM7();
-extern void SetSlot1Slot2ARM9();
-
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
 
 #endif

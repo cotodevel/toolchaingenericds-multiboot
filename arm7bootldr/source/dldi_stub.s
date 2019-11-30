@@ -1,9 +1,10 @@
-#ifdef ARM7
-
 @---------------------------------------------------------------------------------
 	.align	4
 	.arm
 	.global _io_dldi
+.global _dldi_start
+_dldi_start:
+
 @---------------------------------------------------------------------------------
 .equ FEATURE_MEDIUM_CANREAD,		0x00000001
 .equ FEATURE_MEDIUM_CANWRITE,		0x00000002
@@ -14,9 +15,6 @@
 .equ FIX_GLUE,						0x02
 .equ FIX_GOT,						0x04
 .equ FIX_BSS,						0x08
-
-.global _dldi_start
-_dldi_start:
 
 @---------------------------------------------------------------------------------
 @ Driver patch file standard header -- 16 bytes
@@ -74,12 +72,9 @@ _DLDI_shutdown:
 	.pool
 
 
-
 dldi_data_end:
-.space 16384 - (dldi_data_end - _dldi_start)		@ Fill to 32KiB
+.space 16384 - (dldi_data_end - _dldi_start)		@ Fill to 16KiB
 
 _dldi_end:
 	.end
 @---------------------------------------------------------------------------------
-
-#endif

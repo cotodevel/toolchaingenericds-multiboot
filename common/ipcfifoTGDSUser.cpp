@@ -34,16 +34,15 @@ USA
 #include "biosTGDS.h"
 #include "loader.h"
 #include "dmaTGDS.h"
+#include "dldi.h"
 
 #ifdef ARM7
 #include <string.h>
-#include "dldi.h"
 
 #include "main.h"
 #include "wifi_arm7.h"
 #include "spifwTGDS.h"
 
-extern void initDLDIARM7(u32 dldiSrc);	
 #endif
 
 #ifdef ARM9
@@ -51,6 +50,7 @@ extern void initDLDIARM7(u32 dldiSrc);
 #include <stdbool.h>
 #include "main.h"
 #include "wifi_arm9.h"
+#include "nds_cp15_misc.h"
 
 #endif
 
@@ -67,15 +67,47 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			boot_nds();
 		}
 		break;
-		case(NDSLOADER_SENDDLDIADDR_TO_ARM7):{
-			initDLDIARM7(cmd2);	
-		}
-		break;
-		
 		#endif
 		
 		//NDS9: 
 		#ifdef ARM9
+		
+		case(0x11ff00ff):{
+			clrscr();
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			
+			printf("DLDI FAIL @ ARM7");
+		}
+		break;
+		
+		case(0x22ff11ff):{
+			clrscr();
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			
+			printf("DLDI OK @ ARM7");
+		}
+		break;
+		
 		
 		case(0xff11ff22):{
 			clrscr();
@@ -112,13 +144,43 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			printf("ARM7 ALIVE!");
 		}
 		break;
-		
+		case(0xff33ff55):{
+			clrscr();
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("----");
+			
+			printf("ARM7 RELOAD SECTION OK!");
+		}
+		break;
+
 		case(NDSLOADER_ENTERGDB_FROM_ARM7):{
 			GDBEnabled = true;
 		}
 		break;
 		
 		#endif
+		
+		
+		//shared
+		case(NDSLOADER_SENDDLDIADDR_TO_ARM7):{
+			#ifdef ARM7
+			initDLDIARM7(cmd2);	
+			#endif
+			#ifdef ARM9
+			coherent_user_range_by_size((u32)&_dldi_start, (int)16*1024);	//prevent cache problems
+			SendFIFOWords(NDSLOADER_SENDDLDIADDR_TO_ARM7, (u32)&_dldi_start);	//means we call SendFIFOWords(NDSLOADER_SENDDLDIADDR_TO_ARM7, 0); from ARM7 to init DLDI driver @ ARM7
+			#endif
+		}
+		break;
 	}
 	
 }

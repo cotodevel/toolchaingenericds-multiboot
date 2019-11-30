@@ -1,12 +1,8 @@
-#ifdef ARM7
-
-
 #include "typedefsTGDS.h"
 #include "dldi.h"
 #include <string.h>
 
 #include "dmaTGDS.h"
-#include "main.h"
 
 const uint32  DLDI_MAGIC_NUMBER = 
 	0xBF8DA5ED;	
@@ -57,7 +53,7 @@ static void writeAddr (data_t *mem, addr_t offset, addr_t value) {
 //Coto: this one copies the DLDI section from EWRAM and relocates it to u32 DldiRelocatedAddress, so all DLDI code can be called and executed from there.
 void fixAndRelocateDLDI(u32 dldiSourceInRam){
 	//#ifdef ARM7
-	u32 DldiRelocatedAddress = (u32)0x03800000; //relocation offset
+	u32 DldiRelocatedAddress = (u32)&_dldi_start; //relocation offset
 	bool clearBSS = false;
 	bool patchStatus = dldiPatchLoader(clearBSS, DldiRelocatedAddress, dldiSourceInRam);	//Coto: re-use DLDI code to patch the DLDI loaded to us (by the loader itself), so we can relocate the DLDI to whatever the address we want.
 	if(patchStatus == true){
@@ -112,7 +108,7 @@ bool dldiPatchLoader(bool clearBSS, u32 DldiRelocatedAddress, u32 dldiSourceInRa
 
 	// Copy the DLDI patch into the application
 	//dmaCopyWords(0, (void*)pAH, (void*)pDH, dldiFileSize);			//dmaCopyWords (uint8 channel, const void *src, void *dest, uint32 size)
-	dmaTransferWord(0, (uint32)pAH, (uint32)pDH, (uint32)dldiFileSize);	//void dmaTransferWord(sint32 dmachannel, uint32 source, uint32 dest, uint32 word_count)
+	dmaTransferWord(3, (uint32)pAH, (uint32)pDH, (uint32)dldiFileSize);	//void dmaTransferWord(sint32 dmachannel, uint32 source, uint32 dest, uint32 word_count)
 	
 	
 	if (*((u32*)(pDH + DO_ioType)) == DEVICE_TYPE_DLDI) {
@@ -199,83 +195,41 @@ bool dldiPatchLoader(bool clearBSS, u32 DldiRelocatedAddress, u32 dldiSourceInRa
 }
 
 void initDLDIARM7(u32 srcDLDIAddr){	//implementation
-	SetSlot1Slot2ARM7();
-	u32 dldiSourceInRam = (u32)srcDLDIAddr;
-	fixAndRelocateDLDI(dldiSourceInRam);
 	
-	if(dldi_handler_init() == false){
-		//REG_SEND_FIFO = 0x46494944;
+	fixAndRelocateDLDI((u32)srcDLDIAddr);
+	
+	//memcpy ((char*)&_dldi_start, (u8*)srcDLDIAddr, 16*1024);
+	
+	//DLDI_INTERFACE * disc = (DLDI_INTERFACE*)srcDLDIAddr;
+	
+	bool status = dldi_handler_init();
+	if(status == false){
+		SendFIFOWords(0x11ff00ff, 0);
 		while(1);
+	}
+	else{
+		SendFIFOWords(0x22ff11ff, 0);
 	}
 }
 
-///////////////////////////////////////////////////////////////////////////DLDI ARM7 CODE END/////////////////////////////////////////////////////////////////////
-
-
-////////////////////////////////////////////// DLDI ARM7/ARM9 CODE ////////////////////////////////////////////// 
-
-#ifdef ARM9
-PUT_IN_VRAM
-#endif
-__attribute__ ((noinline)) bool dldi_handler_init()
+bool dldi_handler_init()
 {
-	#ifdef ARM7_DLDI
-	#ifdef ARM7
-	FN_MEDIUM_STARTUP _DLDI_startup_ptr = (FN_MEDIUM_STARTUP)(*((uint32_t*)(0x03800000 + 0x60 + 0x8)));
-	return _DLDI_startup_ptr();
-	#endif
-	#ifdef ARM9
-	return true;
-	#endif
-	#endif
-	
-	#ifndef ARM7_DLDI
-	//ARM9 only
-	#ifdef ARM9
-	FN_MEDIUM_STARTUP _DLDI_startup_ptr = (FN_MEDIUM_STARTUP)(*((uint32_t*)(0x06800000 + 0x60 + 0x8)));
-	return _DLDI_startup_ptr();
-	#endif
-	
-	#endif
+	bool status = false;
+	if( (!_dldi_start.ioInterface.startup()) || (!_dldi_start.ioInterface.isInserted()) ){
+		status = false;
+	}
+	else{
+		status = true;	//init OK!
+	}
+	return status;
 }
 
-#ifdef ARM9
-PUT_IN_VRAM
-#endif
-__attribute__ ((noinline)) bool dldi_handler_read_sectors(sec_t sector, sec_t numSectors, void* buffer){
-	#ifdef ARM7
-	FN_MEDIUM_READSECTORS _DLDI_readSectors_ptr = (FN_MEDIUM_READSECTORS)(*((uint32_t*)(0x03800000 + 0x60 + 0x10)));
-	_DLDI_readSectors_ptr(sector, numSectors, (void*)buffer);
-	#endif
-	
-	#ifdef ARM9
-	FN_MEDIUM_READSECTORS _DLDI_readSectors_ptr = (FN_MEDIUM_READSECTORS)(*((uint32_t*)(0x06800000 + 0x60 + 0x10)));
-	//void * buffer is in VRAM...
-	//fetched sectors are in MAIN_MEMORY_ADDRESS_SDCACHE, must be dma'd back to buffer
-	dc_flush_range((void*)MAIN_MEMORY_ADDRESS_SDCACHE, numSectors * 512);
-	_DLDI_readSectors_ptr(sector, numSectors, (void*)MAIN_MEMORY_ADDRESS_SDCACHE);
-	memcpy((uint16_t*)buffer, (uint16_t*)MAIN_MEMORY_ADDRESS_SDCACHE, (numSectors * 512) );
-	#endif
-	return true; 
+bool dldi_handler_read_sectors(sec_t sector, sec_t numSectors, void* buffer){
+	return _dldi_start.ioInterface.readSectors(sector, numSectors, buffer);
 }
 
-#ifdef ARM9
-PUT_IN_VRAM
-#endif
-__attribute__ ((noinline)) bool dldi_handler_write_sectors(sec_t sector, sec_t numSectors, const void* buffer){
-	#ifdef ARM7
-	FN_MEDIUM_WRITESECTORS _DLDI_writeSectors_ptr = (FN_MEDIUM_WRITESECTORS)(*((uint32_t*)(0x03800000 + 0x60 + 0x14)));
-	_DLDI_writeSectors_ptr(sector, numSectors, buffer);
-	#endif
-	#ifdef ARM9
-	FN_MEDIUM_WRITESECTORS _DLDI_writeSectors_ptr = (FN_MEDIUM_WRITESECTORS)(*((uint32_t*)(0x06800000 + 0x60 + 0x14)));
-	//void * buffer is in VRAM...
-	//fetched sectors are in MAIN_MEMORY_ADDRESS_SDCACHE, must be dma'd back to buffer
-	dc_flush_range((void*)MAIN_MEMORY_ADDRESS_SDCACHE, numSectors * 512);
-	memcpy((uint16_t*)MAIN_MEMORY_ADDRESS_SDCACHE, (uint16_t*)buffer, (numSectors * 512));
-	_DLDI_writeSectors_ptr(sector, numSectors, (void*)MAIN_MEMORY_ADDRESS_SDCACHE);
-	#endif
-	return true;
+bool dldi_handler_write_sectors(sec_t sector, sec_t numSectors, const void* buffer){
+	return _dldi_start.ioInterface.writeSectors(sector, numSectors, buffer);
 }
 
 ////////////////////////////////////////////// DLDI ARM 9 CODE end ////////////////////////////////////////////// 
@@ -359,5 +313,3 @@ PUT_IN_VRAM __attribute__((noinline)) __attribute__((aligned(4)))	void write_sd_
 #endif
 
 ////////////////////////////////////////////// DLDI ARM 7 CODE end ////////////////////////////////////////////// 
-
-#endif

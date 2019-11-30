@@ -19,6 +19,8 @@ USA
 #include "main.h"
 #include "biosTGDS.h"
 #include "loader.h"
+#include "busTGDS.h"
+#include "dldi.h"
 
 static inline void enterGDBFromARM7(void){
 	SendFIFOWords(NDSLOADER_ENTERGDB_FROM_ARM7, 0);
@@ -60,8 +62,8 @@ static inline void ARM7ExecuteNDSLoader(void){
 		while((cur_clustersector != 0xFFFFFFFF) && ((data_read * (sectorSize * sectorsPerCluster)) < data_max) )
 		{
 			//full sector copy
-			memset(outBuf, 0, sectorSize * sectorsPerCluster);
-			//io_dldi_data->ioInterface.readSectors(cur_clustersector, sectorsPerCluster, (void*)(outBuf));	//todo
+			memset(outBuf, 0xFF, sectorSize * sectorsPerCluster);
+			dldi_handler_read_sectors(cur_clustersector, sectorsPerCluster, (void*)outBuf);	//bugged
 			
 			//for each sector per cluster...
 			int i = 0;
@@ -71,10 +73,12 @@ static inline void ARM7ExecuteNDSLoader(void){
 				if ( (globalPtr >= arm7BootCodeOffsetInFile) && (globalPtr < (arm7BootCodeOffsetInFile+arm7BootCodeSize)) ){
 					//last part?
 					if( ((arm7BootCodeOffsetInFile+arm7BootCodeSize) - globalPtr) > sectorOffsetEnd7){
-						memcpy (entryAddr7 + globalPtr, outBuf, 512); //fwrite(outBuf + (i*512) , 1, 512, fout7);	//memcpy ( void * destination, const void * source, size_t num );
+						//memcpy (entryAddr7 + globalPtr, outBuf, 512); //fwrite(outBuf + (i*512) , 1, 512, fout7);	//memcpy ( void * destination, const void * source, size_t num );
+						//Todo arm9 first. 
 					}
 					else{
-						memcpy (entryAddr7 + globalPtr, outBuf, sectorOffsetEnd7); //fwrite(outBuf + (i*512) , 1, sectorOffsetEnd7, fout7);
+						//memcpy (entryAddr7 + globalPtr, outBuf, sectorOffsetEnd7); //fwrite(outBuf + (i*512) , 1, sectorOffsetEnd7, fout7);
+						//Todo arm9 first. 
 					}
 				}
 				
@@ -82,10 +86,11 @@ static inline void ARM7ExecuteNDSLoader(void){
 				if ( (globalPtr >= arm9BootCodeOffsetInFile) && (globalPtr < (arm9BootCodeOffsetInFile+arm9BootCodeSize)) ){
 					//last part?
 					if( ((arm9BootCodeOffsetInFile+arm9BootCodeSize) - globalPtr) > sectorOffsetEnd9){
-						//Todo arm7 first. //fwrite(outBuf + (i*512) , 1, 512, fout9);
+						//fwrite(outBuf + (i*512) , 1, 512, fout9);
 					}
 					else{
-						//Todo arm7 first. //memcpy (entryAddr9 + (data_read * (sectorSize * i)), outBuf, sectorOffsetEnd9);	//fwrite(outBuf + (i*512) , 1, sectorOffsetEnd9, fout9);
+						//memcpy (entryAddr9 + (data_read * (sectorSize * i)), outBuf, sectorOffsetEnd9);	//fwrite(outBuf + (i*512) , 1, sectorOffsetEnd9, fout9);
+						memcpy (entryAddr9 + (1*1024*1024), outBuf, sectorOffsetEnd9);
 					}
 				}
 				
@@ -100,14 +105,17 @@ static inline void ARM7ExecuteNDSLoader(void){
 	}
 }
 
+static inline void initDLDI7(){
+	SetBusSLOT1SLOT2ARM7();
+	SendFIFOWords(NDSLOADER_SENDDLDIADDR_TO_ARM7, 0);
+}
+
 int main(int _argc, sint8 **_argv) {
 	/*			TGDS 1.5 Standard ARM7 Init code start	*/
 	installWifiFIFO();		
 	/*			TGDS 1.5 Standard ARM7 Init code end	*/
 	
-	//init dldi, must work properly
-	//redirect DLDI calls here
-	//then...
+	
 	
 	//this bootstub will proceed only when file has been loaded properly
 	while(getNDSLoaderInitStatus() != NDSLOADER_LOAD_OK){
@@ -118,7 +126,13 @@ int main(int _argc, sint8 **_argv) {
 	
 	ARM7ExecuteNDSLoader();
 	
-	//enterGDBFromARM7();	//debug
+	//init dldi properly @ ARM7
+	initDLDI7();
+	
+	//redirect DLDI calls here
+	ARM7ExecuteNDSLoader();
+	
+	enterGDBFromARM7();	//debug
 	
     while (1) {
 		
