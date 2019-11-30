@@ -32,7 +32,8 @@ extern "C" {
 #endif
 
 extern int main(int _argc, sint8 **_argv);
-
+extern char tempBuf[0x700];
+extern void ARM7ExecuteNDSLoader(void);
 #ifdef __cplusplus
 }
 #endif

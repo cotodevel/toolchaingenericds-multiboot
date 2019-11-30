@@ -31,13 +31,15 @@ USA
 #include "dswnifi.h"
 #include "utilsTGDS.h"
 
-#define ARM7COMMAND_RELOADNDS (uint32)(0xFFFFFF01)
+#define ARM7COMMAND_RELOADNDS (u32)(0xFFFFFF01)
+#define NDSLOADER_INIT_OK (u32)(0xFF222218)	//bare minimum setup: OK (file not loaded yet)
+#define NDSLOADER_INIT_WAIT (u32)(0)		//not set up
+#define NDSLOADER_LOAD_OK (u32)(0xFF222219)	//file loaded OK
+#define NDSLOADER_START (u32)(0xFF22221A)	//file written to sections
 
-#define NDSLOADER_INIT_OK (int)(0xFF222218)	//bare minimum setup: OK (file not loaded yet)
-#define NDSLOADER_INIT_WAIT (int)(0)		//not set up
-#define NDSLOADER_LOAD_OK (int)(0xFF222219)	//file loaded OK
-#define NDSLOADER_ENTERGDB_FROM_ARM7 (int)(0xFF222220)	//file loaded OK
-#define NDSLOADER_SENDDLDIADDR_TO_ARM7 (int)(0xFF222221)	//file loaded OK
+#define NDSLOADER_ENTERGDB_FROM_ARM7 (u32)(0xFF222220)	//file loaded OK
+#define NDSLOADER_INITDLDIARM7_BUSY (u32)(0xFF222221)	//DLDI SETUP ARM9 -> ARM7 Taking place...
+#define NDSLOADER_INITDLDIARM7_DONE (u32)(0xFF222224)	//DLDI SETUP ARM9 -> ARM7 Done!
 
 struct ndsloader_s
 {
@@ -69,23 +71,28 @@ struct ndsloader_s
 
 //NDSLoaderContext = EWRAM - 33K shared IPC (NDS_LOADER_IPC_CTX_SIZE)
 #define NDS_LOADER_IPC_CTX_SIZE (48*1024)	//about 34K used anyway, but for addressing purposes we align it
+
 #define NDS_LOADER_IPC_CTXADDR		(0x02400000 - (int)NDS_LOADER_IPC_CTX_SIZE)	//0x023F4000
 #define NDS_LOADER_IPC_CTX_CACHED ((struct ndsloader_s*)NDS_LOADER_IPC_CTXADDR)
-#define NDS_LOADER_IPC_CTX_UNCACHED ((struct ndsloader_s*)(NDS_LOADER_IPC_CTXADDR | 0x400000))
+#define NDS_LOADER_IPC_CTX_UNCACHED ((struct ndsloader_s*)(((int)NDS_LOADER_IPC_CTX_CACHED) + 0x400000))
 
 //ARM7 Pagefile: used as storage buffer (32K <- 512*64 == sectorSize * sectorsPerCluster)
 #define NDS_LOADER_IPC_PAGEFILEARM7_CACHED		(NDS_LOADER_IPC_CTXADDR - (32*1024))	//0x023EC000
-#define NDS_LOADER_IPC_PAGEFILEARM7_UNCACHED 	(NDS_LOADER_IPC_CTXADDR | 0x400000)
+#define NDS_LOADER_IPC_PAGEFILEARM7_UNCACHED 	(NDS_LOADER_IPC_PAGEFILEARM7_CACHED | 0x400000)
 
 //ARM7 NDSLoader code 64K bytes (arm7bootldr/arm7bootldr.bin)
 #define NDS_LOADER_IPC_HIGHCODEARM7_CACHED		(NDS_LOADER_IPC_PAGEFILEARM7_CACHED - (64*1024))	//0x023DC000	-> same as IWRAMBOOTCODE	(rwx)	: ORIGIN = 0x023DC000, LENGTH = 64K (arm7bootldr.bin) entry address
-#define NDS_LOADER_IPC_HIGHCODEARM7_UNCACHED 	(NDS_LOADER_IPC_PAGEFILEARM7_CACHED | 0x400000)
+#define NDS_LOADER_IPC_HIGHCODEARM7_UNCACHED 	(NDS_LOADER_IPC_HIGHCODEARM7_CACHED | 0x400000)
+
+//ARM7 DLDI section code
+#define NDS_LOADER_DLDISECTION_CACHED		(NDS_LOADER_IPC_HIGHCODEARM7_CACHED - (16*1024))	//0x023D8000
+#define NDS_LOADER_DLDISECTION_UNCACHED 	(NDS_LOADER_DLDISECTION_CACHED | 0x400000)
 
 //overall used 0x24000 (147,456?) bytes
 
 
 
-//MAX ARM9 Binary size = 0x02400000 - 48K - 32K - 64K = 0x3DC000 (4,046,848?) bytes left 
+//MAX ARM9 Binary size = 0x02400000 - 48K - 32K - 64K - 16K = 0x3D8000 (4,030,464) bytes left 
 
 #endif
 

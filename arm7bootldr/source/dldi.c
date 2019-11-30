@@ -109,8 +109,8 @@ bool dldiPatchLoader(bool clearBSS, u32 DldiRelocatedAddress, u32 dldiSourceInRa
 	// Copy the DLDI patch into the application
 	//dmaCopyWords(0, (void*)pAH, (void*)pDH, dldiFileSize);			//dmaCopyWords (uint8 channel, const void *src, void *dest, uint32 size)
 	dmaTransferWord(3, (uint32)pAH, (uint32)pDH, (uint32)dldiFileSize);	//void dmaTransferWord(sint32 dmachannel, uint32 source, uint32 dest, uint32 word_count)
-	
-	
+
+
 	if (*((u32*)(pDH + DO_ioType)) == DEVICE_TYPE_DLDI) {
 		// No DLDI patch
 		return false;
@@ -197,11 +197,10 @@ bool dldiPatchLoader(bool clearBSS, u32 DldiRelocatedAddress, u32 dldiSourceInRa
 void initDLDIARM7(u32 srcDLDIAddr){	//implementation
 	
 	fixAndRelocateDLDI((u32)srcDLDIAddr);
-	
+
 	//memcpy ((char*)&_dldi_start, (u8*)srcDLDIAddr, 16*1024);
 	
-	//DLDI_INTERFACE * disc = (DLDI_INTERFACE*)srcDLDIAddr;
-	
+
 	bool status = dldi_handler_init();
 	if(status == false){
 		SendFIFOWords(0x11ff00ff, 0);
@@ -209,6 +208,7 @@ void initDLDIARM7(u32 srcDLDIAddr){	//implementation
 	}
 	else{
 		SendFIFOWords(0x22ff11ff, 0);
+		//while(1);
 	}
 }
 

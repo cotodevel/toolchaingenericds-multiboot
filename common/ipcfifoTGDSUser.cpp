@@ -123,7 +123,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			printf("----");
 			printf("----");
 			
-			printf("BOOTLOADER RUN OK @ ARM7");
+			printf("ARM7 Reloading... please wait");
 		}
 		break;
 		
@@ -161,8 +161,9 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			printf("ARM7 RELOAD SECTION OK!");
 		}
 		break;
-
+		
 		case(NDSLOADER_ENTERGDB_FROM_ARM7):{
+			EWRAMPrioToARM9();
 			GDBEnabled = true;
 		}
 		break;
@@ -171,13 +172,11 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		
 		
 		//shared
-		case(NDSLOADER_SENDDLDIADDR_TO_ARM7):{
-			#ifdef ARM7
-			initDLDIARM7(cmd2);	
-			#endif
+		case(NDSLOADER_INITDLDIARM7_BUSY):{
 			#ifdef ARM9
 			coherent_user_range_by_size((u32)&_dldi_start, (int)16*1024);	//prevent cache problems
-			SendFIFOWords(NDSLOADER_SENDDLDIADDR_TO_ARM7, (u32)&_dldi_start);	//means we call SendFIFOWords(NDSLOADER_SENDDLDIADDR_TO_ARM7, 0); from ARM7 to init DLDI driver @ ARM7
+			memcpy((u32*)NDS_LOADER_DLDISECTION_UNCACHED, (u32*)&_dldi_start, (int)16*1024);
+			setNDSLoaderInitStatus(NDSLOADER_INITDLDIARM7_DONE);
 			#endif
 		}
 		break;
@@ -192,3 +191,14 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 }
 
 //project specific stuff
+
+
+void EWRAMPrioToARM7(){
+	//give EWRAM to ARM7
+	*(u16*)0x04000204 = (  (*(u16*)0x04000204 & ~(1<<15)) | (1<<15));
+}
+
+void EWRAMPrioToARM9(){
+	//give EWRAM to ARM9
+	*(u16*)0x04000204 = (  (*(u16*)0x04000204 & ~(1<<15)) | (0<<15));
+}

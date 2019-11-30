@@ -51,6 +51,9 @@ extern "C" {
 extern void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2);
 
+extern void EWRAMPrioToARM7();
+extern void EWRAMPrioToARM9();
+
 #ifdef __cplusplus
 }
 #endif
