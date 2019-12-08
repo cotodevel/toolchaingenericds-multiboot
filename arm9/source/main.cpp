@@ -170,7 +170,7 @@ bool fillNDSLoaderContext(char * filename){
 		{
 			//full sector copy
 			memset(outBuf, 0, sectorSize * sectorsPerCluster);
-			io_dldi_data->ioInterface.readSectors(cur_clustersector, sectorsPerCluster, (void*)(outBuf));
+			_dldi_start.ioInterface.readSectors(cur_clustersector, sectorsPerCluster, (void*)(outBuf));
 			
 			//for each sector per cluster...
 			for(int i = 0; i < sectorsPerCluster; i++){
