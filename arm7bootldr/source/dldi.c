@@ -37,6 +37,22 @@ static addr_t quickFind (const data_t* data, const data_t* search, size_t dataLe
 const DLDI_INTERFACE* io_dldi_data = (const DLDI_INTERFACE*)&_dldi_start;
 
 struct DLDI_INTERFACE* dldiGet(void) {
+	#ifdef ARM7
+	if (_dldi_start.ioInterface.features & FEATURE_SLOT_GBA) {
+		SetBusSLOT1ARM9SLOT2ARM7();
+	}
+	if (_dldi_start.ioInterface.features & FEATURE_SLOT_NDS) {
+		SetBusSLOT1ARM7SLOT2ARM9();
+	}
+	#endif
+	#ifdef ARM9
+	if (_dldi_start.ioInterface.features & FEATURE_SLOT_GBA) {
+		SetBusSLOT1ARM7SLOT2ARM9();
+	}
+	if (_dldi_start.ioInterface.features & FEATURE_SLOT_NDS) {
+		SetBusSLOT1ARM9SLOT2ARM7();
+	}
+	#endif
 	return (struct DLDI_INTERFACE*)&_dldi_start;
 }
 
@@ -215,7 +231,8 @@ void initDLDIARM7(u32 srcDLDIAddr){	//implementation
 bool dldi_handler_init()
 {
 	bool status = false;
-	if( (!_dldi_start.ioInterface.startup()) || (!_dldi_start.ioInterface.isInserted()) ){
+	struct DLDI_INTERFACE* dldiInit = dldiGet();	//ensures SLOT-1 / SLOT-2 is mapped to ARM7/ARM9 now
+	if( (!dldiInit->ioInterface.startup()) || (!dldiInit->ioInterface.isInserted()) ){
 		status = false;
 	}
 	else{
