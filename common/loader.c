@@ -59,7 +59,7 @@ void boot_nds(void)
 	#endif
 	
 	#ifdef ARM7
-	*((vu32*)0x027FFE34) = (u32)0x023DC000;	//0x03800000;	// Bootloader start address
+	*((vu32*)0x027FFE34) = (u32)NDS_LOADER_IPC_HIGHCODEARM7_CACHED;	//0x03800000;	// Bootloader start address
 	
 	REG_IME = IME_DISABLE;	// Disable interrupts
 	REG_IF = REG_IF;	// Acknowledge interrupt

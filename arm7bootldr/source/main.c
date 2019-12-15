@@ -60,8 +60,8 @@ void ARM7ExecuteNDSLoader(void){
 	while((cur_clustersector != 0xFFFFFFFF) && ((data_read * (sectorSize * sectorsPerCluster)) < data_max) )
 	{
 		//full sector copy
-		memset(outBuf, 0xFF, sectorSize * sectorsPerCluster);
-		dldi_handler_read_sectors(cur_clustersector, sectorsPerCluster, (void*)outBuf);	//bugged
+		//memset(outBuf, 0xFF, sectorSize * sectorsPerCluster);
+		//dldi_handler_read_sectors(cur_clustersector, sectorsPerCluster, (void*)outBuf);	//bugged
 		
 		//for each sector per cluster...
 		int i = 0;

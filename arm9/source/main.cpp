@@ -171,24 +171,14 @@ bool fillNDSLoaderContext(char * filename){
 		
 		u8 * outBuf = (u8 *)malloc(sectorSize * sectorsPerCluster);
 		
-		outBuf7 = (u8 *)malloc(arm7BootCodeSize);
-		outBuf9 = (u8 *)malloc(arm9BootCodeSize);
+		//Uncached to prevent cache issues right at once
+		outBuf7 = (u8 *)(NDS_LOADER_IPC_PAGEFILEARM7_UNCACHED);	//malloc(arm7BootCodeSize);
+		outBuf9 = (u8 *)(0x02000000 + 0x400000); //malloc(arm9BootCodeSize);
+		
+		printf("ARM7/ARM9 Memory allocation OK.");
 		
 		u8 * outBuf7Seek = outBuf7;
 		u8 * outBuf9Seek = outBuf9;
-		
-		if(outBuf7 == NULL){
-			printf("error: couldn't allocate ARM7 Memory.");
-			while(1==1){}
-		}
-		
-		if(outBuf9 == NULL){
-			printf("error: couldn't allocate ARM9 Memory.");
-			while(1==1){}
-		}
-		else{
-			printf("ARM7/ARM9 Memory allocation OK.");
-		}
 		
 		int globalPtr = 0; //this one maps the entire file in 512 bytes (sectorSize)
 		u32 cur_clustersector = NDS_LOADER_IPC_CTX_UNCACHED->sectorTableBootCode[0];
@@ -246,8 +236,8 @@ bool fillNDSLoaderContext(char * filename){
 		#endif
 		
 		#ifndef DLDI_CREATE_ARM7_ARM9_BIN
-		printf("ARM7 %d bytes. [Addr: %x]", arm7BootCodeSize, outBuf7);
-		printf("ARM9 %d bytes. [Addr: %x]", arm9BootCodeSize, outBuf9);
+		printf("ARM7 %d bytes. [Addr: %x]", arm7BootCodeSize, (outBuf7 - 0x400000));
+		printf("ARM9 %d bytes. [Addr: %x]", arm9BootCodeSize, (outBuf9 - 0x400000));
 		#endif
 		
 		#ifdef DLDI_CREATE_ARM7_ARM9_BIN
@@ -256,8 +246,6 @@ bool fillNDSLoaderContext(char * filename){
 		#endif
 		
 		free(outBuf);
-		//free(outBuf7);	//should be disabled when GDB debugging this
-		//free(outBuf9);	//should be disabled when GDB debugging this
 		printf("test end.");//Test end
 		#endif
 		
