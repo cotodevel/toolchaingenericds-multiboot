@@ -1,0 +1,1 @@
+basically, this one should be as small as possible, and perform writing ARM7/ARM9 sections (since ARM7 failed to do so)

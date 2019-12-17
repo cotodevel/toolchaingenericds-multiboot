@@ -49,7 +49,7 @@ void ARM7ExecuteNDSLoader(void){
 	u32 arm9entryaddress = NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress;
 	
 	//ARM7 Highcode loader code: ARM7/ARM9 BootCode setup
-	u8 * outBuf = (u8 *)NDS_LOADER_IPC_PAGEFILEARM7_UNCACHED;
+	u8 * outBuf = (u8 *)NDS_LOADER_IPC_PAGEFILEARM7_CACHED;
 	u8 * entryAddr7 = (u8 *)arm7entryaddress;
 	u8 * entryAddr9 = (u8 *)arm9entryaddress;
 	
@@ -71,12 +71,10 @@ void ARM7ExecuteNDSLoader(void){
 			if ( (globalPtr >= arm7BootCodeOffsetInFile) && (globalPtr < (arm7BootCodeOffsetInFile+arm7BootCodeSize)) ){
 				//last part?
 				if( ((arm7BootCodeOffsetInFile+arm7BootCodeSize) - globalPtr) > sectorOffsetEnd7){
-					//memcpy (entryAddr7 + globalPtr, outBuf, 512); //fwrite(outBuf + (i*512) , 1, 512, fout7);	//memcpy ( void * destination, const void * source, size_t num );
-					//Todo arm9 first. 
+					//deprecated, reloading will be done from ARM9
 				}
 				else{
-					//memcpy (entryAddr7 + globalPtr, outBuf, sectorOffsetEnd7); //fwrite(outBuf + (i*512) , 1, sectorOffsetEnd7, fout7);
-					//Todo arm9 first. 
+					//deprecated, reloading will be done from ARM9
 				}
 			}
 			
@@ -84,14 +82,12 @@ void ARM7ExecuteNDSLoader(void){
 			if ( (globalPtr >= arm9BootCodeOffsetInFile) && (globalPtr < (arm9BootCodeOffsetInFile+arm9BootCodeSize)) ){
 				//last part?
 				if( ((arm9BootCodeOffsetInFile+arm9BootCodeSize) - globalPtr) > sectorOffsetEnd9){
-					//fwrite(outBuf + (i*512) , 1, 512, fout9);
+					//deprecated, reloading will be done from ARM9
 				}
 				else{
-					//memcpy (entryAddr9 + (data_read * (sectorSize * i)), outBuf, sectorOffsetEnd9);	//fwrite(outBuf + (i*512) , 1, sectorOffsetEnd9, fout9);
-					memcpy (entryAddr9 + (1*1024*1024), outBuf, sectorOffsetEnd9);
+					//deprecated, reloading will be done from ARM9
 				}
 			}
-			
 			
 			globalPtr +=512;
 		}

@@ -73,6 +73,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		#ifdef ARM9
 		
 		case(0x11ff00ff):{
+			/*
 			clrscr();
 			printf("----");
 			printf("----");
@@ -85,12 +86,13 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			printf("----");
 			printf("----");
 			printf("----");
-			
+			*/
 			printf("DLDI FAIL @ ARM7");
 		}
 		break;
 		
 		case(0x22ff11ff):{
+			/*
 			clrscr();
 			printf("----");
 			printf("----");
@@ -103,13 +105,14 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			printf("----");
 			printf("----");
 			printf("----");
-			
+			*/
 			printf("DLDI OK @ ARM7");
 		}
 		break;
 		
 		
 		case(0xff11ff22):{
+			/*
 			clrscr();
 			printf("----");
 			printf("----");
@@ -122,12 +125,13 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			printf("----");
 			printf("----");
 			printf("----");
-			
+			*/
 			printf("ARM7 Reloading... please wait");
 		}
 		break;
 		
 		case(0xff11ff44):{
+			/*
 			clrscr();
 			printf("----");
 			printf("----");
@@ -140,11 +144,12 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			printf("----");
 			printf("----");
 			printf("----");
-			
+			*/
 			printf("ARM7 ALIVE!");
 		}
 		break;
 		case(0xff33ff55):{
+			/*
 			clrscr();
 			printf("----");
 			printf("----");
@@ -157,7 +162,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 			printf("----");
 			printf("----");
 			printf("----");
-			
+			*/
 			printf("ARM7 RELOAD SECTION OK!");
 		}
 		break;

@@ -63,6 +63,9 @@ static inline void initNDSLoader(){
 	}
 }
 
+static u8 * outBuf7 = NULL;
+static u8 * outBuf9 = NULL;
+
 //generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
 bool fillNDSLoaderContext(char * filename){
 	
@@ -151,16 +154,41 @@ bool fillNDSLoaderContext(char * filename){
 		*(cluster_table) = 0xFFFFFFFF;
 		
 		
+		#define TEST_DLDI_LOADER
+		//#define DLDI_CREATE_ARM7_ARM9_BIN
+		
 		//test code already implemented in loader.h
-		/*
+		
+		#ifdef TEST_DLDI_LOADER
 		//Test: read ARM7/ARM9 BootCode into .bin
 		printf("test init.");
 		
 		//works fine, but starts from file start
+		#ifdef DLDI_CREATE_ARM7_ARM9_BIN
 		FILE * fout7 = fopen("0:/arm7.bin", "w+");
 		FILE * fout9 = fopen("0:/arm9.bin", "w+");
+		#endif
 		
 		u8 * outBuf = (u8 *)malloc(sectorSize * sectorsPerCluster);
+		
+		outBuf7 = (u8 *)malloc(arm7BootCodeSize);
+		outBuf9 = (u8 *)malloc(arm9BootCodeSize);
+		
+		u8 * outBuf7Seek = outBuf7;
+		u8 * outBuf9Seek = outBuf9;
+		
+		if(outBuf7 == NULL){
+			printf("error: couldn't allocate ARM7 Memory.");
+			while(1==1){}
+		}
+		
+		if(outBuf9 == NULL){
+			printf("error: couldn't allocate ARM9 Memory.");
+			while(1==1){}
+		}
+		else{
+			printf("ARM7/ARM9 Memory allocation OK.");
+		}
 		
 		int globalPtr = 0; //this one maps the entire file in 512 bytes (sectorSize)
 		u32 cur_clustersector = NDS_LOADER_IPC_CTX_UNCACHED->sectorTableBootCode[0];
@@ -179,10 +207,12 @@ bool fillNDSLoaderContext(char * filename){
 				if ( (globalPtr >= arm7BootCodeOffsetInFile) && (globalPtr < (arm7BootCodeOffsetInFile+arm7BootCodeSize)) ){
 					//last part?
 					if( ((arm7BootCodeOffsetInFile+arm7BootCodeSize) - globalPtr) > sectorOffsetEnd7){
-						fwrite(outBuf + (i*512) , 1, 512, fout7);
+						memcpy (outBuf7Seek, outBuf + (i*512), 512);	//fwrite(outBuf + (i*512) , 1, 512, fout7);
+						outBuf7Seek+=512;
 					}
 					else{
-						fwrite(outBuf + (i*512) , 1, sectorOffsetEnd7, fout7);
+						memcpy (outBuf7Seek, outBuf + (i*512), sectorOffsetEnd7);	//fwrite(outBuf + (i*512) , 1, sectorOffsetEnd7, fout7);
+						outBuf7Seek+=sectorOffsetEnd7;
 					}
 				}
 				
@@ -190,30 +220,46 @@ bool fillNDSLoaderContext(char * filename){
 				if ( (globalPtr >= arm9BootCodeOffsetInFile) && (globalPtr < (arm9BootCodeOffsetInFile+arm9BootCodeSize)) ){
 					//last part?
 					if( ((arm9BootCodeOffsetInFile+arm9BootCodeSize) - globalPtr) > sectorOffsetEnd9){
-						fwrite(outBuf + (i*512) , 1, 512, fout9);
+						memcpy (outBuf9Seek, outBuf + (i*512), 512);	//fwrite(outBuf + (i*512) , 1, 512, fout9);
+						outBuf9Seek+=512;
 					}
 					else{
-						fwrite(outBuf + (i*512) , 1, sectorOffsetEnd9, fout9);
+						memcpy (outBuf9Seek, outBuf + (i*512), sectorOffsetEnd9);	//fwrite(outBuf + (i*512) , 1, sectorOffsetEnd9, fout9);
+						outBuf9Seek+=sectorOffsetEnd9;
 					}
-				}
-				
-				
+				}	
 				globalPtr +=512;
 			}
-			
-			
 			
 			//ARM7 Range check
 			data_read++;
 			cur_clustersector = (u32)NDS_LOADER_IPC_CTX_UNCACHED->sectorTableBootCode[data_read];
 		}
 		
+		//write all at once
+		#ifdef DLDI_CREATE_ARM7_ARM9_BIN
+		int written7 = fwrite(outBuf7 , 1, arm7BootCodeSize, fout7);
+		printf("written: ARM7 %d bytes. [Addr: %x]", written7, outBuf7);
+		
+		int written9 = fwrite(outBuf9 , 1, arm9BootCodeSize, fout9);
+		printf("written: ARM9 %d bytes. [Addr: %x]", written9, outBuf9);
+		#endif
+		
+		#ifndef DLDI_CREATE_ARM7_ARM9_BIN
+		printf("ARM7 %d bytes. [Addr: %x]", arm7BootCodeSize, outBuf7);
+		printf("ARM9 %d bytes. [Addr: %x]", arm9BootCodeSize, outBuf9);
+		#endif
+		
+		#ifdef DLDI_CREATE_ARM7_ARM9_BIN
 		fclose(fout9);
 		fclose(fout7);
-		printf("test end.");
+		#endif
+		
 		free(outBuf);
-		//Test end
-		*/
+		//free(outBuf7);	//should be disabled when GDB debugging this
+		//free(outBuf9);	//should be disabled when GDB debugging this
+		printf("test end.");//Test end
+		#endif
 		
 		//todo:
 		//1) Enable DLDI at ARM7
@@ -226,7 +272,6 @@ bool fillNDSLoaderContext(char * filename){
 		fclose(fh);
 		
 		int ret=FS_deinit();
-		
 		setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);
 	}
 	return false;
@@ -305,10 +350,10 @@ int main(int _argc, sint8 **_argv) {
 			int retGDBVal = remoteStubMain();
 			if(retGDBVal == remoteStubMainWIFINotConnected){
 				if (switch_dswnifi_mode(dswifi_gdbstubmode) == true){
-					clrscr();
+					//clrscr();
 					//Show IP and port here
-					printf("    ");
-					printf("    ");
+					//printf("    ");
+					//printf("    ");
 					printf("[Connect to GDB]: %s", ((getValidGDBMapFile() == true) ? " GDBFile Mode!" : "NDSMemory Mode!"));
 					char IP[16];
 					printf("Port:%d GDB IP:%s",remotePort, print_ip((uint32)Wifi_GetIP(), IP));
@@ -320,9 +365,9 @@ int main(int _argc, sint8 **_argv) {
 			}
 			else if(retGDBVal == remoteStubMainWIFIConnectedGDBDisconnected){
 				setWIFISetup(false);
-				clrscr();
-				printf("    ");
-				printf("    ");
+				//clrscr();
+				//printf("    ");
+				//printf("    ");
 				printf("Remote GDB Client disconnected. ");
 				printf("Press A to retry this GDB Session. ");
 				printf("Press B to reboot NDS GDB Server ");
