@@ -20,7 +20,6 @@ USA
 #include "biosTGDS.h"
 #include "loader.h"
 #include "busTGDS.h"
-#include "dldi.h"
 #include "dmaTGDS.h"
 
 static inline void enterGDBFromARM7(void){
@@ -98,7 +97,7 @@ void ARM7ExecuteNDSLoader(void){
 		cur_clustersector = (u32)NDS_LOADER_IPC_CTX_UNCACHED->sectorTableBootCode[data_read];
 	}
 }
-
+/*
 static inline void initDLDI7(){
 	SetBusSLOT1SLOT2ARM7();
 	
@@ -111,6 +110,7 @@ static inline void initDLDI7(){
 	u32 DLDISrc = NDS_LOADER_DLDISECTION_CACHED;
 	initDLDIARM7(DLDISrc);
 }
+*/
 
 int main(int _argc, sint8 **_argv) {
 	/*			TGDS 1.5 Standard ARM7 Init code start	*/

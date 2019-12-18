@@ -255,9 +255,19 @@ bool fillNDSLoaderContext(char * filename){
 		free(NDSHeader);
 		fclose(fh);
 		
-		//int ret=FS_deinit();
+		int ret=FS_deinit();
 		
+		//copy and relocate current TGDS DLDI section into target ARM9 binary
 		
+		bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize);
+		
+		if(stat == true){
+			//printf("DLDI PATCH OK");
+		}
+		else{
+			printf("DLDI PATCH ERROR. TURN OFF NDS.");
+			while(1==1);
+		}
 		
 		// Assign back VRAM to ARM9
 		u8 * VRAM_D_ARM9 = (u8*)0x06860000;

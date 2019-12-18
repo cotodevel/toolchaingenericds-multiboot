@@ -34,7 +34,6 @@ USA
 #include "biosTGDS.h"
 #include "loader.h"
 #include "dmaTGDS.h"
-#include "dldi.h"
 
 #ifdef ARM7
 #include <string.h>
@@ -51,6 +50,7 @@ USA
 #include "main.h"
 #include "wifi_arm9.h"
 #include "nds_cp15_misc.h"
+#include "dldi.h"
 
 #endif
 
