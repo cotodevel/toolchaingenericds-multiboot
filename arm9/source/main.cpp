@@ -169,7 +169,7 @@ bool fillNDSLoaderContext(char * filename){
 		
 		//Uncached to prevent cache issues right at once
 		outBuf7 = (u8 *)(NDS_LOADER_IPC_PAGEFILEARM7_UNCACHED);	//will not be higher than: arm7BootCodeSize
-		outBuf9 = (u8 *)(0x02000000 + 0x400000); //will not be higher than: arm9BootCodeSize or 2.5MB
+		outBuf9 = (u8 *)(NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress | 0x400000); //will not be higher than: arm9BootCodeSize or 2.5MB
 		
 		printf("ARM7/ARM9 Memory allocation OK.");
 		
