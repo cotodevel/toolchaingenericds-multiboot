@@ -26,19 +26,13 @@ USA
 #include "InterruptsARMCores_h.h"
 #include "biosTGDS.h"
 
-void runBootstrapARM7(void)
-{
+void runBootstrapARM7(void){
 	#ifdef ARM9
 	SendFIFOWords(ARM7COMMAND_RELOADNDS, 0);
 	#endif
 	
 	#ifdef ARM7
-	*((vu32*)0x027FFE34) = (u32)NDS_LOADER_IPC_BOOTSTUBARM7_CACHED;	//0x03800000;	// Bootloader start address
-	
-	REG_IME = IME_DISABLE;	// Disable interrupts
-	REG_IF = REG_IF;	// Acknowledge interrupt
-	
-	swiSoftReset();	// Jump to boot loader
+	reloadARMCore((u32)NDS_LOADER_IPC_BOOTSTUBARM7_CACHED);	//Run Bootstrap7 
 	#endif	
 }
 
