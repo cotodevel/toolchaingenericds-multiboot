@@ -19,7 +19,6 @@ USA
 */
 
 #include "loader.h"
-
 #include "dsregs.h"
 #include "dsregs_asm.h"
 #include "ipcfifoTGDS.h"
@@ -27,46 +26,20 @@ USA
 #include "InterruptsARMCores_h.h"
 #include "biosTGDS.h"
 
-void reloadARM7(void)
+void runBootstrapARM7(void)
 {
-	//ori: logic should help
-	/*
-	
-	#ifdef ARM9
-	SendFIFOWords(ARM7COMMAND_RELOADNDS, 0);
-	#endif
-	
-	REG_IME = IME_DISABLE;	// Disable interrupts
-	REG_IF = REG_IF;	// Acknowledge interrupt
-	
-	//todo: write ARM7 and ARM9 binaries to target Bootloader addresses
-	
-	#ifdef ARM7
-	*((vu32*)0x027FFE34) = (u32)0x023DC000;	//0x03800000;	// Bootloader start address
-	#endif
-	#ifdef ARM9
-	*((vu32*)0x027FFE24) = (u32)0x02000000;	// Bootloader start address
-	#endif
-	
-	swiSoftReset();	// Jump to boot loader
-	*/
-	
-	
-	//almost working, ARM7 reloading works! todo: ARM7 must reload code to memory!
-	
 	#ifdef ARM9
 	SendFIFOWords(ARM7COMMAND_RELOADNDS, 0);
 	#endif
 	
 	#ifdef ARM7
-	*((vu32*)0x027FFE34) = (u32)NDS_LOADER_IPC_HIGHCODEARM7_CACHED;	//0x03800000;	// Bootloader start address
+	*((vu32*)0x027FFE34) = (u32)NDS_LOADER_IPC_BOOTSTUBARM7_CACHED;	//0x03800000;	// Bootloader start address
 	
 	REG_IME = IME_DISABLE;	// Disable interrupts
 	REG_IF = REG_IF;	// Acknowledge interrupt
 	
 	swiSoftReset();	// Jump to boot loader
-	#endif
-	
+	#endif	
 }
 
 void reloadARMCore(u32 targetAddress){
@@ -83,14 +56,14 @@ void reloadARMCore(u32 targetAddress){
 	swiSoftReset();	// Jump to boot loader
 }
 
-//waits while a given status is NOT set
+//Waits while a given status is NOT set
 void waitWhileNotSetStatus(u32 status){
 	while(NDS_LOADER_IPC_CTX_UNCACHED->ndsloaderInitStatus != status){
 		swiDelay(111);	
 	}
 }
 
-//waits while a given status is set
+//Waits while a given status is set
 void waitWhileSetStatus(u32 status){
 	while(NDS_LOADER_IPC_CTX_UNCACHED->ndsloaderInitStatus == status){
 		swiDelay(111);	

@@ -62,7 +62,7 @@ struct ndsloader_s
 	//SD specific
 	int sectorsPerCluster;
 	int sectorSize;
-	int ndsloaderInitStatus;	//0 - not inited , 0xff222218 inited
+	int ndsloaderInitStatus;
 };
 
 //Shared IPC : 
@@ -72,18 +72,18 @@ struct ndsloader_s
 
 #define NDS_LOADER_IPC_CTXADDR		(0x02300000 - (int)NDS_LOADER_IPC_CTX_SIZE)	//0x022F4000
 #define NDS_LOADER_IPC_CTX_CACHED ((struct ndsloader_s*)NDS_LOADER_IPC_CTXADDR)
-#define NDS_LOADER_IPC_CTX_UNCACHED ((struct ndsloader_s*)(((int)NDS_LOADER_IPC_CTX_CACHED) + 0x400000))
+#define NDS_LOADER_IPC_CTX_UNCACHED ((struct ndsloader_s*)(NDS_LOADER_IPC_CTXADDR | 0x400000))
 
-//ARM7 Pagefile: (arm7 binary from file) 
-#define NDS_LOADER_IPC_PAGEFILEARM7_CACHED		(NDS_LOADER_IPC_CTXADDR - (64*1024))	//0x022E4000
-#define NDS_LOADER_IPC_PAGEFILEARM7_UNCACHED 	(NDS_LOADER_IPC_PAGEFILEARM7_CACHED | 0x400000)
+//ARM7.bin
+#define NDS_LOADER_IPC_ARM7BIN_CACHED		(NDS_LOADER_IPC_CTXADDR - (64*1024))	//0x022E4000
+#define NDS_LOADER_IPC_ARM7BIN_UNCACHED		(NDS_LOADER_IPC_ARM7BIN_CACHED | 0x400000)
 
-//ARM7 NDSLoader code 64K bytes: Reloads NDS_LOADER_IPC_PAGEFILEARM7_CACHED (arm7 binary from file) into real arm7 entry address (arm7bootldr/arm7bootldr.bin)
-#define NDS_LOADER_IPC_HIGHCODEARM7_CACHED		(NDS_LOADER_IPC_PAGEFILEARM7_CACHED - (64*1024))	//0x022D4000	-> same as IWRAMBOOTCODE	(rwx)	: ORIGIN = 0x022D4000, LENGTH = 64K (arm7bootldr.bin) entry address
-#define NDS_LOADER_IPC_HIGHCODEARM7_UNCACHED 	(NDS_LOADER_IPC_HIGHCODEARM7_CACHED | 0x400000)
+//ARM7 NDSLoader code: Bootstrap that reloads ARM7.bin into arm7 EntryAddress (arm7bootldr/arm7bootldr.bin)
+#define NDS_LOADER_IPC_BOOTSTUBARM7_CACHED		(NDS_LOADER_IPC_ARM7BIN_CACHED - (64*1024))	//0x022D4000	-> same as IWRAMBOOTCODE	(rwx)	: ORIGIN = 0x022D4000, LENGTH = 64K (arm7bootldr.bin) entry address
+#define NDS_LOADER_IPC_BOOTSTUBARM7_UNCACHED 	(NDS_LOADER_IPC_BOOTSTUBARM7_CACHED | 0x400000)
 
 //ARM7 DLDI section code
-#define NDS_LOADER_DLDISECTION_CACHED		(NDS_LOADER_IPC_HIGHCODEARM7_CACHED - (16*1024))	//0x022D0000
+#define NDS_LOADER_DLDISECTION_CACHED		(NDS_LOADER_IPC_BOOTSTUBARM7_CACHED - (16*1024))	//0x022D0000
 #define NDS_LOADER_DLDISECTION_UNCACHED 	(NDS_LOADER_DLDISECTION_CACHED | 0x400000)
 
 #endif
@@ -93,7 +93,7 @@ struct ndsloader_s
 extern "C"{
 #endif
 
-extern void reloadARM7(void);
+extern void runBootstrapARM7(void);
 extern void setNDSLoaderInitStatus(int ndsloaderStatus);
 extern void waitWhileNotSetStatus(u32 status);
 extern void waitWhileSetStatus(u32 status);

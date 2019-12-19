@@ -64,7 +64,7 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		//NDS7: 
 		#ifdef ARM7
 		case(ARM7COMMAND_RELOADNDS):{
-			reloadARM7();
+			runBootstrapARM7();	//ARM7 Side
 		}
 		break;
 		#endif

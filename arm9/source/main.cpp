@@ -52,7 +52,7 @@ static inline void initNDSLoader(){
 	
 	//copy loader code (arm7bootldr.bin) to ARM7's EWRAM portion while preventing Cache issues
 	coherent_user_range_by_size((uint32)&arm7bootldr[0], (int)arm7bootldr_size);					
-	memcpy ((void *)NDS_LOADER_IPC_HIGHCODEARM7_CACHED, (u32*)&arm7bootldr[0], arm7bootldr_size); 	//memcpy ( void * destination, const void * source, size_t num );	//memset(void *str, int c, size_t n)
+	memcpy ((void *)NDS_LOADER_IPC_BOOTSTUBARM7_CACHED, (u32*)&arm7bootldr[0], arm7bootldr_size); 	//memcpy ( void * destination, const void * source, size_t num );	//memset(void *str, int c, size_t n)
 
 	setNDSLoaderInitStatus(NDSLOADER_INIT_OK);
 }
@@ -93,6 +93,7 @@ bool fillNDSLoaderContext(char * filename){
 		int sectorsPerCluster = dldiFs.csize;
 		NDS_LOADER_IPC_CTX_UNCACHED->sectorsPerCluster = sectorsPerCluster;
 		NDS_LOADER_IPC_CTX_UNCACHED->sectorSize = sectorSize;
+		
 		//ARM7
 		int arm7BootCodeSize = NDSHdr->arm7size;
 		u32 arm7BootCodeOffsetInFile = NDSHdr->arm7romoffset;
@@ -117,7 +118,7 @@ bool fillNDSLoaderContext(char * filename){
 		printf("-");
 		printf("-");
 		
-		//get TGDS file handle
+		//Get TGDS file handle
 		int fdindex = fileno(fh);
 		struct fd * fdinst = getStructFD(fdindex);
 		
@@ -125,7 +126,6 @@ bool fillNDSLoaderContext(char * filename){
 		fseek(fh,0,SEEK_END);
 		int fileSize = ftell(fh);
 		fseek(fh,0,SEEK_SET);
-		
 		NDS_LOADER_IPC_CTX_UNCACHED->fileSize = fileSize;
 		
 		printf("fillNDSLoaderContext():");
@@ -147,17 +147,10 @@ bool fillNDSLoaderContext(char * filename){
 		}
 		*(cluster_table) = 0xFFFFFFFF;
 		
-		
-		#define TEST_DLDI_LOADER
 		//#define DLDI_CREATE_ARM7_ARM9_BIN
 		
-		//test code already implemented in loader.h
+		printf("NDSLoader start. ");
 		
-		#ifdef TEST_DLDI_LOADER
-		//Test: read ARM7/ARM9 BootCode into .bin
-		printf("test init.");
-		
-		//works fine, but starts from file start
 		#ifdef DLDI_CREATE_ARM7_ARM9_BIN
 		FILE * fout7 = fopen("0:/arm7.bin", "w+");
 		FILE * fout9 = fopen("0:/arm9.bin", "w+");
@@ -166,10 +159,8 @@ bool fillNDSLoaderContext(char * filename){
 		u8 * outBuf = (u8 *)malloc(sectorSize * sectorsPerCluster);
 		
 		//Uncached to prevent cache issues right at once
-		outBuf7 = (u8 *)(NDS_LOADER_IPC_PAGEFILEARM7_UNCACHED);	//will not be higher than: arm7BootCodeSize
-		outBuf9 = (u8 *)(NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress | 0x400000); //will not be higher than: arm9BootCodeSize or 2.5MB
-		
-		printf("ARM7/ARM9 Memory allocation OK.");
+		outBuf7 = (u8 *)(NDS_LOADER_IPC_ARM7BIN_UNCACHED);	//will not be higher than: arm7BootCodeSize
+		outBuf9 = (u8 *)(NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress | 0x400000); //will not be higher than: arm9BootCodeSize or 0x2D0000 (2,949,120 bytes)
 		
 		u8 * outBuf7Seek = outBuf7;
 		u8 * outBuf9Seek = outBuf9;
@@ -220,8 +211,8 @@ bool fillNDSLoaderContext(char * filename){
 			cur_clustersector = (u32)NDS_LOADER_IPC_CTX_UNCACHED->sectorTableBootCode[data_read];
 		}
 		
-		//write all at once
 		#ifdef DLDI_CREATE_ARM7_ARM9_BIN
+		//Write all at once
 		int written7 = fwrite(outBuf7 , 1, arm7BootCodeSize, fout7);
 		printf("written: ARM7 %d bytes. [Addr: %x]", written7, outBuf7);
 		
@@ -239,35 +230,21 @@ bool fillNDSLoaderContext(char * filename){
 		fclose(fout7);
 		#endif
 		
+		printf("NDSLoader end. ");
+		
 		free(outBuf);
-		printf("test end.");//Test end
-		#endif
-		
-		//todo:
-		//1) Enable DLDI at ARM7
-		//2) then relocate Test code into ARM7's highcode section: 0x03800000 + 64K = 0x03810000 + 32K (highcode), and instead, write from the DLDI driver to ARM7'sarm7BootCodeEntryAddress and ARM9's arm9BootCodeEntryAddress
-		//3) When 2) done, copy high code to EWRAM's end - 32K(NDSBinary ctx) - 32K(ARM7 highcode section) - 32K(ARM7 pagefile) from ARM9 to ARM7, ARM9 triggers ARM7 highcode reloading code (fifo irq), then ARM9 does 4)
-		//4) ITCM Call: Let ARM9 jump, disable Interrupts, and wait loop for value in IPC region. When loop value is met, ARM9 triggers swi soft reset
-		//5) Once ARM7 highcode is executed, write the wait loop value in IPC, disable Interrupts and ARM7 triggers swi soft reset
-		
 		free(NDSHeader);
 		fclose(fh);
-		
 		int ret=FS_deinit();
 		
-		//copy and relocate current TGDS DLDI section into target ARM9 binary
-		
+		//Copy and relocate current TGDS DLDI section into target ARM9 binary
 		bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize);
-		
-		if(stat == true){
-			//printf("DLDI PATCH OK");
-		}
-		else{
+		if(stat == false){
 			printf("DLDI PATCH ERROR. TURN OFF NDS.");
 			while(1==1);
 		}
 		
-		// Assign back VRAM to ARM9
+		//Assign back VRAM to ARM9
 		u8 * VRAM_D_ARM9 = (u8*)0x06860000;
 		VRAMBLOCK_SETBANK_D(VRAM_D_LCDC_MODE); //LCDC -- VRAM D       128K  0    -     6860000h-687FFFFh
 		
@@ -278,24 +255,14 @@ bool fillNDSLoaderContext(char * filename){
 		coherent_user_range_by_size((uint32)(outBuf7 - 0x400000), (int)arm7BootCodeSize);					
 		dmaTransferWord(3, (uint32)(outBuf7 - 0x400000), (uint32)VRAM_D_ARM9, arm7BootCodeSize);
 		
-		/*
-		u32 * vramPtr = (u32*)VRAM_D_ARM9;
-		printf("VRAM D:");
-		printf(" %x[%x] - %x[%x] ", (u32)&vramPtr[0], *(u32*)&vramPtr[0], (u32)&vramPtr[1], *(u32*)&vramPtr[1] );
-		printf(" %x[%x] - %x[%x] ", (u32)&vramPtr[2], *(u32*)&vramPtr[2], (u32)&vramPtr[3], *(u32*)&vramPtr[3] );
-		*/
-		
 		// Give the VRAM to the ARM7
 		VRAMBLOCK_SETBANK_D(VRAM_D_0x06000000_ARM7);
 		
-		reloadARM7();							//		/	
-		setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);//	|	Wait until ARM7.bin is copied back to IWRAM's target address
-		waitWhileNotSetStatus(NDSLOADER_START);	//		\
+		runBootstrapARM7();	//ARM9 Side						/	
+		setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);	//		|	Wait until ARM7.bin is copied back to IWRAM's target address
+		waitWhileNotSetStatus(NDSLOADER_START);		//		\
 		
-		//OK, safe to reload now.
-		
-		//todo: reload into target address now.
-		
+		//reload ARM9.bin
 		reloadARMCore(NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress);
 	}
 	return false;
