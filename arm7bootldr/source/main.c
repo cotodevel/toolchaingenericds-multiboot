@@ -101,12 +101,10 @@ void ARM7ExecuteNDSLoader(void){
 static inline void initDLDI7(){
 	SetBusSLOT1SLOT2ARM7();
 	
-	//wait for DLDI init here...
-	setNDSLoaderInitStatus(NDSLOADER_INITDLDIARM7_BUSY);
-	SendFIFOWords(NDSLOADER_INITDLDIARM7_BUSY, 0);
-	while(getNDSLoaderInitStatus() == NDSLOADER_INITDLDIARM7_BUSY){
+	setNDSLoaderInitStatus(NDSLOADER_INITDLDIARM7_BUSY);	//		/
+	SendFIFOWords(NDSLOADER_INITDLDIARM7_BUSY, 0);			//		|	//Wait until DLDI is moved from ARM9 into NDS_LOADER_DLDISECTION_CACHED
+	waitWhileSetStatus(NDSLOADER_INITDLDIARM7_BUSY);		//		\
 	
-	}
 	u32 DLDISrc = NDS_LOADER_DLDISECTION_CACHED;
 	initDLDIARM7(DLDISrc);
 }
@@ -117,10 +115,7 @@ int main(int _argc, sint8 **_argv) {
 	installWifiFIFO();		
 	/*			TGDS 1.5 Standard ARM7 Init code end	*/
 	
-	//this bootstub will proceed only when file has been loaded properly
-	while(getNDSLoaderInitStatus() != NDSLOADER_LOAD_OK){
-	
-	}
+	waitWhileNotSetStatus(NDSLOADER_LOAD_OK);	//this bootstub will proceed only when file has been loaded properly
 	
 	//ARM7's VRAM D @0x06000000 should have the ARM7.bin bootcode now
 	int arm7BootCodeSize = NDS_LOADER_IPC_CTX_UNCACHED->bootCode7FileSize;

@@ -31,10 +31,9 @@ USA
 #include "utilsTGDS.h"
 
 #define ARM7COMMAND_RELOADNDS (u32)(0xFFFFFF01)
-#define NDSLOADER_INIT_OK (u32)(0xFF222218)	//bare minimum setup: OK (file not loaded yet)
-#define NDSLOADER_INIT_WAIT (u32)(0)		//not set up
-#define NDSLOADER_LOAD_OK (u32)(0xFF222219)	//file loaded OK -> ARM7 must reload ARM7.bin into arm7 target address
-#define NDSLOADER_START (u32)(0xFF22221A)	//reload ARM7/ARM9 within their respective target addresses
+#define NDSLOADER_INIT_OK (u32)(0xFF222218)	//Minimal setup: OK (NDSLoader context not generated yet)
+#define NDSLOADER_LOAD_OK (u32)(0xFF222219)	//File read OK -> (NDSLoader context generated properly) ARM7 must reload ARM7.bin into arm7 target address
+#define NDSLOADER_START (u32)(0xFF22221A)	//Reload ARM7.bin -> ARM7 target addresses && ARM9.bin -> ARM9 target addresses and boot NDS homebrew
 
 #define NDSLOADER_ENTERGDB_FROM_ARM7 (u32)(0xFF222220)	//file loaded OK
 #define NDSLOADER_INITDLDIARM7_BUSY (u32)(0xFF222221)	//DLDI SETUP ARM9 -> ARM7 Taking place...
@@ -95,9 +94,9 @@ extern "C"{
 #endif
 
 extern void reloadARM7(void);
-extern int 	getNDSLoaderInitStatus();
 extern void setNDSLoaderInitStatus(int ndsloaderStatus);
-
+extern void waitWhileNotSetStatus(u32 status);
+extern void waitWhileSetStatus(u32 status);
 extern void reloadARMCore(u32 targetAddress);
 
 #ifdef __cplusplus

@@ -83,8 +83,18 @@ void reloadARMCore(u32 targetAddress){
 	swiSoftReset();	// Jump to boot loader
 }
 
-int getNDSLoaderInitStatus(){
-	return (NDS_LOADER_IPC_CTX_UNCACHED->ndsloaderInitStatus);
+//waits while a given status is NOT set
+void waitWhileNotSetStatus(u32 status){
+	while(NDS_LOADER_IPC_CTX_UNCACHED->ndsloaderInitStatus != status){
+		swiDelay(111);	
+	}
+}
+
+//waits while a given status is set
+void waitWhileSetStatus(u32 status){
+	while(NDS_LOADER_IPC_CTX_UNCACHED->ndsloaderInitStatus == status){
+		swiDelay(111);	
+	}
 }
 
 void setNDSLoaderInitStatus(int ndsloaderStatus){

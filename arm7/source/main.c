@@ -32,12 +32,7 @@ int main(int _argc, sint8 **_argv) {
 	installWifiFIFO();		
 	/*			TGDS 1.5 Standard ARM7 Init code end	*/
 	
-	
-	setNDSLoaderInitStatus(NDSLOADER_INIT_WAIT);
-	
-	while(getNDSLoaderInitStatus() != NDSLOADER_INIT_OK){
-		//wait for init NDSLoader code 
-	}
+	waitWhileNotSetStatus(NDSLOADER_INIT_OK);	//wait for init NDSLoader code 
 	
     while (1) {
 		//up to this point, is free to reload the EWRAM code

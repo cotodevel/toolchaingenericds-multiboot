@@ -47,16 +47,14 @@ void menuShow(){
 }
 
 static inline void initNDSLoader(){
-	if(getNDSLoaderInitStatus() == NDSLOADER_INIT_WAIT){
-		coherent_user_range_by_size((uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (64*1024) + (64*1024) + (16*1024));
-		dmaFillHalfWord(3, 0, (uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (64*1024) + (64*1024) + (16*1024));	//setNDSLoaderInitStatus(NDSLOADER_INIT_WAIT);  (0);
-		
-		//copy loader code (arm7bootldr.bin) to ARM7's EWRAM portion while preventing Cache issues
-		coherent_user_range_by_size((uint32)&arm7bootldr[0], (int)arm7bootldr_size);					
-		memcpy ((void *)NDS_LOADER_IPC_HIGHCODEARM7_CACHED, (u32*)&arm7bootldr[0], arm7bootldr_size); 	//memcpy ( void * destination, const void * source, size_t num );	//memset(void *str, int c, size_t n)
+	coherent_user_range_by_size((uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (64*1024) + (64*1024) + (16*1024));
+	dmaFillHalfWord(3, 0, (uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (64*1024) + (64*1024) + (16*1024));
 	
-		setNDSLoaderInitStatus(NDSLOADER_INIT_OK);
-	}
+	//copy loader code (arm7bootldr.bin) to ARM7's EWRAM portion while preventing Cache issues
+	coherent_user_range_by_size((uint32)&arm7bootldr[0], (int)arm7bootldr_size);					
+	memcpy ((void *)NDS_LOADER_IPC_HIGHCODEARM7_CACHED, (u32*)&arm7bootldr[0], arm7bootldr_size); 	//memcpy ( void * destination, const void * source, size_t num );	//memset(void *str, int c, size_t n)
+
+	setNDSLoaderInitStatus(NDSLOADER_INIT_OK);
 }
 
 static u8 * outBuf7 = NULL;
@@ -290,11 +288,9 @@ bool fillNDSLoaderContext(char * filename){
 		// Give the VRAM to the ARM7
 		VRAMBLOCK_SETBANK_D(VRAM_D_0x06000000_ARM7);
 		
-		reloadARM7();	//wait until ARM7.bin is copied back to IWRAM's target address
-		setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);
-		
-		while(getNDSLoaderInitStatus() != NDSLOADER_START){
-		}
+		reloadARM7();							//		/	
+		setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);//	|	Wait until ARM7.bin is copied back to IWRAM's target address
+		waitWhileNotSetStatus(NDSLOADER_START);	//		\
 		
 		//OK, safe to reload now.
 		
