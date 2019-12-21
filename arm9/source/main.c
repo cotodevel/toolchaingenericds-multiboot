@@ -23,7 +23,6 @@ USA
 #include "typedefsTGDS.h"
 #include "gui_console_connector.h"
 #include "dswnifi_lib.h"
-#include "fileBrowse.hpp"	//generic template functions from TGDS: maintain 1 source, whose changes are globally accepted by all TGDS Projects.
 #include "TGDSLogoLZSSCompressed.h"
 #include "ipcfifoTGDSUser.h"
 #include "fatfslayerTGDS.h"
@@ -34,6 +33,7 @@ USA
 #include "dmaTGDS.h"
 #include "arm7bootldr.h"
 #include "nds_cp15_misc.h"
+#include "fileBrowse.h"
 #include <stdio.h>
 
 bool GDBEnabled = false;
@@ -176,7 +176,8 @@ bool fillNDSLoaderContext(char * filename){
 			_dldi_start.ioInterface.readSectors(cur_clustersector, sectorsPerCluster, (void*)(outBuf));
 			
 			//for each sector per cluster...
-			for(int i = 0; i < sectorsPerCluster; i++){
+			int i = 0;
+			for(i = 0; i < sectorsPerCluster; i++){
 				
 				//copy it into output ARM7 binary
 				if ( (globalPtr >= arm7BootCodeOffsetInFile) && (globalPtr < (arm7BootCodeOffsetInFile+arm7BootCodeSize)) ){

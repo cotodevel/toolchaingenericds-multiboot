@@ -49,6 +49,7 @@ extern int main(int _argc, sint8 **_argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 extern bool fillNDSLoaderContext(char * filename);
 extern bool GDBEnabled;
+extern struct FileClassList * thisFileList;
 
 #ifdef __cplusplus
 }
