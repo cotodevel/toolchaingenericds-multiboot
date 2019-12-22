@@ -24,19 +24,7 @@ USA
 #include "typedefsTGDS.h"
 #include "dsregs.h"
 #include "limitsTGDS.h"
-
-#ifdef __cplusplus
-//C++ part
-using namespace std;
-#include <iostream>
-#include <fstream>
-#include <list>
-#include <vector>
-#include <cmath>
-#include <cstdlib>
-#include <cstdio>
-#endif
-
+#include "dldi.h"
 
 #endif
 
@@ -50,6 +38,14 @@ extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 extern bool fillNDSLoaderContext(char * filename);
 extern bool GDBEnabled;
 extern struct FileClassList * thisFileList;
+
+extern addr_t readAddr (data_t *mem, addr_t offset);
+extern void writeAddr (data_t *mem, addr_t offset, addr_t value);
+extern addr_t quickFind (const data_t* data, const data_t* search, size_t dataLen, size_t searchLen);
+
+extern bool dldiRelocateLoader(bool clearBSS, u32 DldiRelocatedAddress, u32 dldiSourceInRam);
+extern bool dldiPatchLoader (data_t *binData, u32 binSize); //original DLDI code: seeks a DLDI section in binData, and uses current NTR TGDS homebrew's DLDI to relocate it in there
+
 
 #ifdef __cplusplus
 }
