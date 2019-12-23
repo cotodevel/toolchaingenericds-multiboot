@@ -14,4 +14,16 @@ Simply DLDI patch ToolchainGenericDS-multiboot.nds (if the loader does not perfo
 
 /release folder has the latest binary precompiled for your convenience.
 
+Notes:
+
+Map layout:
+
+0x02340000 + (used 360K -- 0x5A000?) = 0x0239A000? NDS App Size.
+
+0x02400000 - 0x30000 = 0x023D0000 onwards, reserved for NDSLoader context?.
+
+589,824? "free". Thus this map starts from 0x02340000, uses as little as possible memory for now. Thus,
+for ARM9.bin, we have free up to: 0x02340000 - 0x02000000 = 3,407,872? bytes, which is NOT too bad ;-)
+
+
 Coto
