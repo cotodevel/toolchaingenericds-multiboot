@@ -35,6 +35,7 @@ USA
 #include "nds_cp15_misc.h"
 #include "fileBrowse.h"
 #include <stdio.h>
+#include "biosTGDS.h"
 
 static const uint32  DLDI_MAGIC_NUMBER = 0xBF8DA5ED;	
 static const data_t dldiMagicString[12] = "\xED\xA5\x8D\xBF Chishm";	// Normal DLDI file
@@ -712,6 +713,8 @@ int main(int _argc, sint8 **_argv) {
 			//GDB Debugging end
 			//#endif
 		}	
+		
+		handleARM9SVC();	/* Do not remove, handles TGDS services */
 		IRQVBlankWait();
 	}
 }
