@@ -97,8 +97,7 @@ extern "C"{
 
 extern void runBootstrapARM7(void);
 extern void setNDSLoaderInitStatus(int ndsloaderStatus);
-extern void waitWhileNotSetStatus(u32 status);
-extern void waitWhileSetStatus(u32 status);
+extern void waitWhileNotSetStatus(u32 status);	//[Blocking]: Local ARM Core waits until External action takes place, waits while resolving internal NDS hardware wait states.
 extern void reloadARMCore(u32 targetAddress);
 
 #ifdef __cplusplus

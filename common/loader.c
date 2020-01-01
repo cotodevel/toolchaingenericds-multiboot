@@ -50,16 +50,9 @@ void reloadARMCore(u32 targetAddress){
 	swiSoftReset();	// Jump to boot loader
 }
 
-//Waits while a given status is NOT set
+//[Blocking]: Local ARM Core waits until External action takes place, waits while resolving internal NDS hardware wait states.
 void waitWhileNotSetStatus(u32 status){
 	while(NDS_LOADER_IPC_CTX_UNCACHED->ndsloaderInitStatus != status){
-		swiDelay(111);	
-	}
-}
-
-//Waits while a given status is set
-void waitWhileSetStatus(u32 status){
-	while(NDS_LOADER_IPC_CTX_UNCACHED->ndsloaderInitStatus == status){
 		swiDelay(111);	
 	}
 }
