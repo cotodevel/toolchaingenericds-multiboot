@@ -359,7 +359,9 @@ char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 void menuShow(){
 	clrscr();
 	printf("                              ");
-	printf("Start: File browser + load NDS");
+	printf("Button (Start): File browser -> ");
+	printf("    Button(A) Load TGDS NDS Binary. ");
+	printf("Available heap memory: %d", getMaxRam());
 	printf("Select: this menu");
 }
 
@@ -638,6 +640,7 @@ int main(int _argc, sint8 **_argv) {
 		
 		if (keysPressed() & KEY_SELECT){
 			menuShow();
+			scanKeys();
 			while(keysPressed() & KEY_SELECT){
 				scanKeys();
 			}
