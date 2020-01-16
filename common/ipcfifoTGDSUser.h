@@ -40,6 +40,10 @@ struct sIPCSharedTGDSSpecific {
 	uint32 frameCounter9;	//VBLANK counter9
 };
 
+#ifdef ARM9
+//Used by ARM9. Required internally by ARM7
+#define TGDSDLDI_ARM7_ADDRESS (u32)(0x06000000)
+#endif
 
 #endif
 
