@@ -36,6 +36,7 @@ USA
 #include "fileBrowse.h"
 #include <stdio.h>
 #include "biosTGDS.h"
+#include "global_settings.h"
 
 bool GDBEnabled = false;
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
@@ -176,7 +177,14 @@ bool fillNDSLoaderContext(char * filename){
 		{
 			//full sector copy
 			memset(outBuf, 0, sectorSize * sectorsPerCluster);
+			
+			#ifdef ARM7_DLDI
+			read_sd_sectors_safe(cur_clustersector, sectorsPerCluster, (void*)(outBuf));
+			#endif
+			
+			#ifdef ARM9_DLDI
 			_dldi_start.ioInterface.readSectors(cur_clustersector, sectorsPerCluster, (void*)(outBuf));
+			#endif
 			
 			//for each sector per cluster...
 			int i = 0;
@@ -247,20 +255,6 @@ bool fillNDSLoaderContext(char * filename){
 			printf("DLDI PATCH ERROR. TURN OFF NDS.");
 			while(1==1);
 		}
-		
-		//Assign back VRAM to ARM9
-		u8 * VRAM_D_ARM9 = (u8*)0x06860000;
-		VRAMBLOCK_SETBANK_D(VRAM_D_LCDC_MODE); //LCDC -- VRAM D       128K  0    -     6860000h-687FFFFh
-		
-		// Clear VRAM
-		dmaFillHalfWord(3, 0, (uint32)VRAM_D_ARM9, (uint32)(128*1024));
-		
-		// Load the loader/patcher into the correct address
-		coherent_user_range_by_size((uint32)(outBuf7 - 0x400000), (int)arm7BootCodeSize);					
-		dmaTransferWord(3, (uint32)(outBuf7 - 0x400000), (uint32)VRAM_D_ARM9, arm7BootCodeSize);
-		
-		// Give the VRAM to the ARM7
-		VRAMBLOCK_SETBANK_D(VRAM_D_0x06000000_ARM7);
 		
 		runBootstrapARM7();	//ARM9 Side						/	
 		setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);	//		|	Wait until ARM7.bin is copied back to IWRAM's target address

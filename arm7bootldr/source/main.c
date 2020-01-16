@@ -33,10 +33,10 @@ int main(int _argc, sint8 **_argv) {
 	
 	waitWhileNotSetStatus(NDSLOADER_LOAD_OK);	//this bootstub will proceed only when file has been loaded properly
 	
-	//ARM7's VRAM D @0x06000000 should have the ARM7.bin bootcode now
+	//NDS_LOADER_IPC_ARM7BIN_UNCACHED has ARM7.bin bootcode now
 	int arm7BootCodeSize = NDS_LOADER_IPC_CTX_UNCACHED->bootCode7FileSize;
 	u32 arm7entryaddress = NDS_LOADER_IPC_CTX_UNCACHED->arm7EntryAddress;
-	dmaTransferWord(3, (uint32)0x06000000, (uint32)arm7entryaddress, (uint32)arm7BootCodeSize);	//copy back
+	dmaTransferWord(3, (uint32)NDS_LOADER_IPC_ARM7BIN_UNCACHED, (uint32)arm7entryaddress, (uint32)arm7BootCodeSize);
 	
 	//reload ARM7.bin
 	setNDSLoaderInitStatus(NDSLOADER_START);	
