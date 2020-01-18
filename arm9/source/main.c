@@ -272,7 +272,10 @@ int main(int _argc, sint8 **_argv) {
 	printf("     ");
 	printf("     ");
 	
+	#ifdef ARM7_DLDI
 	setDLDIARM7Address((u32 *)TGDSDLDI_ARM7_ADDRESS);	//Required by ARM7DLDI!
+	#endif
+	
 	int ret=FS_init();
 	if (ret == 0)
 	{
