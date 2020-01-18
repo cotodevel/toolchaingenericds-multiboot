@@ -178,13 +178,7 @@ bool fillNDSLoaderContext(char * filename){
 			//full sector copy
 			memset(outBuf, 0, sectorSize * sectorsPerCluster);
 			
-			#ifdef ARM7_DLDI
-			read_sd_sectors_safe(cur_clustersector, sectorsPerCluster, (void*)(outBuf));
-			#endif
-			
-			#ifdef ARM9_DLDI
-			_dldi_start.ioInterface.readSectors(cur_clustersector, sectorsPerCluster, (void*)(outBuf));
-			#endif
+			dldi_handler_read_sectors(cur_clustersector, sectorsPerCluster, (void*)(outBuf));
 			
 			//for each sector per cluster...
 			int i = 0;
