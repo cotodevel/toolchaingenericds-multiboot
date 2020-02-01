@@ -1,3 +1,7 @@
+Branch: master -> uses an older loader but it is more compatible with older slot-1 cards.
+
+-
+
 This is the Toolchain Generic multiboot project:
 
 Compile Toolchain: To compile this project you will need to follow the steps at https://bitbucket.org/Coto88/toolchaingenericds : Then simply extract the project somewhere.

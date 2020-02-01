@@ -244,7 +244,7 @@ bool fillNDSLoaderContext(char * filename){
 		int ret=FS_deinit();
 		
 		//Copy and relocate current TGDS DLDI section into target ARM9 binary
-		bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize);
+		bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize, (u32)&_dldi_start);
 		if(stat == false){
 			printf("DLDI PATCH ERROR. TURN OFF NDS.");
 			while(1==1);
