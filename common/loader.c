@@ -37,17 +37,9 @@ void runBootstrapARM7(void){
 }
 
 void reloadARMCore(u32 targetAddress){
-	#ifdef ARM7
-	*((vu32*)0x027FFE34) = (u32)targetAddress;
-	#endif
-	#ifdef ARM9
-	*((vu32*)0x027FFE24) = (u32)targetAddress;
-	#endif
-	
 	REG_IME = IME_DISABLE;	// Disable interrupts
 	REG_IF = REG_IF;	// Acknowledge interrupt
-	
-	swiSoftReset();	// Jump to boot loader
+	swiSoftResetByAddress(targetAddress);	// Jump to boot loader
 }
 
 //[Blocking]: Local ARM Core waits until External action takes place, waits while resolving internal NDS hardware wait states.
