@@ -19,6 +19,7 @@ USA
 #include "main.h"
 #include "biosTGDS.h"
 #include "loader.h"
+#include "spifwTGDS.h"
 
 void initDLDIARM7(u32 srcDLDIAddr){	//stubbed
 	
@@ -46,4 +47,9 @@ int main(int _argc, sint8 **_argv) {
 	}
    
 	return 0;
+}
+
+//Custom Button Mapping Handler implementation: IRQ Driven
+void CustomInputMappingHandler(uint32 readKeys){
+	
 }

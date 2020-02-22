@@ -21,6 +21,7 @@ USA
 #include "loader.h"
 #include "busTGDS.h"
 #include "dmaTGDS.h"
+#include "spifwTGDS.h"
 
 static inline void enterGDBFromARM7(void){
 	SendFIFOWords(NDSLOADER_ENTERGDB_FROM_ARM7, 0);
@@ -51,4 +52,9 @@ int main(int _argc, sint8 **_argv) {
 	}
    
 	return 0;
+}
+
+//Custom Button Mapping Handler implementation: IRQ Driven
+void CustomInputMappingHandler(uint32 readKeys){
+	
 }
