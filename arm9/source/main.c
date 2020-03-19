@@ -342,7 +342,7 @@ int main(int _argc, sint8 **_argv) {
 					//Show IP and port here
 					//printf("    ");
 					//printf("    ");
-					printf("[Connect to GDB]: %s", ((getValidGDBMapFile() == true) ? " GDBFile Mode!" : "NDSMemory Mode!"));
+					printf("[Connect to GDB]: NDSMemory Mode!");
 					char IP[16];
 					printf("Port:%d GDB IP:%s",remotePort, print_ip((uint32)Wifi_GetIP(), IP));
 					remoteInit();
@@ -374,7 +374,6 @@ int main(int _argc, sint8 **_argv) {
 				}
 				
 				if (keys&KEY_B){
-					setValidGDBMapFile(false);
 					main(0, (sint8**)"");
 				}
 				
@@ -384,7 +383,7 @@ int main(int _argc, sint8 **_argv) {
 					//Show IP and port here
 					printf("    ");
 					printf("    ");
-					printf("[Re-Connect to GDB]: %s",((getValidGDBMapFile() == true) ? " GDBFile Mode!" : "NDSMemory Mode!"));
+					printf("[Re-Connect to GDB]: NDSMemory Mode!");
 					char IP[16];
 					printf("Retries: %d",reconnectCount);
 					printf("Port:%d GDB IP:%s", remotePort, print_ip((uint32)Wifi_GetIP(), IP));
