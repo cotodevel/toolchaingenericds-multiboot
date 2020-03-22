@@ -48,7 +48,7 @@ void menuShow(){
 	printf("    Button(A) Load TGDS NDS Binary. ");
 	printf("Available heap memory: %d", getMaxRam());
 	printf("Select: this menu");
-	printf("ARM7 Status: %s", printf7Buffer);
+	printf("ARM7 Status: %s", getarm7DebugBuffer());
 }
 
 static inline void initNDSLoader(){
