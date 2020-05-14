@@ -22,11 +22,7 @@ USA
 #include "spifwTGDS.h"
 #include "posixHandleTGDS.h"
 
-//These buffers are project specific for ARM7 WAV SoundStream
-u16 strpcmL0Buf[WAV_READ_SIZE];
-u16 strpcmL1Buf[WAV_READ_SIZE];
-u16 strpcmR0Buf[WAV_READ_SIZE];
-u16 strpcmR1Buf[WAV_READ_SIZE];
+
 
 void initDLDIARM7(u32 srcDLDIAddr){	//stubbed
 	
@@ -68,8 +64,8 @@ void CustomInputMappingHandler(uint32 readKeys){
 void initSoundStreamUser(){
 	//Buffers must be provided here. 
 	//Format: s16 buffer[WAV_READ_SIZE];
-	strpcmL0 = (s16*)&strpcmL0Buf[0];
-	strpcmL1 = (s16*)&strpcmL1Buf[0];
-	strpcmR0 = (s16*)&strpcmR0Buf[0];
-	strpcmR1 = (s16*)&strpcmR1Buf[0];
+	//strpcmL0 = (s16*)&strpcmL0Buf[0];
+	//strpcmL1 = (s16*)&strpcmL1Buf[0];
+	//strpcmR0 = (s16*)&strpcmR0Buf[0];
+	//strpcmR1 = (s16*)&strpcmR1Buf[0];
 }

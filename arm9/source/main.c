@@ -46,7 +46,7 @@ char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 void menuShow(){
 	clrscr();
 	printf("                              ");
-	printf("Button (Start): File browser -> ");
+	printf("Button (Start): File browser, then ");
 	printf("    Button(A) Load TGDS NDS Binary. ");
 	printf("Available heap memory: %d", getMaxRam());
 	printf("Select: this menu");
@@ -238,6 +238,9 @@ bool fillNDSLoaderContext(char * filename){
 		fclose(fout9);
 		fclose(fout7);
 		#endif
+		
+		//Build NDS Header
+		memcpy((u8*)0x027FFE00, NDSHeader, (headerSize*sizeof(u8)) );
 		
 		printf("NDSLoader end. ");
 		
