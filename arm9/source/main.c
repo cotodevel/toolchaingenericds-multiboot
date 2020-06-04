@@ -256,6 +256,12 @@ bool fillNDSLoaderContext(char * filename){
 			while(1==1);
 		}
 		
+		asm("mcr	p15, 0, r0, c7, c10, 4");
+		flush_icache_all();
+		flush_dcache_all();
+		
+		WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
+		
 		runBootstrapARM7();	//ARM9 Side						/	
 		setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);	//		|	Wait until ARM7.bin is copied back to IWRAM's target address
 		waitWhileNotSetStatus(NDSLOADER_START);		//		\
@@ -292,6 +298,9 @@ int main(int _argc, sint8 **_argv) {
 		printf("FS Init error.");
 	}
 	switch_dswnifi_mode(dswifi_idlemode);
+	asm("mcr	p15, 0, r0, c7, c10, 4");
+	flush_icache_all();
+	flush_dcache_all();
 	/*			TGDS 1.5 Standard ARM9 Init code end	*/
 	
 	initNDSLoader();	//set up NDSLoader
