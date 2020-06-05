@@ -54,8 +54,8 @@ void menuShow(){
 }
 
 static inline void initNDSLoader(){
-	coherent_user_range_by_size((uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (64*1024) + (64*1024) + (16*1024));
-	dmaFillHalfWord(3, 0, (uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (64*1024) + (64*1024) + (16*1024));
+	coherent_user_range_by_size((uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (96*1024) + (64*1024) + (16*1024));
+	dmaFillHalfWord(3, 0, (uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (96*1024) + (64*1024) + (16*1024));
 	
 	//copy loader code (arm7bootldr.bin) to ARM7's EWRAM portion while preventing Cache issues
 	coherent_user_range_by_size((uint32)&arm7bootldr[0], (int)arm7bootldr_size);					
