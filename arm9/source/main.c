@@ -43,11 +43,28 @@ USA
 bool GDBEnabled = false;
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 
+//Back to loader, based on Whitelisted DLDI names
+static char curLoaderNameFromDldiString[MAX_TGDSFILENAME_LENGTH+1];
+static inline char * canGoBackToLoader(){
+	char * dldiName = dldi_tryingInterface();
+	if(dldiName != NULL){
+		if(strcmp(dldiName, "R4iDSN") == 0){	//R4iGold loader
+			strcpy(curLoaderNameFromDldiString, "0:/_DS_MENU.dat");
+			return (char*)&curLoaderNameFromDldiString[0];
+		}
+	}
+	return NULL;
+}
+
 void menuShow(){
 	clrscr();
 	printf("                              ");
-	printf("Button (Start): File browser, then ");
-	printf("    Button(A) Load TGDS NDS Binary. ");
+	printf("ToolchainGenericDS-multiboot:");
+	printf("                              ");
+	printf("Button (Start): File browser ");
+	printf("    Button (A) Load TGDS/devkitARM NDS Binary. ");
+	printf("                              ");
+	printf("(Select): back to Loader. >%d", TGDSPrintfColor_Green);
 	printf("Available heap memory: %d", getMaxRam());
 	printf("Select: this menu");
 	printarm7DebugBuffer();
@@ -252,8 +269,7 @@ bool fillNDSLoaderContext(char * filename){
 		//Copy and relocate current TGDS DLDI section into target ARM9 binary
 		bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize, (u32)&_dldi_start);
 		if(stat == false){
-			printf("DLDI PATCH ERROR. TURN OFF NDS.");
-			while(1==1);
+			printf("DLDI Patch failed. APP does not support DLDI format.");
 		}
 		
 		asm("mcr	p15, 0, r0, c7, c10, 4");
@@ -333,18 +349,26 @@ int main(int _argc, sint8 **_argv) {
 		}
 		
 		if (keysPressed() & KEY_SELECT){
-			menuShow();
-			scanKeys();
-			while(keysPressed() & KEY_SELECT){
+			char * loaderName = canGoBackToLoader();
+			if(loaderName != NULL){
+				fillNDSLoaderContext(loaderName);
+			}
+			else{
+				clrscr();
+				printf("--");
+				printf("Dldi name: %s isn't registered.", dldi_tryingInterface());
+				printf("Press B to exit.");
 				scanKeys();
+				while(1==1){
+					scanKeys();
+					if(keysPressed()&KEY_B){
+						break;
+					}
+				}
 			}
 		}
 		
-		if (keysPressed() & KEY_B){
-			while(keysPressed() & KEY_B){
-				scanKeys();
-			}
-		}
+		
 		
 		//GDB Debugging start
 		//#ifdef NDSGDB_DEBUG_ENABLE
