@@ -272,12 +272,6 @@ bool fillNDSLoaderContext(char * filename){
 			printf("DLDI Patch failed. APP does not support DLDI format.");
 		}
 		
-		char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-		memset(thisArgv, 0, sizeof(thisArgv));
-		strcpy(&thisArgv[0][0], "ToolchainGenericDS-multiboot.nds");	//Arg0:	Loader used
-		strcpy(&thisArgv[1][0], filename);								//Arg1: NDS Binary loaded
-		addARGV(2, (char*)&thisArgv);
-		
 		asm("mcr	p15, 0, r0, c7, c10, 4");
 		flush_icache_all();
 		flush_dcache_all();
@@ -348,9 +342,52 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 			while( ShowBrowser((char *)startPath, (char *)&curChosenBrowseFile[0]) == true ){	//as long you keep using directories ShowBrowser will be true
 				
 			}
-			while(keysPressed() & KEY_START){
+			
+			scanKeys();
+			while((keysPressed() & KEY_A) || (keysPressed() & KEY_START)){
 				scanKeys();
 			}
+			
+			//Send args
+			printf("[Booting %s]", curChosenBrowseFile);
+			printf("Want to send argument?");
+			printf("(A) Yes: (Start) Choose arg.");
+			printf("(B) No. ");
+			
+			while(1==1){
+				scanKeys();
+				if(keysPressed()&KEY_A){
+					scanKeys();
+					while(keysPressed() & KEY_A){
+						scanKeys();
+					}
+					
+					char argv0[MAX_TGDSFILENAME_LENGTH+1];
+					memset(argv0, 0, sizeof(argv0));
+					
+					while( ShowBrowser((char *)startPath, (char *)&argv0[0]) == true ){	//as long you keep using directories ShowBrowser will be true
+						
+					}
+					
+					char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+					memset(thisArgv, 0, sizeof(thisArgv));
+					strcpy(&thisArgv[0][0], curChosenBrowseFile);	//Arg0:	NDS Binary loaded
+					strcpy(&thisArgv[1][0], argv0);					//Arg1: ARGV0
+					addARGV(2, (char*)&thisArgv);
+					break;
+				}
+				else if(keysPressed()&KEY_B){
+					
+					char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+					memset(thisArgv, 0, sizeof(thisArgv));
+					strcpy(&thisArgv[0][0], "");	//Arg0:	
+					strcpy(&thisArgv[1][0], "");	//Arg1: 
+					strcpy(&thisArgv[2][0], "");	//Arg2:
+					addARGV(3, (char*)&thisArgv);
+					break;
+				}
+			}
+			
 			fillNDSLoaderContext(curChosenBrowseFile);
 		}
 		
