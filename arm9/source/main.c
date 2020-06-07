@@ -272,6 +272,12 @@ bool fillNDSLoaderContext(char * filename){
 			printf("DLDI Patch failed. APP does not support DLDI format.");
 		}
 		
+		char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+		memset(thisArgv, 0, sizeof(thisArgv));
+		strcpy(&thisArgv[0][0], "ToolchainGenericDS-multiboot.nds");	//Arg0:	Loader used
+		strcpy(&thisArgv[1][0], filename);								//Arg1: NDS Binary loaded
+		addARGV(2, (char*)&thisArgv);
+		
 		asm("mcr	p15, 0, r0, c7, c10, 4");
 		flush_icache_all();
 		flush_dcache_all();
@@ -288,7 +294,7 @@ bool fillNDSLoaderContext(char * filename){
 	return false;
 }
 
-int main(int _argc, sint8 **_argv) {
+int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 	
 	/*			TGDS 1.5 Standard ARM9 Init code start	*/
 	bool isTGDSCustomConsole = false;	//set default console or custom console: default console

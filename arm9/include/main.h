@@ -33,7 +33,7 @@ USA
 extern "C" {
 #endif
 
-extern int main(int _argc, sint8 **_argv);
+extern int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 extern bool fillNDSLoaderContext(char * filename);
 extern bool GDBEnabled;
