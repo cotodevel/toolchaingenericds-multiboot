@@ -46,7 +46,6 @@ int main(int _argc, sint8 **_argv) {
 	//enterGDBFromARM7();	//debug
     
 	while (1) {
-		scanKeys();
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
 		IRQVBlankWait();
 	}
