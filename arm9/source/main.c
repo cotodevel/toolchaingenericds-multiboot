@@ -171,14 +171,7 @@ bool fillNDSLoaderContext(char * filename){
 		}
 		*(cluster_table) = 0xFFFFFFFF;
 		
-		//#define DLDI_CREATE_ARM7_ARM9_BIN
-		
 		printf("NDSLoader start. ");
-		
-		#ifdef DLDI_CREATE_ARM7_ARM9_BIN
-		FILE * fout7 = fopen("0:/arm7.bin", "w+");
-		FILE * fout9 = fopen("0:/arm9.bin", "w+");
-		#endif
 		
 		u8 * outBuf = (u8 *)malloc(sectorSize * sectorsPerCluster);
 		
@@ -208,11 +201,11 @@ bool fillNDSLoaderContext(char * filename){
 				if ( (globalPtr >= arm7BootCodeOffsetInFile) && (globalPtr < (arm7BootCodeOffsetInFile+arm7BootCodeSize)) ){
 					//last part?
 					if( ((arm7BootCodeOffsetInFile+arm7BootCodeSize) - globalPtr) > sectorOffsetEnd7){
-						memcpy (outBuf7Seek, outBuf + (i*512), 512);	//fwrite(outBuf + (i*512) , 1, 512, fout7);
+						memcpy (outBuf7Seek, outBuf + (i*512), 512);
 						outBuf7Seek+=512;
 					}
 					else{
-						memcpy (outBuf7Seek, outBuf + (i*512), sectorOffsetEnd7);	//fwrite(outBuf + (i*512) , 1, sectorOffsetEnd7, fout7);
+						memcpy (outBuf7Seek, outBuf + (i*512), sectorOffsetEnd7);
 						outBuf7Seek+=sectorOffsetEnd7;
 					}
 				}
@@ -221,11 +214,11 @@ bool fillNDSLoaderContext(char * filename){
 				if ( (globalPtr >= arm9BootCodeOffsetInFile) && (globalPtr < (arm9BootCodeOffsetInFile+arm9BootCodeSize)) ){
 					//last part?
 					if( ((arm9BootCodeOffsetInFile+arm9BootCodeSize) - globalPtr) > sectorOffsetEnd9){
-						memcpy (outBuf9Seek, outBuf + (i*512), 512);	//fwrite(outBuf + (i*512) , 1, 512, fout9);
+						memcpy (outBuf9Seek, outBuf + (i*512), 512);
 						outBuf9Seek+=512;
 					}
 					else{
-						memcpy (outBuf9Seek, outBuf + (i*512), sectorOffsetEnd9);	//fwrite(outBuf + (i*512) , 1, sectorOffsetEnd9, fout9);
+						memcpy (outBuf9Seek, outBuf + (i*512), sectorOffsetEnd9);
 						outBuf9Seek+=sectorOffsetEnd9;
 					}
 				}	
@@ -237,24 +230,8 @@ bool fillNDSLoaderContext(char * filename){
 			cur_clustersector = (u32)NDS_LOADER_IPC_CTX_UNCACHED->sectorTableBootCode[data_read];
 		}
 		
-		#ifdef DLDI_CREATE_ARM7_ARM9_BIN
-		//Write all at once
-		int written7 = fwrite(outBuf7 , 1, arm7BootCodeSize, fout7);
-		printf("written: ARM7 %d bytes. [Addr: %x]", written7, outBuf7);
-		
-		int written9 = fwrite(outBuf9 , 1, arm9BootCodeSize, fout9);
-		printf("written: ARM9 %d bytes. [Addr: %x]", written9, outBuf9);
-		#endif
-		
-		#ifndef DLDI_CREATE_ARM7_ARM9_BIN
 		printf("ARM7 %d bytes. [Addr: %x]", arm7BootCodeSize, (outBuf7 - 0x400000));
 		printf("ARM9 %d bytes. [Addr: %x]", arm9BootCodeSize, (outBuf9 - 0x400000));
-		#endif
-		
-		#ifdef DLDI_CREATE_ARM7_ARM9_BIN
-		fclose(fout9);
-		fclose(fout7);
-		#endif
 		
 		//Build NDS Header
 		memcpy((u8*)0x027FFE00, NDSHeader, (headerSize*sizeof(u8)) );
