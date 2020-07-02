@@ -26,21 +26,6 @@ USA
 #include "InterruptsARMCores_h.h"
 #include "biosTGDS.h"
 
-void runBootstrapARM7(void){
-	#ifdef ARM9
-	SendFIFOWords(ARM7COMMAND_RELOADNDS, 0);
-	#endif
-	
-	#ifdef ARM7
-	reloadARMCore((u32)NDS_LOADER_IPC_BOOTSTUBARM7_CACHED);	//Run Bootstrap7 
-	#endif	
-}
-
-void reloadARMCore(u32 targetAddress){
-	REG_IME = IME_DISABLE;	// Disable interrupts
-	REG_IF = REG_IF;	// Acknowledge interrupt
-	swiSoftResetByAddress(targetAddress);	// Jump to boot loader
-}
 
 //[Blocking]: Local ARM Core waits until External action takes place, waits while resolving internal NDS hardware wait states.
 void waitWhileNotSetStatus(u32 status){

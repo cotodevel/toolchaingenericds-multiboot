@@ -243,23 +243,22 @@ bool fillNDSLoaderContext(char * filename){
 		fclose(fh);
 		int ret=FS_deinit();
 		
+		asm("mcr	p15, 0, r0, c7, c10, 4");
+		WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
+		flush_icache_all();
+		flush_dcache_all();
 		//Copy and relocate current TGDS DLDI section into target ARM9 binary
 		bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize, (u32)&_dldi_start);
 		if(stat == false){
 			printf("DLDI Patch failed. APP does not support DLDI format.");
 		}
 		
-		asm("mcr	p15, 0, r0, c7, c10, 4");
-		flush_icache_all();
-		flush_dcache_all();
-		
-		WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
-		
 		runBootstrapARM7();	//ARM9 Side						/	
 		setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);	//		|	Wait until ARM7.bin is copied back to IWRAM's target address
 		waitWhileNotSetStatus(NDSLOADER_START);		//		\
 		
 		//reload ARM9.bin
+		coherent_user_range_by_size((uint32)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize);
 		reloadARMCore(NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress);
 	}
 	return false;

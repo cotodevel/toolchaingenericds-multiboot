@@ -29,6 +29,7 @@ USA
 #include "ipcfifoTGDS.h"
 #include "dswnifi.h"
 #include "utilsTGDS.h"
+#include "biosTGDS.h"
 
 #define ARM7COMMAND_RELOADNDS (u32)(0xFFFFFF01)
 #define NDSLOADER_INIT_OK (u32)(0xFF222218)	//Minimal setup: OK (NDSLoader context not generated yet)
@@ -86,6 +87,23 @@ struct ndsloader_s
 #define NDS_LOADER_DLDISECTION_CACHED		(NDS_LOADER_IPC_BOOTSTUBARM7_CACHED - (16*1024))	//0x023C8000
 #define NDS_LOADER_DLDISECTION_UNCACHED 	(NDS_LOADER_DLDISECTION_CACHED | 0x400000)
 
+static inline void reloadARMCore(u32 targetAddress){
+	REG_IF = REG_IF;	// Acknowledge interrupt
+	REG_IE = 0;
+	REG_IME = IME_DISABLE;	// Disable interrupts
+	swiDelay(800);
+	swiSoftResetByAddress(targetAddress);	// Jump to boot loader
+}
+
+static inline void runBootstrapARM7(void){
+	#ifdef ARM9
+	SendFIFOWordsITCM(ARM7COMMAND_RELOADNDS, 0);
+	#endif
+	
+	#ifdef ARM7
+	reloadARMCore((u32)NDS_LOADER_IPC_BOOTSTUBARM7_CACHED);	//Run Bootstrap7 
+	#endif	
+}
 
 #endif
 
@@ -94,10 +112,8 @@ struct ndsloader_s
 extern "C"{
 #endif
 
-extern void runBootstrapARM7(void);
 extern void setNDSLoaderInitStatus(int ndsloaderStatus);
 extern void waitWhileNotSetStatus(u32 status);	//[Blocking]: Local ARM Core waits until External action takes place, waits while resolving internal NDS hardware wait states.
-extern void reloadARMCore(u32 targetAddress);
 
 #ifdef __cplusplus
 }
