@@ -52,6 +52,10 @@ static inline char * canGoBackToLoader(){
 			strcpy(curLoaderNameFromDldiString, "0:/_DS_MENU.dat");
 			return (char*)&curLoaderNameFromDldiString[0];
 		}
+		if(strcmp(dldiName, "Ninjapass X9 (SD Card)") == 0){	//R4iGold loader
+			strcpy(curLoaderNameFromDldiString, "0:/loader.nds");
+			return (char*)&curLoaderNameFromDldiString[0];
+		}
 	}
 	return NULL;
 }
@@ -72,7 +76,7 @@ void menuShow(){
 
 static inline void initNDSLoader(){
 	coherent_user_range_by_size((uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (96*1024) + (64*1024) + (16*1024));
-	dmaFillHalfWord(3, 0, (uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (96*1024) + (64*1024) + (16*1024));
+	dmaFillHalfWord(0, 0, (uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (96*1024) + (64*1024) + (16*1024));
 	
 	//copy loader code (arm7bootldr.bin) to ARM7's EWRAM portion while preventing Cache issues
 	coherent_user_range_by_size((uint32)&arm7bootldr[0], (int)arm7bootldr_size);					
@@ -248,7 +252,7 @@ bool fillNDSLoaderContext(char * filename){
 		flush_icache_all();
 		flush_dcache_all();
 		//Copy and relocate current TGDS DLDI section into target ARM9 binary
-		bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize, (u32)&_dldi_start);
+		bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize, (u32)&_io_dldi_stub);
 		if(stat == false){
 			printf("DLDI Patch failed. APP does not support DLDI format.");
 		}
@@ -266,11 +270,12 @@ bool fillNDSLoaderContext(char * filename){
 
 int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 	
-	/*			TGDS 1.5 Standard ARM9 Init code start	*/
+	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	bool isTGDSCustomConsole = false;	//set default console or custom console: default console
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
-	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup());
+	bool isCustomTGDSMalloc = false;
+	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
 	printf("     ");
@@ -293,7 +298,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	flush_icache_all();
 	flush_dcache_all();
-	/*			TGDS 1.5 Standard ARM9 Init code end	*/
+	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
 	initNDSLoader();	//set up NDSLoader
 	

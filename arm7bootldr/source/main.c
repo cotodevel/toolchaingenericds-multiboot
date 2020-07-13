@@ -28,9 +28,9 @@ static inline void enterGDBFromARM7(void){
 }
 
 int main(int _argc, sint8 **_argv) {
-	/*			TGDS 1.5 Standard ARM7 Init code start	*/
+	/*			TGDS 1.6 Standard ARM7 Init code start	*/
 	installWifiFIFO();		
-	/*			TGDS 1.5 Standard ARM7 Init code end	*/
+	/*			TGDS 1.6 Standard ARM7 Init code end	*/
 	
 	waitWhileNotSetStatus(NDSLOADER_LOAD_OK);	//this bootstub will proceed only when file has been loaded properly
 	

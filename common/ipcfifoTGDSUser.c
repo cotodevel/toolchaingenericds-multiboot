@@ -22,8 +22,8 @@ USA
 //TGDS required version: IPC Version: 1.3
 
 //IPC FIFO Description: 
-//		TGDSIPC 		= 	Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
-//		TGDSUSERIPC		=	Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
+//		getsIPCSharedTGDS() 		= 	Access to TGDS internal IPC FIFO structure. 		(ipcfifoTGDS.h)
+//		getsIPCSharedTGDSSpecific()	=	Access to TGDS Project (User) IPC FIFO structure	(ipcfifoTGDSUser.h)
 
 #include "ipcfifoTGDS.h"
 #include "ipcfifoTGDSUser.h"
@@ -53,6 +53,13 @@ USA
 
 #endif
 
+#ifdef ARM9
+__attribute__((section(".itcm")))
+#endif
+struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
+	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(getUserIPCAddress());
+	return sIPCSharedTGDSSpecificInst;
+}
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
@@ -178,8 +185,8 @@ void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 		//shared
 		case(NDSLOADER_INITDLDIARM7_BUSY):{
 			#ifdef ARM9
-			coherent_user_range_by_size((u32)&_dldi_start, (int)16*1024);	//prevent cache problems
-			memcpy((u32*)NDS_LOADER_DLDISECTION_UNCACHED, (u32*)&_dldi_start, (int)16*1024);
+			coherent_user_range_by_size((u32)&_io_dldi_stub, (int)16*1024);	//prevent cache problems
+			memcpy((u32*)NDS_LOADER_DLDISECTION_UNCACHED, (u32*)&_io_dldi_stub, (int)16*1024);
 			setNDSLoaderInitStatus(NDSLOADER_INITDLDIARM7_DONE);
 			#endif
 		}

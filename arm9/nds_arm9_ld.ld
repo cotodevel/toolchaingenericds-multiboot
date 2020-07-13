@@ -23,12 +23,16 @@ MEMORY
 {
 	DTCM : ORIGIN = 0x0b000000, LENGTH = 16K	
 	ITCM : ORIGIN = 0x01000000, LENGTH = 32K	/* alternate 0x00000000 vectors here */
+	VECTORS : ORIGIN = 0x01008000 - 256, LENGTH = 256
 	GBAROM : ORIGIN = 0x08000000, LENGTH = 32M
 	EWRAM : ORIGIN = 0x02340000, LENGTH = 4M
 }
 
 _itcm_start = ORIGIN(ITCM);
 _itcm_end = ORIGIN(ITCM)	+	LENGTH(ITCM);
+
+_vector_start = ORIGIN(VECTORS);
+_vector_end = ORIGIN(VECTORS)	+	LENGTH(VECTORS);
 
 _ewram_start = ORIGIN(EWRAM);
 _ewram_end = ORIGIN(EWRAM)	+	LENGTH(EWRAM);
@@ -50,6 +54,7 @@ sp_FIQ	= sp_IRQ - 0x200;	/* fiq exception */
 sp_ABT	= sp_FIQ - 0x200;	/* prefetch / data aborts exception */
 sp_UND	= sp_ABT - 0x200;	/* undefined exception */
 sp_USR	= sp_UND - 0x200;	/* usr / sys stacks */
+sp_SYS	= sp_USR;	/* usr / sys stacks */
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm","elf32-littlearm")
 OUTPUT_ARCH(arm)
@@ -115,6 +120,13 @@ SECTIONS
 		KEEP (*(.itcm*))
 	} > ITCM AT > EWRAM
 	__itcm_vma_end__ = .;
+	
+	__vectors_vma_start = .;
+	.vectors      : 
+	{
+		KEEP (*(.vectors*))
+	} > VECTORS AT > EWRAM
+	__vectors_vma_end__ = .;
 	
 	__dtcm_vma_start = .;
 	.dtcm      : 

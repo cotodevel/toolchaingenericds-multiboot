@@ -23,6 +23,7 @@ USA
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
+#include "utilsTGDS.h"
 #include "limitsTGDS.h"
 #include "dldi.h"
 
