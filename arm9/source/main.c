@@ -49,10 +49,10 @@ static inline char * canGoBackToLoader(){
 	char * dldiName = dldi_tryingInterface();
 	if(dldiName != NULL){
 		if(strcmp(dldiName, "R4iDSN") == 0){	//R4iGold loader
-			strcpy(curLoaderNameFromDldiString, "0:/_DS_MENU.dat");
+			strcpy(curLoaderNameFromDldiString, "0:/_DS_MENU.dat_ori");	//this allows to return to original payload code, and autoboot to TGDS-multiboot 
 			return (char*)&curLoaderNameFromDldiString[0];
 		}
-		if(strcmp(dldiName, "Ninjapass X9 (SD Card)") == 0){	//R4iGold loader
+		if(strcmp(dldiName, "Ninjapass X9 (SD Card)") == 0){	//Ninjapass X9SD
 			strcpy(curLoaderNameFromDldiString, "0:/loader.nds");
 			return (char*)&curLoaderNameFromDldiString[0];
 		}
@@ -380,7 +380,8 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 			else{
 				clrscr();
 				printf("--");
-				printf("Dldi name: %s isn't registered.", dldi_tryingInterface());
+				printf("Dldi name: %s ", dldi_tryingInterface());
+				printf("isn't registered.");
 				printf("Press B to exit.");
 				scanKeys();
 				while(1==1){
@@ -389,6 +390,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 						break;
 					}
 				}
+				menuShow();
 			}
 		}
 		
