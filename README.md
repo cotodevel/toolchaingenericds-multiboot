@@ -32,9 +32,6 @@ So basically:
 ARM9: (0x02400000 - 0x02340000) = 0x02400000 - 0xC0000 - 0x02000000 = 0x340000 ~ 3.407.872 bytes, which is NOT too bad ;-)
 
 
-Todo:
-TGDS-multiboot should execute from 0x02000000 and that will allow to reload itself and other NDS apps relying on the Loader Code address.
-Workaround: Some dkARM DS binaries aren't working, could be the above or something else. 
-			As workaround you can reload moonshell2 through tgds-multiboot, then reload the problematic ds binary.
+Todo: Some dkARM DS binaries aren't working. As a workaround you can reload moonshell2 through tgds-multiboot, then reload the problematic ds binary.
 
 Coto

@@ -16,16 +16,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
 USA
 */
 
-/* Coto: linker file for NDS ARM9 processor, could be adapted for DSi-3DS */
+/* Coto: own linker stuff. Written by me. for NDS hardware (non DSi-3DS)*/
 
 /* attributes can actually help in debugging because if you try to move functions to DTCM, for example, compiler will rant since DTCM is DATA only path and not execution*/
 MEMORY
 {
 	DTCM : ORIGIN = 0x0b000000, LENGTH = 16K
-	ITCM : ORIGIN = 0x01FF8300, LENGTH = 32K - 768
-	VECTORS : ORIGIN = 0x01FF8000, LENGTH = 768
+	ITCM : ORIGIN = 0x01FF8300, LENGTH = 32K - 1K + 256
+	VECTORS : ORIGIN = 0x01FF8000, LENGTH = 1K - 256
 	GBAROM : ORIGIN = 0x08000000, LENGTH = 32M
-	EWRAM : ORIGIN = 0x02340000, LENGTH = 4M
+	BOOTCODE : ORIGIN = 0x02000000, LENGTH = 768
+	EWRAM : ORIGIN = 0x02000000 + 768, LENGTH = 4M
 }
 
 _itcm_start = ORIGIN(ITCM);
@@ -37,6 +38,9 @@ _vector_end = ORIGIN(VECTORS)	+	LENGTH(VECTORS);
 _ewram_start = ORIGIN(EWRAM);
 _ewram_end = ORIGIN(EWRAM)	+	LENGTH(EWRAM);
 
+_iwram_start = _ewram_start;
+_iwram_end = _ewram_end;
+
 _gba_start = ORIGIN(GBAROM);
 _gba_end = ORIGIN(GBAROM)	+	LENGTH(GBAROM);
 
@@ -44,33 +48,50 @@ _dtcm_start = ORIGIN(DTCM);
 _dtcm_end = ORIGIN(DTCM)	+	LENGTH(DTCM);
 
 /* ARM9 Specific */
-_arm9_irqcheckbits = ORIGIN(DTCM) + 0x3FF8;	/* __irq_flags */
-_arm9_irqhandler = ORIGIN(DTCM) + 0x3FFC;	/* __irq_vector */
+_arm7_irqcheckbits = ORIGIN(DTCM) + 0x3FF8;	/* __irq_flags */
+_arm7_irqhandler = ORIGIN(DTCM) + 0x3FFC;	/* __irq_vector */
 
 /* ARM ABI says stacks are full decreasing */
-sp_SVC	= _dtcm_end  - 0x200;	/* reset, swi exception*/
-sp_IRQ	= sp_SVC - 0x200;	/*irq exception*/
-sp_FIQ	= sp_IRQ - 0x200;	/* fiq exception */
-sp_ABT	= sp_FIQ - 0x200;	/* prefetch / data aborts exception */
-sp_UND	= sp_ABT - 0x200;	/* undefined exception */
-sp_USR	= sp_UND - 0x200;	/* usr / sys stacks */
-sp_SYS	= sp_USR;	/* usr / sys stacks */
+sp_SVC	= _dtcm_end - 0x200;
+sp_IRQ	= sp_SVC - 0x200;
+sp_FIQ	= sp_IRQ - 0x200;
+sp_ABT	= sp_FIQ - 0x200;
+sp_UND	= sp_ABT - 0x200;
+sp_USR	= sp_UND - 0x200;
+sp_SYS	= sp_USR;
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm","elf32-littlearm")
 OUTPUT_ARCH(arm)
 ENTRY(_start)
 SECTIONS
 {
-	.init : { __init_start__ = .;
-		*(.init*)
+	__init_start__ = .;
+	.init : { 
+		*(.init*)				/* bootldr runs from VRAM A: 0x06800000 */
 		. = ALIGN(4);
-	} > EWRAM = 0xff
+	} > BOOTCODE = 0xFF
+	
+	.init2 : { 
+		*(.init2*)
+		. = ALIGN(4);
+	} > BOOTCODE = 0xFF
 	__init_end__ = .;
+	
 	.dldiSection :  { 
-		. += (0x300 - 0x180);	/* 0x02300300                _io_dldi_stub */
 		KEEP(*(.dldiSection*));	/* DLDI section is always at this address so it's detected by DLDI patchers */
 		. = ALIGN(4);
 	} > EWRAM = 0xff
+	
+	__text_start__ = .;
+	.text : {
+		*(.text)
+		*(.text*)
+		*(.gnu.linkonce.t*)
+		*(.gnu.linkonce.d*)
+		. = ALIGN(4);
+	} > EWRAM = 0xFF
+	__text_end__ = .;
+	
 	__preinit_array_start__ = .;
 	.preinit_array : { 
 		*(.preinit_array*)
@@ -89,14 +110,6 @@ SECTIONS
 		. = ALIGN(4);
 	} > EWRAM = 0xff
 	__fini_array_end__ = .;
-	__text_start__ = .;
-	.text : {
-		*(.text)
-		*(.text*)
-		*(.gnu.linkonce.t*)
-		. = ALIGN(4);
-	} > EWRAM = 0xff
-	__text_end__ = .;
 	__bss_vma_start = .;
 	.bss : {
 		*(.dynbss*)
@@ -186,12 +199,6 @@ SECTIONS
 	} > EWRAM = 0xff
 	__fini_end__ = .;
 	__lib__end__ = __fini_end__;
-	__vectors_vma_start = .;
-	.vectors : {
-		KEEP (*(.vectors*))
-		. = ALIGN(4);
-	} > VECTORS AT > EWRAM
-	__vectors_vma_end__ = .;
 	__itcm_vma_start = .;
 	.itcm : {
 		KEEP (*(.itcm*))
@@ -204,5 +211,11 @@ SECTIONS
 		. = ALIGN(4);
 	} > DTCM AT > EWRAM
 	__dtcm_vma_end__ = .;
-	__vma_stub_end__ = __lib__end__ + SIZEOF(.vectors) + SIZEOF(.itcm) + SIZEOF(.dtcm);
+	__vectors_vma_start = .;
+	.vectors : {
+		KEEP (*(.vectors*))
+		. = ALIGN(4);
+	} > VECTORS AT > EWRAM
+	__vectors_vma_end__ = .;
+	__vma_stub_end__ = __lib__end__ + SIZEOF(.itcm) + SIZEOF(.dtcm) + SIZEOF(.vectors);
 }

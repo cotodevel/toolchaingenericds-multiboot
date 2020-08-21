@@ -37,20 +37,29 @@ export EXECUTABLE_VERSION_HEADER =	0.1
 export EXECUTABLE_VERSION =	"$(EXECUTABLE_VERSION_HEADER)"
 
 #The ndstool I use requires to have the elf section removed, so these rules create elf headerless- binaries.
-export BINSTRIP_RULE_7 =	arm7.bin
-export BINSTRIP_RULE_arm7bootldr =	arm7bootldr.bin
-export BINSTRIP_RULE_9 =	arm9.bin
+export DIR_ARM7 = arm7
 export BUILD_ARM7	=	build
+export DIR_ARM9 = arm9
 export BUILD_ARM9	=	build
 export ELF_ARM7 = arm7.elf
 export ELF_ARM9 = arm9.elf
 export NONSTRIPELF_ARM7 = arm7-nonstripped.elf
 export NONSTRIPELF_ARM9 = arm9-nonstripped.elf
 
+export DECOMPRESSOR_BOOTCODE_9 = arm9bootldr
+
+export BINSTRIP_RULE_7 :=	$(DIR_ARM7).bin
+export BINSTRIP_RULE_arm7bootldr =	arm7bootldr.bin
+export BINSTRIP_RULE_9 :=	$(DIR_ARM9).bin
+export BINSTRIP_RULE_COMPRESSED_9 :=	$(DECOMPRESSOR_BOOTCODE_9).bin
+
 export TARGET_LIBRARY_CRT0_FILE_7 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_9 = nds_arm_ld_crt0
+export TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9 = nds_arm_ld_crt0
+
 export TARGET_LIBRARY_LINKER_FILE_7 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_7).S
 export TARGET_LIBRARY_LINKER_FILE_9 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_9).S
+export TARGET_LIBRARY_LINKER_FILE_COMPRESSED_9 = $(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).S
 
 export TARGET_LIBRARY_NAME_7 = toolchaingen7
 export TARGET_LIBRARY_NAME_9 = toolchaingen9
@@ -59,15 +68,13 @@ export TARGET_LIBRARY_FILE_9	=	lib$(TARGET_LIBRARY_NAME_9).a
 
 #####################################################ARM7#####################################################
 
-export DIRS_ARM7_SRC = data/	\
-			source/	\
+export DIRS_ARM7_SRC = source/	\
 			source/interrupts/	\
 			../common/	\
 			../common/templateCode/source/	\
 			../common/templateCode/data/arm7/	
 			
-export DIRS_ARM7_HEADER = data/	\
-			source/	\
+export DIRS_ARM7_HEADER = source/	\
 			source/interrupts/	\
 			include/	\
 			../common/	\
@@ -87,15 +94,14 @@ export DIRS_ARM9_SRC = data/	\
 			../common/templateCode/data/arm9/	
 			
 export DIRS_ARM9_HEADER = data/	\
+			build/	\
 			include/	\
 			source/gui/	\
 			source/TGDSMemoryAllocator/	\
 			../common/	\
 			../common/templateCode/source/	\
 			../common/templateCode/data/arm9/	\
-			build/	\
 			../$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/include/
-
 # Build Target(s)	(both processors here)
 all: $(EXECUTABLE_FNAME)
 #all:	debug
@@ -110,7 +116,6 @@ compile	:
 	-$(MAKE)	-R	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/
 	-cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC9_FPIC)	$(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)
 	-$(MAKE)	-R	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/
-
 ifeq ($(SOURCE_MAKEFILE7),default)
 	cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC7_NOFPIC)	$(CURDIR)/$(DIR_ARM7)
 endif
@@ -122,10 +127,10 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 	cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC9_NOFPIC)	$(CURDIR)/$(DIR_ARM9)
 endif
 	$(MAKE)	-R	-C	$(DIR_ARM9)/
-
+	$(MAKE)	-R	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
-	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/arm9/$(BINSTRIP_RULE_9) -e9  0x02340000	-b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
+	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9) -e9  0x02000000	-b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
 	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------
@@ -140,6 +145,7 @@ ifeq ($(SOURCE_MAKEFILE7),default)
 	-@rm -rf $(CURDIR)/$(DIR_ARM7)/Makefile
 endif
 #--------------------------------------------------------------------	
+	$(MAKE) clean	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/
 	$(MAKE)	clean	-C	$(DIR_ARM9)/
 	$(MAKE) clean	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/
 ifeq ($(SOURCE_MAKEFILE9),default)
@@ -147,7 +153,7 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
-	-@rm -fr $(EXECUTABLE_FNAME)	$(CURDIR)/common/templateCode/	arm9/data/arm7bootldr.bin
+	-@rm -fr $(EXECUTABLE_FNAME)	$(CURDIR)/common/templateCode/	arm9/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)
 
 rebase:
 	git reset --hard HEAD

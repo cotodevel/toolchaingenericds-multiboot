@@ -16,8 +16,16 @@
 #USA
 #
 
-
-# relative path (if you are outside arm9 folder then $(DIR_ARM9), arm7 is $(DIR_ARM7))
+export DIRS_ARM9_SRC = data/	\
+	source/	\
+	source/interrupts/	\
+			
+export DIRS_ARM9_HEADER = source/	\
+			build/	\
+			include/	\
+			
+			
+# relative path (if you are outside arm9 folder then $(DIR_ARM9), arm7 is $(DIR_ARM9))
 RELATIVE_PATH =	
 
 #Prepare ARM9 dirs
@@ -36,29 +44,29 @@ file_arm9_src_bin=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE
 objs_arm9:=		${file_arm9_src_bin:.bin=.o}	${file_arm9_src_c:.c=.o}	${file_arm9_src_s:.s=.o}	${file_arm9_src_SUPP:.S=.o}		${file_arm9_src_cpp:.cpp=.o}
 d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_SUPP:.S=.d}	${file_arm9_src_cpp:.cpp=.d}
 
-#ARM9 specific definitions.	-fno-common so we force initialized data to rodata
-MAPFILE = $(DIR_ARM9).map
-AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_AS_COMPILER_FLAGS_9)		$(GLOBAL_AS_COMPILER_FLAGS)
-CC_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_CC_COMPILER_FLAGS_9)		$(GLOBAL_CC_COMPILER_FLAGS)	
-CPP_FLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_CXX_COMPILER_FLAGS_9)	$(GLOBAL_CXX_COMPILER_FLAGS)	
+#ARM9 specific definitions. -fno-common so we force initialized data to rodata
+MAPFILE = $(BINSTRIP_RULE_COMPRESSED_9).map
+AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_AS_COMPILER_FLAGS_7)		$(GLOBAL_AS_COMPILER_FLAGS)
+CC_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_CC_COMPILER_FLAGS_7)		$(GLOBAL_CC_COMPILER_FLAGS)		-fPIE	-pie
+CPP_FLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_CXX_COMPILER_FLAGS_7)	$(GLOBAL_CXX_COMPILER_FLAGS)	-fPIE	-pie
 BUILD			= 	$(BUILD_ARM9)
 DIR_SRC			=	$(DIRS_ARM9_SRC)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),-z,defs
-LIBRARIES =	-l$(TARGET_LIBRARY_NAME_9)	-lstdc++	-lcnano9	-lgcc
+LDFLAGS	=	-specs=nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE)
+LIBRARIES =	-l$(TARGET_LIBRARY_NAME_7)	-lstdc++	-lcnano7	-lgcc
 
 ################################################################################################
 
 #Dont modify anything else if not necessary ..
-OBJECTS = 	$(objs_arm9)	$(file_arm9_src_o_out)
+OBJECTS:=	$(objs_arm9)	$(file_arm9_src_o_out)
 OBJDIR 	=	./$(BUILD)
 VPATH 	=	$(DIR_SRC)
-OBJPROG = 	$(addprefix $(OBJDIR)/, $(NONSTRIPELF_ARM9))
+OBJPROG =	$(addprefix $(OBJDIR)/, $(NONSTRIPELF_ARM9))
 
 
-all: makebuild	$(TARGET_LIBRARY_CRT0_FILE_9).o	$(BINSTRIP_RULE_9)
+all: makebuild	$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).o	$(BINSTRIP_RULE_COMPRESSED_9)
 #all: debug
 
 makebuild:
@@ -79,7 +87,7 @@ $(OBJDIR)/%.o : %.c
 #Do C++ (CXX) Compile now!
 $(OBJDIR)/%.o : %.cpp
 	-@echo 'C++ Compile start: $@'
-	$(CPP)	$(CPP_FLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o	$@	-c	$<
+	$(CPP)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o	$@	-c	$<
 	-@echo 'C Compile End: $@'
 
 #Coto: Special "exception" rule. Fixes tricky projects such as SnemulDS's opcodes2.s where GCC AS is used, while compatibility with .S is required for newer projects.
@@ -99,13 +107,13 @@ $(OBJDIR)/%.o : %.S
 	-@echo 'S Compile end: $@'
 
 #Special rule: compile crt0 for arm9 entrypoint
-$(TARGET_LIBRARY_CRT0_FILE_9).o:	$(TARGET_LIBRARY_LINKER_FILE_9)
+$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).o:	$(TARGET_LIBRARY_LINKER_FILE_COMPRESSED_9)
 	-@echo 'S Compile start: crt0s'
-	rm -fr $(BUILD)/$(TARGET_LIBRARY_CRT0_FILE_9).o
+	rm -fr $(BUILD)/$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).o
 	$(CPP)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $(OBJDIR)/$@ -c $<
 	-@echo 'S Compile end: crt0s'
 
-#Linkage. 
+#Linkage.
 $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 	-@echo 'Entering Linking phase'
 	$(CC) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
@@ -117,12 +125,15 @@ $(ELF_ARM9): $(OBJPROG)
 	$(OBJSTRIP)	-s -R .comment -R .gnu.version	$<
 	-mv	$<	$@
 	
-$(BINSTRIP_RULE_9): $(ELF_ARM9)
+$(BINSTRIP_RULE_COMPRESSED_9): $(ELF_ARM9)
+	-@echo 'STRIP End: Remove ELF header and build baremetal Binary executable: $<	->	$@ !'
 	$(OBJCOPY) 	-S -O binary	$<	$@
-	-mv	$@ ../$(DECOMPRESSOR_BOOTCODE_9)/data
 	-rm	$<
 ################################################################################################
-
+	
 clean:
-	-@echo 'cleanup $(DIR_ARM9)'
-	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE) $(OBJDIR)
+	-@echo 'cleanup $(BINSTRIP_RULE_COMPRESSED_9)'
+	-@rm -fr $(BINSTRIP_RULE_COMPRESSED_9)	$(MAPFILE)	$(BUILD_ARM9)	data/$(DIR_ARM9).bin
+	
+debug:
+	-@echo 'debug $(objs_arm9)'
