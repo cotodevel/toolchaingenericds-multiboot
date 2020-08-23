@@ -75,6 +75,9 @@ void menuShow(){
 }
 
 static inline void initNDSLoader(){
+	coherent_user_range_by_size((uint32)(0x02000000), (0x02400000 - 0x02240000));
+	dmaFillHalfWord(0, 0, (uint32)(0x02000000), (0x02400000 - 0x02240000));
+	
 	coherent_user_range_by_size((uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (96*1024) + (64*1024) + (16*1024));
 	dmaFillHalfWord(0, 0, (uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (96*1024) + (64*1024) + (16*1024));
 	

@@ -23,13 +23,13 @@ Simply DLDI patch ToolchainGenericDS-multiboot.nds, if the loader used to boot t
 
 Loader Code map layout:
 
-0x02340000 + (used 315K ~ 0x4F000?) = 0x0238F000 NDS App Size.
+0x02240000 + (used 315K ~ 0x4F000?) = 0x0238F000 NDS App Size.
 0x02400000 - 0x38000 = 0x023C8000 onwards, reserved for NDSLoader context.
 
 So basically:
 0xC0000 used by loader code from top 4MB EWRAM backwards, which leaves us with:
 
-ARM9: (0x02400000 - 0x02340000) = 0x02400000 - 0xC0000 - 0x02000000 = 0x340000 ~ 3.407.872 bytes, which is NOT too bad ;-)
+ARM9: (0x02400000 - 0x02240000) = 0x02400000 - 0xC0000 - 0x02000000 = 0x340000 ~ 3.407.872 bytes, which is NOT too bad ;-)
 
 
 Todo: Some dkARM DS binaries aren't working. As a workaround you can reload moonshell2 through tgds-multiboot, then reload the problematic ds binary.
