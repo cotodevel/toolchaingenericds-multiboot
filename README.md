@@ -1,8 +1,6 @@
 ![ToolchainGenericDS](img/TGDS-Logo.png)
 
-Branch: master -> uses an older loader but it is more compatible with older slot-1 cards.
-
--
+Branch: master
 
 This is the Toolchain Generic multiboot project:
 
@@ -32,6 +30,12 @@ So basically:
 ARM9: (0x02400000 - 0x02340000) = 0x340000 ~ 3.407.872 bytes, which is NOT too bad ;-)
 
 
-Todo: Some dkARM DS binaries aren't working. As a workaround you can reload moonshell2 through tgds-multiboot, then reload the problematic ds binary.
+Todo: 
+
+1)
+Some dkARM DS binaries aren't working. As a workaround you can reload moonshell2 through tgds-multiboot, then reload the problematic ds binary.
+
+2)
+Move dynamically any arm7.bin / arm9.bin targetAddress aiming for 0x02340000 areas
 
 Coto
