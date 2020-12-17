@@ -48,7 +48,7 @@ int main(int _argc, sint8 **_argv) {
 	//Copy ARGV
 	memcpy(((u8*)0x06820000 - (16*1024) - 48 - 0x200), (u32*)0x02FFFE70, (int)0x200);
 	
-	u32 arm9_payload_addr_phys = (u32)0x02340000;
+	u32 arm9_payload_addr_phys = (u32)0x02300000;
 	memcpy((u32*)arm9_payload_addr_phys, (u32*)arm9_payload_addr, arm9_size);
 	
 	//Restore ARGV
