@@ -59,7 +59,7 @@ int main(int _argc, sint8 **_argv) {
 	//Read flash mem to detect NDS hardware by firmware.
 	u32 * flashMem = (u32 *)newarm9;
 	ReadFirmwareARM7Ext(flashMem);
-	struct sIPCSharedTGDS * TGDSIPC = getsIPCSharedTGDS();
+	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 	coherent_user_range((u8*)&TGDSIPC->DSFWHEADERInst.stub[0], (u8*)&TGDSIPC->DSFWHEADERInst.stub[0] + 512);
 	memcpy((u8*)&TGDSIPC->DSFWHEADERInst.stub[0], (u8*)flashMem, sizeof(TGDSIPC->DSFWHEADERInst.stub));
 	
@@ -68,9 +68,4 @@ int main(int _argc, sint8 **_argv) {
 	bootARM9Payload();
 	
 	return 0;
-}
-
-//Custom Button Mapping Handler implementation: IRQ Driven
-void CustomInputMappingHandler(uint32 readKeys){
-	
 }

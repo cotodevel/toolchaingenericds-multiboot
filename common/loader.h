@@ -97,7 +97,7 @@ static inline void reloadARMCore(u32 targetAddress){
 
 static inline void runBootstrapARM7(void){
 	#ifdef ARM9
-	SendFIFOWordsITCM(ARM7COMMAND_RELOADNDS, 0);
+	SendFIFOWords(ARM7COMMAND_RELOADNDS, 0);
 	#endif
 	
 	#ifdef ARM7

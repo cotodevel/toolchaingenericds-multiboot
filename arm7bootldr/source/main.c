@@ -47,13 +47,8 @@ int main(int _argc, sint8 **_argv) {
     
 	while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQVBlankWait();
+		IRQWait(IRQ_HBLANK);
 	}
    
 	return 0;
-}
-
-//Custom Button Mapping Handler implementation: IRQ Driven
-void CustomInputMappingHandler(uint32 readKeys){
-	
 }

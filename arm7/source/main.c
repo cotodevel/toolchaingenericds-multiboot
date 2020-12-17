@@ -50,17 +50,7 @@ int main(int _argc, sint8 **_argv) {
 		//up to this point, is free to reload the EWRAM code
 		
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQVBlankWait();
+		IRQWait(IRQ_HBLANK);
 	}
 	return 0;
-}
-
-//Custom Button Mapping Handler implementation: IRQ Driven
-void CustomInputMappingHandler(uint32 readKeys){
-	
-}
-
-//Project specific: ARM7 Setup for TGDS sound stream
-void initSoundStreamUser(u32 srcFmt){
-	
 }
