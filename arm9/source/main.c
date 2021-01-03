@@ -320,7 +320,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 	while (1){
 		scanKeys();
 		
-		if (keysPressed() & KEY_START){
+		if (keysDown() & KEY_START){
 			char startPath[MAX_TGDSFILENAME_LENGTH+1];
 			strcpy(startPath,"/");
 			while( ShowBrowser((char *)startPath, (char *)&curChosenBrowseFile[0]) == true ){	//as long you keep using directories ShowBrowser will be true
@@ -328,7 +328,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 			}
 			
 			scanKeys();
-			while((keysPressed() & KEY_A) || (keysPressed() & KEY_START)){
+			while((keysDown() & KEY_A) || (keysDown() & KEY_START)){
 				scanKeys();
 			}
 			
@@ -340,9 +340,9 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 			
 			while(1==1){
 				scanKeys();
-				if(keysPressed()&KEY_A){
+				if(keysDown()&KEY_A){
 					scanKeys();
-					while(keysPressed() & KEY_A){
+					while(keysDown() & KEY_A){
 						scanKeys();
 					}
 					
@@ -360,7 +360,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 					addARGV(2, (char*)&thisArgv);
 					break;
 				}
-				else if(keysPressed()&KEY_B){
+				else if(keysDown()&KEY_B){
 					
 					char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
 					memset(thisArgv, 0, sizeof(thisArgv));
@@ -375,7 +375,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 			fillNDSLoaderContext(curChosenBrowseFile);
 		}
 		
-		if (keysPressed() & KEY_SELECT){
+		if (keysDown() & KEY_SELECT){
 			char * loaderName = canGoBackToLoader();
 			if(loaderName != NULL){
 				fillNDSLoaderContext(loaderName);
@@ -389,7 +389,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 				scanKeys();
 				while(1==1){
 					scanKeys();
-					if(keysPressed()&KEY_B){
+					if(keysDown()&KEY_B){
 						break;
 					}
 				}
@@ -431,7 +431,7 @@ int main(int argc, char argv[argvItems][MAX_TGDSFILENAME_LENGTH]) {
 				int keys = 0;
 				while(1){
 					scanKeys();
-					keys = keysPressed();
+					keys = keysDown();
 					if (keys&KEY_A){
 						break;
 					}
