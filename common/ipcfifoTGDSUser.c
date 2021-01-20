@@ -57,7 +57,7 @@ USA
 __attribute__((section(".itcm")))
 #endif
 struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
-	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (__attribute__((packed)) struct sIPCSharedTGDSSpecific*)(TGDSIPCUserStartAddress);
+	struct sIPCSharedTGDSSpecific* sIPCSharedTGDSSpecificInst = (struct sIPCSharedTGDSSpecific*)(TGDSIPCUserStartAddress);
 	return sIPCSharedTGDSSpecificInst;
 }
 
@@ -212,3 +212,15 @@ void EWRAMPrioToARM9(){
 	//give EWRAM to ARM9
 	*(u16*)0x04000204 = (  (*(u16*)0x04000204 & ~(1<<15)) | (0<<15));
 }
+
+#ifdef ARM9
+
+void updateStreamCustomDecoder(u32 srcFrmt){
+
+}
+
+void freeSoundCustomDecoder(u32 srcFrmt){
+
+}
+
+#endif
