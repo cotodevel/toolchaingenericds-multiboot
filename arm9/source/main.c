@@ -94,7 +94,7 @@ static u8 * outBuf9 = NULL;
 //generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
 bool fillNDSLoaderContext(char * filename){
 	
-	FILE * fh = fopen(filename, "r");
+	FILE * fh = fopen(filename, "r+");
 	if(fh != NULL){
 		
 		int headerSize = sizeof(struct sDSCARTHEADER);
@@ -237,18 +237,16 @@ bool fillNDSLoaderContext(char * filename){
 			cur_clustersector = (u32)NDS_LOADER_IPC_CTX_UNCACHED->sectorTableBootCode[data_read];
 		}
 		
-		printf("ARM7 %d bytes. [Addr: %x]", arm7BootCodeSize, (outBuf7 - 0x400000));
-		printf("ARM9 %d bytes. [Addr: %x]", arm9BootCodeSize, (outBuf9 - 0x400000));
+		printf("ARM7 %d bytes. [Addr: %x]", arm7BootCodeSize, (unsigned int)(outBuf7 - 0x400000));
+		printf("ARM9 %d bytes. [Addr: %x]", arm9BootCodeSize, (unsigned int)(outBuf9 - 0x400000));
 		
 		//Build NDS Header
-		memcpy((u8*)0x027FFE00, NDSHeader, (headerSize*sizeof(u8)) );
+		memcpy((u8*)0x027FFE00, NDSHeader, (headerSize*sizeof(u8)));
 		
 		printf("NDSLoader end. ");
 		
 		free(outBuf);
 		free(NDSHeader);
-		fclose(fh);
-		int ret=FS_deinit();
 		
 		asm("mcr	p15, 0, r0, c7, c10, 4");
 		WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
@@ -259,6 +257,16 @@ bool fillNDSLoaderContext(char * filename){
 		if(stat == false){
 			printf("DLDI Patch failed. APP does not support DLDI format.");
 		}
+		
+		//Path DLDI to file before launching it
+		fseek(fh, (int)arm9BootCodeOffsetInFile, SEEK_SET);
+		int wrote = fwrite((u8*)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, 1, arm9BootCodeSize, fh);
+		if(wrote >= 0){
+			sint32 FDToSync = fileno(fh);
+			fsync(FDToSync);	//save cached changes into disk
+		}
+		fclose(fh);
+		int ret=FS_deinit();
 		
 		runBootstrapARM7();	//ARM9 Side						/	
 		setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);	//		|	Wait until ARM7.bin is copied back to IWRAM's target address
@@ -272,7 +280,7 @@ bool fillNDSLoaderContext(char * filename){
 }
 
 bool stopSoundStreamUser(){
-	
+	return false;
 }
 
 void closeSoundUser(){
