@@ -25,7 +25,7 @@ USA
 #include "wifi_arm7.h"
 
 void enterGDBFromARM7(void){
-	SendFIFOWords(NDSLOADER_ENTERGDB_FROM_ARM7, 0);
+	SendFIFOWords(NDSLOADER_ENTERGDB_FROM_ARM7);
 }
 
 int main(int argc, char **argv) {
