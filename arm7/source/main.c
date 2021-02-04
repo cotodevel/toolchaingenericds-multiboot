@@ -29,7 +29,7 @@ void initDLDIARM7(u32 srcDLDIAddr){	//stubbed
 }
 
 //---------------------------------------------------------------------------------
-int main(int argc, char **argv) {
+int main(int argc, char **argv)  __attribute__ ((optnone)) {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
 	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
@@ -43,8 +43,6 @@ int main(int argc, char **argv) {
 	writeDebugBuffer7("TGDS ARM7.bin Boot OK!", 1, (int*)&argBuffer[0]);
 		
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
-	
-	waitWhileNotSetStatus(NDSLOADER_INIT_OK);	//wait for init NDSLoader code 
 	
     while (1) {
 		//up to this point, is free to reload the EWRAM code

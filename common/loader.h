@@ -32,7 +32,6 @@ USA
 #include "biosTGDS.h"
 
 #define ARM7COMMAND_RELOADNDS (u32)(0xFFFFFF01)
-#define NDSLOADER_INIT_OK (u32)(0xFF222218)	//Minimal setup: OK (NDSLoader context not generated yet)
 #define NDSLOADER_LOAD_OK (u32)(0xFF222219)	//File read OK -> (NDSLoader context generated properly) ARM7 must reload ARM7.bin into arm7 target address
 #define NDSLOADER_START (u32)(0xFF22221A)	//Reload ARM7.bin -> ARM7 target addresses && ARM9.bin -> ARM9 target addresses and boot NDS homebrew
 

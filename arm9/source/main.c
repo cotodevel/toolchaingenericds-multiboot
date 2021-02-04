@@ -74,25 +74,20 @@ void menuShow(){
 	printarm7DebugBuffer();
 }
 
-static inline void initNDSLoader(){
-	coherent_user_range_by_size((uint32)(0x02000000), (0x02400000 - 0x02300000));
-	dmaFillHalfWord(0, 0, (uint32)(0x02000000), (0x02400000 - 0x02300000));
-	
-	coherent_user_range_by_size((uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (96*1024) + (64*1024) + (16*1024));
-	dmaFillHalfWord(0, 0, (uint32)NDS_LOADER_DLDISECTION_CACHED, (48*1024) + (96*1024) + (64*1024) + (16*1024));
-	
+//This code runs from the TGDS Project host code, and reloads below bootstub code, relocated to run from VRAM.
+void ReloadNDSBinaryRunPayload(char * filename) __attribute__ ((optnone)) {
+	ReloadNDSBinaryFromContext(filename);
+}
+
+//new: this bootcode will run from VRAM, once the NDSBinary context has been created and handled by the reload bootcode.
+//generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
+bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
+	volatile u8 * outBuf7 = NULL;
+	volatile u8 * outBuf9 = NULL;
+
 	//copy loader code (arm7bootldr.bin) to ARM7's EWRAM portion while preventing Cache issues
 	coherent_user_range_by_size((uint32)&arm7bootldr[0], (int)arm7bootldr_size);					
 	memcpy ((void *)NDS_LOADER_IPC_BOOTSTUBARM7_CACHED, (u32*)&arm7bootldr[0], arm7bootldr_size); 	//memcpy ( void * destination, const void * source, size_t num );	//memset(void *str, int c, size_t n)
-
-	setNDSLoaderInitStatus(NDSLOADER_INIT_OK);
-}
-
-static u8 * outBuf7 = NULL;
-static u8 * outBuf9 = NULL;
-
-//generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
-bool fillNDSLoaderContext(char * filename){
 	
 	FILE * fh = fopen(filename, "r+");
 	if(fh != NULL){
@@ -159,7 +154,7 @@ bool fillNDSLoaderContext(char * filename){
 		fseek(fh,0,SEEK_SET);
 		NDS_LOADER_IPC_CTX_UNCACHED->fileSize = fileSize;
 		
-		printf("fillNDSLoaderContext():");
+		printf("ReloadNDSBinaryFromContext():");
 		printf("arm7BootCodeSize:%d", arm7BootCodeSize);
 		printf("arm7BootCodeOffsetInFile:%x", arm7BootCodeOffsetInFile);
 		printf("arm7BootCodeEntryAddress:%x", NDS_LOADER_IPC_CTX_UNCACHED->arm7EntryAddress);
@@ -287,7 +282,7 @@ void closeSoundUser(){
 	//Stubbed. Gets called when closing an audiostream of a custom audio decoder
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	bool isTGDSCustomConsole = false;	//set default console or custom console: default console
@@ -318,8 +313,6 @@ int main(int argc, char **argv) {
 	flush_icache_all();
 	flush_dcache_all();
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
-	
-	initNDSLoader();	//set up NDSLoader
 	
 	//load TGDS Logo (NDS BMP Image)
 	//VRAM A Used by console
@@ -388,13 +381,13 @@ int main(int argc, char **argv) {
 				}
 			}
 			
-			fillNDSLoaderContext(curChosenBrowseFile);
+			ReloadNDSBinaryRunPayload(curChosenBrowseFile);
 		}
 		
 		if (keysDown() & KEY_SELECT){
 			char * loaderName = canGoBackToLoader();
 			if(loaderName != NULL){
-				fillNDSLoaderContext(loaderName);
+				ReloadNDSBinaryRunPayload(loaderName);
 			}
 			else{
 				clrscr();

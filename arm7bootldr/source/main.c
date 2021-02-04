@@ -28,7 +28,7 @@ void enterGDBFromARM7(void){
 	SendFIFOWords(NDSLOADER_ENTERGDB_FROM_ARM7);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
 	installWifiFIFO();		
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/

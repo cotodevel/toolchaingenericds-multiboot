@@ -28,9 +28,7 @@ USA
 bool GDBEnabled = false;
 
 //This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
-__attribute__((optimize("O0")))
-__attribute__ ((noinline))
-int main(int argc, char **argv) {
+int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	
 	u32 * dest = 0x02000000;
 	int arm9_payload_addr = (int)dest[0];
