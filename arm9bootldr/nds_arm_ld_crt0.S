@@ -46,7 +46,7 @@ _start:
 	
 	//copy the vram code to a
 	ldr r0,= _start2
-	ldr r1,= (128 * 1024)
+	ldr r1,= (512 * 1024)
 	ldr r2,= 0x06800000
 	mov r7, r2
 vram_bootldr_copy_loop:

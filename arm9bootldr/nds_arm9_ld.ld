@@ -26,7 +26,7 @@ MEMORY
 	ITCM : ORIGIN = 0x01FF8000, LENGTH = 32K
 	GBAROM : ORIGIN = 0x08000000, LENGTH = 32M
 	BOOTCODE : ORIGIN = 0x02000000, LENGTH = 768
-	EWRAM : ORIGIN = 0x02000000 + 768, LENGTH = 4M
+	EWRAM : ORIGIN = 0x02000000 + 768, LENGTH = 512K
 }
 
 _itcm_start = ORIGIN(ITCM);
@@ -52,12 +52,12 @@ _arm7_irqcheckbits = ORIGIN(DTCM) + 0x3FF8;	/* __irq_flags */
 _arm7_irqhandler = ORIGIN(DTCM) + 0x3FFC;	/* __irq_vector */
 
 /* ARM ABI says stacks are full decreasing */
-sp_SVC	= _dtcm_end - 0x200;	/* reset, swi exception*/
-sp_IRQ	= sp_SVC - 0x200;	/*irq exception*/
-sp_FIQ	= sp_IRQ - 0x200;	/* fiq exception */
-sp_ABT	= sp_FIQ - 0x200;	/* prefetch / data aborts exception */
-sp_UND	= sp_ABT - 0x200;	/* undefined exception */
-sp_USR	= sp_UND - 0x200;	/* usr / sys stacks */
+sp_SVC	= _dtcm_end - 0x400;	/* reset, swi exception*/
+sp_IRQ	= sp_SVC - 0x400;	/*irq exception*/
+sp_FIQ	= sp_IRQ - 0x400;	/* fiq exception */
+sp_ABT	= sp_FIQ - 0x400;	/* prefetch / data aborts exception */
+sp_UND	= sp_ABT - 0x400;	/* undefined exception */
+sp_USR	= sp_UND - 0x400;	/* usr / sys stacks */
 sp_SYS = sp_USR;
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm","elf32-littlearm")
