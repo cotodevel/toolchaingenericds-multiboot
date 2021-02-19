@@ -157,10 +157,9 @@ $(ELF_ARM9): $(OBJPROG)
 	
 $(BINSTRIP_RULE_9): $(ELF_ARM9)
 	$(OBJCOPY) 	-S -O binary	$<	$@
-	-mv	$@ ../$(DECOMPRESSOR_BOOTCODE_9)/data
 	-rm	$<
 ################################################################################################
 
 clean:
 	-@echo 'cleanup $(DIR_ARM9)'
-	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE) $(OBJDIR)
+	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE) $(OBJDIR)	data/tgds_multiboot_payload.bin

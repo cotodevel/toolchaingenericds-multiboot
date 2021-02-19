@@ -48,7 +48,7 @@ export ELF_ARM9 = arm9.elf
 export NONSTRIPELF_ARM7 = arm7-nonstripped.elf
 export NONSTRIPELF_ARM9 = arm9-nonstripped.elf
 
-export DECOMPRESSOR_BOOTCODE_9 = arm9bootldr
+export DECOMPRESSOR_BOOTCODE_9 = tgds_multiboot_payload
 
 export BINSTRIP_RULE_7 :=	$(DIR_ARM7).bin
 export BINSTRIP_RULE_arm7bootldr =	arm7bootldr.bin
@@ -123,16 +123,21 @@ ifeq ($(SOURCE_MAKEFILE7),default)
 endif
 	$(MAKE)	-R	-C	$(DIR_ARM7)/
 	$(MAKE)	-R	-C	arm7bootldr/
-	-mv arm7bootldr/arm7bootldr.bin	arm9/data
+	-mv arm7bootldr/arm7bootldr.bin	tgds_multiboot_payload/data
 	
 ifeq ($(SOURCE_MAKEFILE9),default)
 	cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC9_NOFPIC)	$(CURDIR)/$(DIR_ARM9)
 endif
-	$(MAKE)	-R	-C	$(DIR_ARM9)/
+	$(MAKE)	-R	-C	$(CURDIR)/stage2_9/
 	$(MAKE)	-R	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/
+	$(MAKE)	-R	-C	$(DIR_ARM9)/
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
-	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9) -e9  0x02000000	-b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
+	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/ARM9/$(BINSTRIP_RULE_9) -e9  0x02000000	-b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
+	-mv $(EXECUTABLE_FNAME)	release/arm9dldi-ntr
+	-mv arm9/build/tgds_multiboot_payload.h	release/arm9dldi-ntr
+	-mv arm9/build/tgds_multiboot_payload.c	release/arm9dldi-ntr
+	
 	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------
@@ -147,6 +152,7 @@ ifeq ($(SOURCE_MAKEFILE7),default)
 	-@rm -rf $(CURDIR)/$(DIR_ARM7)/Makefile
 endif
 #--------------------------------------------------------------------	
+	$(MAKE) clean	-C	$(CURDIR)/stage2_9/
 	$(MAKE) clean	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/
 	$(MAKE)	clean	-C	$(DIR_ARM9)/
 	$(MAKE) clean	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/
@@ -155,7 +161,7 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
-	-@rm -fr $(EXECUTABLE_FNAME)	$(CURDIR)/common/templateCode/	arm9/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)
+	-@rm -fr $(EXECUTABLE_FNAME)	$(CURDIR)/common/templateCode/	arm9/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	release/arm9dldi-ntr/$(EXECUTABLE_FNAME)	release/arm9dldi-ntr/tgds_multiboot_payload.h	release/arm9dldi-ntr/tgds_multiboot_payload.c
 
 rebase:
 	git reset --hard HEAD
