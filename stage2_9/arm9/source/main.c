@@ -154,7 +154,7 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		fseek(fh,0,SEEK_SET);
 		NDS_LOADER_IPC_CTX_UNCACHED->fileSize = fileSize;
 		
-		printf("ReloadNDSBinaryFromContext():");
+		printf("ReloadNDSBinaryFromContext3():");
 		printf("arm7BootCodeSize:%d", arm7BootCodeSize);
 		printf("arm7BootCodeOffsetInFile:%x", arm7BootCodeOffsetInFile);
 		printf("arm7BootCodeEntryAddress:%x", NDS_LOADER_IPC_CTX_UNCACHED->arm7EntryAddress);
@@ -248,6 +248,8 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		flush_icache_all();
 		flush_dcache_all();
 		//Copy and relocate current TGDS DLDI section into target ARM9 binary
+		printf("Boot Stage3");
+		
 		bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize, (u32)&_io_dldi_stub);
 		if(stat == false){
 			printf("DLDI Patch failed. APP does not support DLDI format.");

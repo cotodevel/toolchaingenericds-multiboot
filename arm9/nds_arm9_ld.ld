@@ -70,7 +70,8 @@ SECTIONS
 	__init_end__ = .;
 	.dldiSection : SUBALIGN(4) { 
 		. += (0x300 - 0x180);	/* 0x02300300                _io_dldi_stub */
-		KEEP(*(.dldiSection*));	/* DLDI section is always at this address so it's detected by DLDI patchers */
+		KEEP(*(.initDldiSection)) /* DLDI section is always at this address so it's detected by DLDI patchers */
+		KEEP(*(.dldiSection))
 		. = ALIGN(4);
 	} > EWRAM = 0xff
 	.text      :	SUBALIGN(4)

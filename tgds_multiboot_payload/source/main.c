@@ -52,18 +52,9 @@ void closeSoundUser(){
 
 //generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
 __attribute__((section(".itcm")))
-bool ReloadNDSBinaryFromContext(char * filename) {
+bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	
-	/*
-	char nameBuf[256+1];
-	memset(nameBuf, 0, sizeof(nameBuf));
-	strcpy(nameBuf, "0:/");
-	strcat(nameBuf, (char*)0x02FFFE89);
-	filename = (char*)nameBuf;
-	*/
-	
-	//should reload stage 2 and pass filename into ARGV[0]
-	
+	//Will reload stage 2 payload and while passing it the filename into ARGV[0] vector
 	volatile u8 * outBuf7 = NULL;
 	volatile u8 * outBuf9 = NULL;
 
@@ -122,7 +113,7 @@ bool ReloadNDSBinaryFromContext(char * filename) {
 	int fileSize = stage2_9_size;
 	NDS_LOADER_IPC_CTX_UNCACHED->fileSize = fileSize;
 	
-	printf("ReloadNDSBinaryFromContext():");
+	printf("ReloadNDSBinaryFromContext1():");
 	printf("arm7BootCodeSize:%d", arm7BootCodeSize);
 	printf("arm7BootCodeOffsetInFile:%x", arm7BootCodeOffsetInFile);
 	printf("arm7BootCodeEntryAddress:%x", NDS_LOADER_IPC_CTX_UNCACHED->arm7EntryAddress);
@@ -150,22 +141,20 @@ bool ReloadNDSBinaryFromContext(char * filename) {
 	free(NDSHeader);
 	
 	asm("mcr	p15, 0, r0, c7, c10, 4");
-	//WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
-	flush_icache_all();
-	flush_dcache_all();
+	WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
 	//Copy and relocate current TGDS DLDI section into target ARM9 binary
+	//printf("Boot Stage2");
 	bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize, (u32)&_io_dldi_stub);
 	if(stat == false){
 		printf("DLDI Patch failed. APP does not support DLDI format.");
 	}
 	
 	int ret=FS_deinit();
-	
 	runBootstrapARM7();	//ARM9 Side						/	
 	setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);	//		|	Wait until ARM7.bin is copied back to IWRAM's target address
 	//waitWhileNotSetStatus(NDSLOADER_START);		//		\
 	
-	//reload ARM9.bin
+	
 	u32 arm9Addr = (uint32)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress;
 	coherent_user_range_by_size(arm9Addr, (u32)arm9BootCodeSize);
 	memset(0x023C0000, 0, 0x4000);
