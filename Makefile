@@ -137,6 +137,7 @@ $(EXECUTABLE_FNAME)	:	compile
 	-mv $(EXECUTABLE_FNAME)	release/arm9dldi-ntr
 	-mv arm9/build/tgds_multiboot_payload.h	release/arm9dldi-ntr
 	-mv arm9/build/tgds_multiboot_payload.c	release/arm9dldi-ntr
+	-mv arm9/data/tgds_multiboot_payload.bin release/arm9dldi-ntr
 	
 	-@echo 'ndstool end: built: $@'
 	
@@ -161,7 +162,7 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
-	-@rm -fr $(EXECUTABLE_FNAME)	$(CURDIR)/common/templateCode/	arm9/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	release/arm9dldi-ntr/$(EXECUTABLE_FNAME)	release/arm9dldi-ntr/tgds_multiboot_payload.h	release/arm9dldi-ntr/tgds_multiboot_payload.c
+	-@rm -fr $(EXECUTABLE_FNAME)	$(CURDIR)/common/templateCode/	arm9/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	release/arm9dldi-ntr/$(EXECUTABLE_FNAME)	release/arm9dldi-ntr/tgds_multiboot_payload.h	release/arm9dldi-ntr/tgds_multiboot_payload.c	release/arm9dldi-ntr/tgds_multiboot_payload.bin
 
 rebase:
 	git reset --hard HEAD
