@@ -32,7 +32,6 @@ extern "C" {
 #endif
 
 extern int main(int argc, char **argv);
-extern bool GDBEnabled;
 extern bool ReloadNDSBinaryFromContext(char * filename);
 
 #ifdef __cplusplus

@@ -173,12 +173,6 @@ void HandleFifoNotEmptyWeakRef(volatile u32 cmd1){
 		}
 		break;
 		
-		case(NDSLOADER_ENTERGDB_FROM_ARM7):{
-			EWRAMPrioToARM9();
-			GDBEnabled = true;
-		}
-		break;
-		
 		#endif
 		
 		

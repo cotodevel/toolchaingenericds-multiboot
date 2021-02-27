@@ -40,8 +40,6 @@ USA
 #include "TGDSMemoryAllocator.h"
 #include "stage2_9.h"
 
-bool GDBEnabled = false;
-
 bool stopSoundStreamUser(){
 	return false;
 }

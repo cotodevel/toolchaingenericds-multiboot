@@ -40,7 +40,6 @@ USA
 #include "posixHandleTGDS.h"
 #include "TGDSMemoryAllocator.h"
 
-bool GDBEnabled = false;
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 
 //Back to loader, based on Whitelisted DLDI names

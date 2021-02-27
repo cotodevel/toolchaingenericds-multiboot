@@ -25,8 +25,6 @@ USA
 #include "dmaTGDS.h"
 #include "utilsTGDS.h"
 
-bool GDBEnabled = false;
-
 //This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	
