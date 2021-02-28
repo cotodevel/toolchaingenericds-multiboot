@@ -32,7 +32,7 @@ Simply DLDI patch ToolchainGenericDS-multiboot.nds, if the loader used to boot t
 And implement this method:
 //NTR Bootcode:
 __attribute__((section(".itcm")))
-void TGDSMultibootRunNDSPayload(char * filename) __attribute__ ((optnone)) __attribute__ ((optnone)) {
+void TGDSMultibootRunNDSPayload(char * filename) __attribute__ ((optnone)) {
 	strcpy((char*)(0x02280000 - (MAX_TGDSFILENAME_LENGTH+1)), filename);	//Arg0:	
 	
 	FILE * tgdsPayloadFh = fopen("0:/tgds_multiboot_payload.bin", "r");
