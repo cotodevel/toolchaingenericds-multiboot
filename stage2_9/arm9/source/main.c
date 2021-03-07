@@ -73,11 +73,6 @@ void menuShow(){
 	printarm7DebugBuffer();
 }
 
-//This code runs from the TGDS Project host code, and reloads below bootstub code, relocated to run from VRAM.
-void TGDSMultibootRunNDSPayload(char * filename) __attribute__ ((optnone)) {
-	ReloadNDSBinaryFromContext(filename);
-}
-
 //new: this bootcode will run from VRAM, once the NDSBinary context has been created and handled by the reload bootcode.
 //generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
 bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
@@ -283,6 +278,11 @@ void closeSoundUser(){
 	//Stubbed. Gets called when closing an audiostream of a custom audio decoder
 }
 
+//ToolchainGenericDS-LinkedModule User implementation: none, part parent TGDS Project bootcode process.
+int TGDSProjectReturnFromLinkedModule(){
+	return -1;
+}
+
 int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
@@ -328,7 +328,7 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	menuShow();
 	
 	char * arg0 = (0x02280000 - (MAX_TGDSFILENAME_LENGTH+1));
-	TGDSMultibootRunNDSPayload(arg0);
+	ReloadNDSBinaryFromContext(arg0);
 	
 	while (1){
 		handleARM9SVC();	/* Do not remove, handles TGDS services */

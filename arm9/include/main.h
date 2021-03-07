@@ -27,6 +27,8 @@ USA
 #include "limitsTGDS.h"
 #include "dldi.h"
 
+#define TGDSPROJECTNAME (char*)"ToolchainGenericDS-multiboot"
+
 #endif
 
 
@@ -36,11 +38,13 @@ extern "C" {
 
 extern int main(int argc, char **argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
-extern void TGDSMultibootRunNDSPayload(char * filename);
 extern struct FileClassList * thisFileList;
 
-
 extern bool ReloadNDSBinaryFromContext(char * filename);
+
+//ToolchainGenericDS-LinkedModule User implementation: Vanilla TGDS Project
+extern char args[8][MAX_TGDSFILENAME_LENGTH];
+extern char *argvs[8];
 
 #ifdef __cplusplus
 }

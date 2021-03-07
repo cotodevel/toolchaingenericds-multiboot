@@ -36,9 +36,7 @@ extern "C" {
 
 extern int main(int argc, char **argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
-extern void TGDSMultibootRunNDSPayload(char * filename);
 extern struct FileClassList * thisFileList;
-
 
 extern bool ReloadNDSBinaryFromContext(char * filename);
 

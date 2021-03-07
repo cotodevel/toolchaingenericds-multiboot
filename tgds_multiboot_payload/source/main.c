@@ -161,6 +161,18 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	return false;
 }
 
+//ToolchainGenericDS-LinkedModule User implementation: Vanilla TGDS Project as embedded TGDS-MB payload.
+char args[8][MAX_TGDSFILENAME_LENGTH];
+char *argvs[8];
+int TGDSProjectReturnFromLinkedModule(){
+	//Return from TGDS-LinkedModule? Restore services
+	u8 DSHardware = ARM7ReloadFlashSync();
+	IRQInit(DSHardware);
+	int readaArgc = getGlobalArgc();
+	char** readaArgv = getGlobalArgv();
+	return main(readaArgc, readaArgv);
+}
+
 //This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	

@@ -72,31 +72,6 @@ void menuShow(){
 	printarm7DebugBuffer();
 }
 
-//NTR Bootcode:
-__attribute__((section(".itcm")))
-void TGDSMultibootRunNDSPayload(char * filename) __attribute__ ((optnone)) __attribute__ ((optnone)) {
-	strcpy((char*)(0x02280000 - (MAX_TGDSFILENAME_LENGTH+1)), filename);	//Arg0:	
-	
-	FILE * tgdsPayloadFh = fopen("0:/tgds_multiboot_payload.bin", "r");
-	if(tgdsPayloadFh != NULL){
-		fseek(tgdsPayloadFh, 0, SEEK_SET);
-		int	tgds_multiboot_payload_size = FS_getFileSizeFromOpenHandle(tgdsPayloadFh);
-		fread((u32*)0x02280000, 1, tgds_multiboot_payload_size, tgdsPayloadFh);
-		coherent_user_range_by_size(0x02280000, (int)tgds_multiboot_payload_size);
-		fclose(tgdsPayloadFh);
-		int ret=FS_deinit();
-		//Copy and relocate current TGDS DLDI section into target ARM9 binary
-		bool stat = dldiPatchLoader((data_t *)0x02280000, (u32)tgds_multiboot_payload_size, (u32)&_io_dldi_stub);
-		if(stat == false){
-			//printf("DLDI Patch failed. APP does not support DLDI format.");
-		}
-		REG_IME = 0;
-		typedef void (*t_bootAddr)();
-		t_bootAddr bootARM9Payload = (t_bootAddr)0x02280000;
-		bootARM9Payload();
-	}
-}
-
 bool stopSoundStreamUser(){
 	return false;
 }
@@ -105,15 +80,37 @@ void closeSoundUser(){
 	//Stubbed. Gets called when closing an audiostream of a custom audio decoder
 }
 
+//ToolchainGenericDS-LinkedModule User implementation: Vanilla TGDS Project
+char args[8][MAX_TGDSFILENAME_LENGTH];
+char *argvs[8];
+int TGDSProjectReturnFromLinkedModule(){
+	//Return from TGDS-LinkedModule? Restore services
+	u8 DSHardware = ARM7ReloadFlashSync();
+	IRQInit(DSHardware);
+	int readaArgc = getGlobalArgc();
+	char** readaArgv = getGlobalArgv();
+	return main(readaArgc, readaArgv);
+}
+
+static bool needToReload = true;
 int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	bool isTGDSCustomConsole = false;	//set default console or custom console: default console
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
-	bool isCustomTGDSMalloc = false;
-	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc));
-	sint32 fwlanguage = (sint32)getLanguage();
+	
+	if(needToReload == true){
+		bool isCustomTGDSMalloc = false;
+		setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc));
+		sint32 fwlanguage = (sint32)getLanguage();
+		
+		switch_dswnifi_mode(dswifi_idlemode);
+		asm("mcr	p15, 0, r0, c7, c10, 4");
+		flush_icache_all();
+		flush_dcache_all();
+		needToReload = false;
+	}
 	
 	printf("     ");
 	printf("     ");
@@ -131,10 +128,6 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	{
 		printf("FS Init error.");
 	}
-	switch_dswnifi_mode(dswifi_idlemode);
-	asm("mcr	p15, 0, r0, c7, c10, 4");
-	flush_icache_all();
-	flush_dcache_all();
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
 	//load TGDS Logo (NDS BMP Image)
@@ -193,13 +186,35 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 				}
 			}
 			
-			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-			memset(thisArgv, 0, sizeof(thisArgv));
-			strcpy(&thisArgv[0][0], curChosenBrowseFile);	//Arg0:	NDS Binary loaded
-			strcpy(&thisArgv[1][0], argv0);					//Arg1: ARGV0
-			addARGV(2, (char*)&thisArgv);
+			//Boot .NDS file! (homebrew only)
+			char tmpName[256];
+			char ext[256];
+			strcpy(tmpName, curChosenBrowseFile);
+			separateExtension(tmpName, ext);
+			strlwr(ext);
+			if(strncmp(ext,".nds", 4) == 0){
+				char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+				memset(thisArgv, 0, sizeof(thisArgv));
+				strcpy(&thisArgv[0][0], curChosenBrowseFile);	//Arg0:	NDS Binary loaded
+				strcpy(&thisArgv[1][0], argv0);					//Arg1: ARGV0
+				addARGV(2, (char*)&thisArgv);				
+				TGDSMultibootRunNDSPayload(curChosenBrowseFile);	
+			}
 			
-			TGDSMultibootRunNDSPayload(curChosenBrowseFile);
+			//TGDS-LinkedModule Boot
+			else if(strncmp(ext,".bin", 4) == 0){
+				int argCount = 2;	
+				strcpy(&args[0][0], TGDSPROJECTNAME);	//Arg0: Parent TGDS Project name
+				strcpy(&args[1][0], curChosenBrowseFile);	//Arg1: self TGDS-LinkedModule filename
+				
+				int i = 0;
+				for(i = 0; i < argCount; i++){
+					argvs[i] = (char*)&args[i][0];
+				}
+				
+				TGDSProjectRunLinkedModule(curChosenBrowseFile, argCount, argvs, TGDSPROJECTNAME);
+			}
+			
 		}
 		
 		if (keysDown() & KEY_SELECT){
