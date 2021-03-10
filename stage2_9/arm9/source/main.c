@@ -278,8 +278,10 @@ void closeSoundUser(){
 	//Stubbed. Gets called when closing an audiostream of a custom audio decoder
 }
 
-//ToolchainGenericDS-LinkedModule User implementation: none, part parent TGDS Project bootcode process.
-int TGDSProjectReturnFromLinkedModule(){
+//ToolchainGenericDS-LinkedModule User implementation: Called if TGDS-LinkedModule fails to reload ARM9.bin from DLDI.
+char args[8][MAX_TGDSFILENAME_LENGTH];
+char *argvs[8];
+int TGDSProjectReturnFromLinkedModule() __attribute__ ((optnone)) {
 	return -1;
 }
 
