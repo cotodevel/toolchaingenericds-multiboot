@@ -148,6 +148,11 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 				scanKeys();
 			}
 			
+			scanKeys();
+			while(!(keysUp() & KEY_A)){
+				scanKeys();
+			}
+			
 			//Send args
 			printf("[Booting %s]", curChosenBrowseFile);
 			printf("Want to send argument?");

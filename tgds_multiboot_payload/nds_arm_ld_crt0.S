@@ -92,7 +92,8 @@ _start:
 	ldr                 r1,=__bss_vma_end
 	bl clear
 	
-	
+	blx ARM7ReloadFlashSync
+	bl initHardware
 	
 	ldr	lr, =exception_sysexit
 	
