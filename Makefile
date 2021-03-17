@@ -37,7 +37,7 @@ export TGDSPROJECTNAME = ToolchainGenericDS-multiboot
 export EXECUTABLE_FNAME = $(TGDSPROJECTNAME).nds
 export EXECUTABLE_VERSION_HEADER =	0.1
 export EXECUTABLE_VERSION =	"$(EXECUTABLE_VERSION_HEADER)"
-export TGDSPKG_TARGET_NAME = TGDSPKG_multiboot
+export TGDSPKG_TARGET_NAME = /
 #The ndstool I use requires to have the elf section removed, so these rules create elf headerless- binaries.
 export DIR_ARM7 = arm7
 export BUILD_ARM7	=	build
