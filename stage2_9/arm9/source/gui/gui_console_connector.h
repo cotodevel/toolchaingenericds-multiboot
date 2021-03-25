@@ -26,7 +26,6 @@ USA
 #include <stdlib.h>
 #include <time.h>
 #include <stdarg.h>
-#include <malloc.h>
 #include <ctype.h>
 #include "ipcfifoTGDSUser.h"
 
@@ -57,6 +56,8 @@ extern vramSetup * getProjectSpecificVRAMSetup();
 
 //1) VRAM Layout
 extern bool InitProjectSpecificConsole();
+
+extern vramSetup * TGDSMULTIBOOT_3DVRAM_SETUP();
 
 #ifdef __cplusplus
 }

@@ -40,6 +40,12 @@ extern struct FileClassList * thisFileList;
 
 extern bool ReloadNDSBinaryFromContext(char * filename);
 
+extern int textureID;
+extern float rotateX;
+extern float rotateY;
+extern float camDist;
+extern void drawQuad(int poly);
+
 #ifdef __cplusplus
 }
 #endif
