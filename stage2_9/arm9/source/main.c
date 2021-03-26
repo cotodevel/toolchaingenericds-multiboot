@@ -167,10 +167,10 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	if(fh != NULL){
 		
 		int headerSize = sizeof(struct sDSCARTHEADER);
-		u8 * NDSHeader = (u8 *)malloc(headerSize*sizeof(u8));
+		u8 * NDSHeader = (u8 *)TGDSARM9Malloc(headerSize*sizeof(u8));
 		if (fread(NDSHeader, 1, headerSize, fh) != headerSize){
 			printf("header read error");
-			free(NDSHeader);
+			TGDSARM9Free(NDSHeader);
 			fclose(fh);
 			return false;
 		}
@@ -249,7 +249,7 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		
 		printf("NDSLoader start. ");
 		
-		u8 * outBuf = (u8 *)malloc(sectorSize * sectorsPerCluster);
+		u8 * outBuf = (u8 *)TGDSARM9Malloc(sectorSize * sectorsPerCluster);
 		
 		//Uncached to prevent cache issues right at once
 		outBuf7 = (u8 *)(NDS_LOADER_IPC_ARM7BIN_UNCACHED);	//will not be higher than: arm7BootCodeSize
@@ -314,22 +314,15 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		
 		printf("NDSLoader end. ");
 		
-		free(outBuf);
-		free(NDSHeader);
-		
-		asm("mcr	p15, 0, r0, c7, c10, 4");
-		WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
-		flush_icache_all();
-		flush_dcache_all();
-		//Copy and relocate current TGDS DLDI section into target ARM9 binary
-		printf("Boot Stage3");
+		TGDSARM9Free(outBuf);
+		TGDSARM9Free(NDSHeader);
 		
 		bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize, (u32)&_io_dldi_stub);
 		if(stat == false){
 			printf("DLDI Patch failed. APP does not support DLDI format.");
 		}
 		
-		//Path DLDI to file before launching it
+		//Patch DLDI to file before launching it
 		fseek(fh, (int)arm9BootCodeOffsetInFile, SEEK_SET);
 		int wrote = fwrite((u8*)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, 1, arm9BootCodeSize, fh);
 		if(wrote >= 0){
@@ -338,6 +331,13 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		}
 		fclose(fh);
 		int ret=FS_deinit();
+		
+		asm("mcr	p15, 0, r0, c7, c10, 4");
+		WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
+		flush_icache_all();
+		flush_dcache_all();
+		//Copy and relocate current TGDS DLDI section into target ARM9 binary
+		printf("Boot Stage3");
 		
 		runBootstrapARM7();	//ARM9 Side						/	
 		setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);	//		|	Wait until ARM7.bin is copied back to IWRAM's target address
@@ -371,7 +371,7 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	bool isTGDSCustomConsole = true;	//set default console or custom console: default console
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
-	bool isCustomTGDSMalloc = false;
+	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 	

@@ -61,7 +61,7 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	memcpy ((void *)NDS_LOADER_IPC_BOOTSTUBARM7_CACHED, (u32*)&arm7bootldr[0], arm7bootldr_size); 	//memcpy ( void * destination, const void * source, size_t num );	//memset(void *str, int c, size_t n)
 	
 	int headerSize = sizeof(struct sDSCARTHEADER);
-	u8 * NDSHeader = (u8 *)malloc(headerSize*sizeof(u8));
+	u8 * NDSHeader = (u8 *)TGDSARM9Malloc(headerSize*sizeof(u8));
 	memcpy(NDSHeader, (u8*)&stage2_9[0], headerSize);
 	printf("header parsed correctly.");
 	struct sDSCARTHEADER * NDSHdr = (struct sDSCARTHEADER *)NDSHeader;
@@ -121,7 +121,7 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	
 	printf("NDSLoader start. ");
 	
-	u8 * outBuf = (u8 *)malloc(sectorSize * sectorsPerCluster);
+	u8 * outBuf = (u8 *)TGDSARM9Malloc(sectorSize * sectorsPerCluster);
 	
 	//Uncached to prevent cache issues right at once
 	outBuf7 = (u8 *)(NDS_LOADER_IPC_ARM7BIN_UNCACHED);	//will not be higher than: arm7BootCodeSize
@@ -135,11 +135,9 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	
 	printf("NDSLoader end. ");
 	
-	free(outBuf);
-	free(NDSHeader);
+	TGDSARM9Free(outBuf);
+	TGDSARM9Free(NDSHeader);
 	
-	asm("mcr	p15, 0, r0, c7, c10, 4");
-	WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
 	//Copy and relocate current TGDS DLDI section into target ARM9 binary
 	//printf("Boot Stage2");
 	bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize, (u32)&_io_dldi_stub);
@@ -148,10 +146,13 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	}
 	
 	int ret=FS_deinit();
+	
+	asm("mcr	p15, 0, r0, c7, c10, 4");
+	WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
+	
 	runBootstrapARM7();	//ARM9 Side						/	
 	setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);	//		|	Wait until ARM7.bin is copied back to IWRAM's target address
 	//waitWhileNotSetStatus(NDSLOADER_START);		//		\
-	
 	
 	u32 arm9Addr = (uint32)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress;
 	coherent_user_range_by_size(arm9Addr, (u32)arm9BootCodeSize);
@@ -175,6 +176,10 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	bool isTGDSCustomConsole = false;	//set default console or custom console: default console
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
+	
+	bool isCustomTGDSMalloc = true;
+	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc));
+	sint32 fwlanguage = (sint32)getLanguage();
 	
 	printf(" -- ");
 	printf(" -- ");
