@@ -378,10 +378,6 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	printf("     ");
 	printf("     ");
 	
-	#ifdef ARM7_DLDI
-	setDLDIARM7Address((u32 *)TGDSDLDI_ARM7_ADDRESS);	//Required by ARM7DLDI!
-	#endif
-	
 	int ret=FS_init();
 	if (ret == 0)
 	{
