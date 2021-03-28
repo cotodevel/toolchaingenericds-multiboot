@@ -134,10 +134,10 @@ endif
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
 	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/ARM9/$(BINSTRIP_RULE_9) -e9  0x02000000	-b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
-	-mv $(EXECUTABLE_FNAME)	release/arm9dldi-ntr
-	-mv arm9/build/tgds_multiboot_payload.h	release/arm9dldi-ntr
-	-mv arm9/build/tgds_multiboot_payload.c	release/arm9dldi-ntr
-	-mv arm9/data/tgds_multiboot_payload.bin release/arm9dldi-ntr
+	-mv $(EXECUTABLE_FNAME)	release/arm7dldi-ntr
+	-mv arm9/build/tgds_multiboot_payload.h	release/arm7dldi-ntr
+	-mv arm9/build/tgds_multiboot_payload.c	release/arm7dldi-ntr
+	-mv arm9/data/tgds_multiboot_payload.bin release/arm7dldi-ntr
 	
 	-@echo 'ndstool end: built: $@'
 	
@@ -162,7 +162,7 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
-	-@rm -fr $(EXECUTABLE_FNAME)	$(CURDIR)/common/templateCode/	arm9/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	release/arm9dldi-ntr/$(EXECUTABLE_FNAME)	release/arm9dldi-ntr/tgds_multiboot_payload.h	release/arm9dldi-ntr/tgds_multiboot_payload.c	release/arm9dldi-ntr/tgds_multiboot_payload.bin
+	-@rm -fr $(EXECUTABLE_FNAME)	$(CURDIR)/common/templateCode/	arm9/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	release/arm7dldi-ntr/$(EXECUTABLE_FNAME)	release/arm7dldi-ntr/tgds_multiboot_payload.h	release/arm7dldi-ntr/tgds_multiboot_payload.c	release/arm7dldi-ntr/tgds_multiboot_payload.bin
 
 rebase:
 	git reset --hard HEAD
@@ -176,4 +176,4 @@ commitChanges:
 #ToolchainGenericDS Package deploy format required by ToolchainGenericDS-OnlineApp.
 BuildTGDSPKG:
 	-@echo 'Build TGDS Package. '
-	-$(TGDSPKGBUILDER) $(TGDSPROJECTNAME) $(TGDSPKG_TARGET_NAME) $(LIBPATH) /release/arm9dldi-ntr/
+	-$(TGDSPKGBUILDER) $(TGDSPROJECTNAME) $(TGDSPKG_TARGET_NAME) $(LIBPATH) /release/arm7dldi-ntr/
