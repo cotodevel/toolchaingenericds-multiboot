@@ -117,7 +117,7 @@ void VcounterUser(){
 	glRotateY(rotateY);
 	
 	glMatrixMode(GL_TEXTURE);
-	glIdentity();
+	glLoadIdentity();
 	
 	glMatrixMode(GL_MODELVIEW);
 
