@@ -103,15 +103,15 @@ void VcounterUser(){
 				0.0, 0.0, 0.0,		//look at
 				0.0, 1.0, 0.0);		//up
 	
-	glLight(0, RGB15(31,31,31) , 0,				  floatov10(-1.0),		 0);
-	glLight(1, RGB15(31,0,31),   0,				  floatov10(1) - 1,			 0);
-	glLight(2, RGB15(0,31,0) ,   floatov10(-1.0), 0,					 0);
-	glLight(3, RGB15(0,0,31) ,   floatov10(1.0) - 1,  0,					 0);
+	glLight(0, RGB15(31,31,31) , 0,				  floattov10(-1.0),		 0);
+	glLight(1, RGB15(31,0,31),   0,				  floattov10(1) - 1,			 0);
+	glLight(2, RGB15(0,31,0) ,   floattov10(-1.0), 0,					 0);
+	glLight(3, RGB15(0,0,31) ,   floattov10(1.0) - 1,  0,					 0);
 
 	glPushMatrix();
 
 	//move it away from the camera
-	glTranslate3f32(0, 0, floatof32(-1));
+	glTranslate3f32(0, 0, floattof32(-1));
 			
 	glRotateX(rotateX);
 	glRotateY(rotateY);

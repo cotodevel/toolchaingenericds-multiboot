@@ -48,14 +48,14 @@ USA
 
 //verticies for the cube
 v16 CubeVectors[] = {
- 		floatov16(-0.5),	floatov16(-0.5),	floatov16(0.5), 
-		floatov16(0.5),		floatov16(-0.5),	floatov16(0.5),
-		floatov16(0.5),		floatov16(-0.5),	floatov16(-0.5),
-		floatov16(-0.5),	floatov16(-0.5),	floatov16(-0.5),
-		floatov16(-0.5),	floatov16(0.5),		floatov16(0.5), 
-		floatov16(0.5),		floatov16(0.5),		floatov16(0.5),
-		floatov16(0.5),		floatov16(0.5),		floatov16(-0.5),
-		floatov16(-0.5),	floatov16(0.5),		floatov16(-0.5)
+ 		floattov16(-0.5),	floattov16(-0.5),	floattov16(0.5), 
+		floattov16(0.5),		floattov16(-0.5),	floattov16(0.5),
+		floattov16(0.5),		floattov16(-0.5),	floattov16(-0.5),
+		floattov16(-0.5),	floattov16(-0.5),	floattov16(-0.5),
+		floattov16(-0.5),	floattov16(0.5),		floattov16(0.5), 
+		floattov16(0.5),		floattov16(0.5),		floattov16(0.5),
+		floattov16(0.5),		floattov16(0.5),		floattov16(-0.5),
+		floattov16(-0.5),	floattov16(0.5),		floattov16(-0.5)
 };
 
 //polys
