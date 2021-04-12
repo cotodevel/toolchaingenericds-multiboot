@@ -23,7 +23,6 @@ USA
 #include "typedefsTGDS.h"
 #include "gui_console_connector.h"
 #include "dswnifi_lib.h"
-#include "TGDSLogoLZSSCompressed.h"
 #include "ipcfifoTGDSUser.h"
 #include "fatfslayerTGDS.h"
 #include "cartHeader.h"
@@ -44,80 +43,11 @@ USA
 #include "videoGL.h"
 #include "videoTGDS.h"
 #include "math.h"
-#include "16bpp.h" 
+#include "imagepcx.h"
 
-//verticies for the cube
-v16 CubeVectors[] = {
- 		floattov16(-0.5),	floattov16(-0.5),	floattov16(0.5), 
-		floattov16(0.5),		floattov16(-0.5),	floattov16(0.5),
-		floattov16(0.5),		floattov16(-0.5),	floattov16(-0.5),
-		floattov16(-0.5),	floattov16(-0.5),	floattov16(-0.5),
-		floattov16(-0.5),	floattov16(0.5),		floattov16(0.5), 
-		floattov16(0.5),		floattov16(0.5),		floattov16(0.5),
-		floattov16(0.5),		floattov16(0.5),		floattov16(-0.5),
-		floattov16(-0.5),	floattov16(0.5),		floattov16(-0.5)
-};
-
-//polys
-u8 CubeFaces[] = {
-	3,2,1,0,
-	0,1,5,4,
-	1,2,6,5,
-	2,3,7,6,
-	3,0,4,7,
-	5,6,7,4
-};
-
-//texture coordinates
-u32 uv[] =
-{
-	
-	TEXTURE_PACK(128, 0),
-	TEXTURE_PACK(128,128),
-	TEXTURE_PACK(0, 128),
-	TEXTURE_PACK(0,0)
-};
-
-u32 normals[] =
-{
-	NORMAL_PACK(0,-1,0),
-	NORMAL_PACK(0,1,0),
-	NORMAL_PACK(1,0,0),
-	NORMAL_PACK(0,0,-1),
-	NORMAL_PACK(-1,0,0),
-	NORMAL_PACK(0,1,0)
-
-};
-
-//draw a cube face at the specified color
-void drawQuad(int poly)
-{	
-	
-	u32 f1 = CubeFaces[poly * 4] ;
-	u32 f2 = CubeFaces[poly * 4 + 1] ;
-	u32 f3 = CubeFaces[poly * 4 + 2] ;
-	u32 f4 = CubeFaces[poly * 4 + 3] ;
-
-
-	glNormal(normals[poly]);
-
-	glTexCoord1i(uv[0]);
-	glVertex3v16(CubeVectors[f1*3], CubeVectors[f1*3 + 1], CubeVectors[f1*3 +  2] );
-	
-	glTexCoord1i(uv[1]);
-	glVertex3v16(CubeVectors[f2*3], CubeVectors[f2*3 + 1], CubeVectors[f2*3 + 2] );
-	
-	glTexCoord1i(uv[2]);
-	glVertex3v16(CubeVectors[f3*3], CubeVectors[f3*3 + 1], CubeVectors[f3*3 + 2] );
-
-	glTexCoord1i(uv[3]);
-	glVertex3v16(CubeVectors[f4*3], CubeVectors[f4*3 + 1], CubeVectors[f4*3 + 2] );
-}
-
-int textureID = 0;
+float camDist = -0.3*4;
 float rotateX = 0.0;
 float rotateY = 0.0;
-float camDist = -0.3*4;
 //3D Cube end
 
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
@@ -409,15 +339,18 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 		glClearColor(0,0,0);
 		glClearDepth(0x7FFF);
 		
-		glGenTextures(1, &textureID);
-		glBindTexture(0, textureID);
-		glTexImage2D(0, 0, GL_RGB, TEXTURE_SIZE_128 , TEXTURE_SIZE_128, 0, TEXGEN_TEXCOORD, (u8*)_6bppBitmap);		
-		
-		
 		glReset();
-		glEnable(GL_TEXTURE_2D);
+		
+		LoadGLTextures();
+		
 		glEnable(GL_ANTIALIAS);
+		glEnable(GL_TEXTURE_2D);
 		glEnable(GL_BLEND);
+		
+		//any floating point gl call is being converted to fixed prior to being implemented
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		gluPerspective(35, 256.0 / 192.0, 0.1, 40);
 		
 	}
 	//gl end

@@ -30,6 +30,10 @@ USA
 #include "videoTGDS.h"
 #include "math.h"
 
+#include "imagepcx.h"
+#include "Cube.h"	//Mesh Generated from Blender 2.49b
+//#include "Texture_Cube.h"	//Textures of it
+
 //User Handler Definitions
 
 #ifdef ARM9
@@ -96,68 +100,27 @@ void VblankUser(){
 __attribute__((section(".itcm")))
 #endif
 void VcounterUser(){
-	//any floating point gl call is being converted to fixed prior to being implemented
-	gluPerspective(30, 256.0 / 192.0, 0.1, 70);
-
-	gluLookAt(	0.0, 0.0, camDist,		//camera possition 
-				0.0, 0.0, 0.0,		//look at
-				0.0, 1.0, 0.0);		//up
-	
-	glLight(0, RGB15(31,31,31) , 0,				  floattov10(-1.0),		 0);
-	glLight(1, RGB15(31,0,31),   0,				  floattov10(1) - 1,			 0);
-	glLight(2, RGB15(0,31,0) ,   floattov10(-1.0), 0,					 0);
-	glLight(3, RGB15(0,0,31) ,   floattov10(1.0) - 1,  0,					 0);
-
 	glPushMatrix();
-
-	//move it away from the camera
-	glTranslate3f32(0, 0, floattof32(-1));
-			
-	glRotateX(rotateX);
-	glRotateY(rotateY);
-	
-	glMatrixMode(GL_TEXTURE);
+		
+	glMatrixMode(GL_POSITION);
 	glLoadIdentity();
 	
-	glMatrixMode(GL_MODELVIEW);
-
-	glMaterialf(GL_AMBIENT, RGB15(8,8,8));
-	glMaterialf(GL_DIFFUSE, RGB15(16,16,16));
-	glMaterialf(GL_SPECULAR, BIT(15) | RGB15(8,8,8));
-	glMaterialf(GL_EMISSION, RGB15(5,5,5));
-
-	//ds uses a table for shinyness..this generates a half-ass one
-	glMaterialShinnyness();
-
-	//not a real gl function and will likely change
-	glPolyFmt(POLY_ALPHA(31) | POLY_CULL_BACK | POLY_FORMAT_LIGHT0 | POLY_FORMAT_LIGHT1 | 
-												POLY_FORMAT_LIGHT2 | POLY_FORMAT_LIGHT3 ) ;
+	gluLookAt(	0.0, 0.0, camDist,		//camera possition 
+			0.0, -1.0, 4.0,		//look at
+			0.0, 1.0, 0.0);		//up
 	
-	u32 keypad = keysHeld();
+	glTranslatef32(0, 0, 0.0);
+	glRotateXi(rotateX);
+	glRotateYi(rotateY);
+	glMaterialf(GL_EMISSION, RGB15(31,31,31));
+	glPolyFmt(POLY_ALPHA(31) | POLY_CULL_BACK );
 	
-	/*
-	if(keypad & KEY_UP) rotateX += 3;
-	if(keypad & KEY_DOWN) rotateX -= 3;
-	if(keypad & KEY_LEFT) rotateY += 3;
-	if(keypad & KEY_RIGHT) rotateY -= 3;
-	
-	if(keypad & KEY_A) camDist += 0.3;
-	if(keypad & KEY_B) camDist -= 0.3;
-	*/
-	
-	glBindTexture(0, textureID);
-
-	//draw the obj
-	glBegin(GL_QUAD);
-		for(int i = 0; i < 6; i++){
-			drawQuad(i);
-		}
-	glEnd();
-	
-	glPopMatrix(1);
-		
+	glRotateX(-90.0);	//Because OBJ Axis is 90º inverted...
+	glRotateY(45.0);	
+	glCallList((u32*)&Cube);
 	glFlush();
- 	
+	glPopMatrix(1);
+	
 	rotateX += 0.3;
 	rotateY += 0.3;
 }
