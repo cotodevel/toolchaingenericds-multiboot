@@ -47,7 +47,8 @@ DIR_SRC			=	$(DIRS_ARM9_SRC)
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
 LDFLAGS_DSI	:=	-specs=dsi_arm9_ld.specs	-Wl,--no-gc-sections,-Map,arm9-nonstripped_dsi.map
-LIBRARIES =	-l$(TARGET_LIBRARY_NAME_9)	-lstdc++	-lcnano9	-lgcc
+LIBRARIES_NTR =	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lstdc++	-lcnano9	-lgcc
+LIBRARIES_TWL =	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lstdc++	-lcnano9	-lgcc
 
 ################################################################################################
 
@@ -145,7 +146,7 @@ $(TARGET_LIBRARY_CRT0_FILE_9).o:	$(TARGET_LIBRARY_LINKER_FILE_9)
 #Linkage. 
 $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 	-@echo 'Entering Linking phase'
-	-$(LD2) $^	$(LDFLAGS_DSI)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o	${@:.elf=_dsi.elf}
+	-$(LD2) $^	$(LDFLAGS_DSI)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_TWL)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o	${@:.elf=_dsi.elf}
 	-@echo 'Leaving Linking phase. Output: $@'
 
 #xxxx-nonstripped.elf -> xxxx.elf STRIP operation
