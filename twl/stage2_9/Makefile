@@ -109,7 +109,7 @@ endif
 	$(MAKE)	-R	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
-	$(NDSTOOL)	-c 	${@:.nds=.srl} -b	../icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; " -7 $(CURDIR)/../arm7/arm7-nonstripped_dsi.elf -9 $(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/arm9-nonstripped_dsi.elf
+	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB"	-b	../icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary; " -7 $(CURDIR)/../arm7/arm7-nonstripped_dsi.elf -9 $(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/arm9-nonstripped_dsi.elf
 	-mv $(EXECUTABLE_FNAME)	../tgds_multiboot_payload/data
 	-@echo 'ndstool end: built: $@'
 	

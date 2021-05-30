@@ -133,7 +133,7 @@ endif
 	$(MAKE)	-R	-C	$(DIR_ARM9)/
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
-	$(NDSTOOL)	-c 	${@:.nds=.srl} -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; " -7 $(CURDIR)/arm7/arm7-nonstripped_dsi.elf -9 $(CURDIR)/arm9/arm9-nonstripped_dsi.elf
+	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB"	-b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary; " -7 $(CURDIR)/arm7/arm7-nonstripped_dsi.elf -9 $(CURDIR)/arm9/arm9-nonstripped_dsi.elf
 	-mv ${@:.nds=.srl}	release/arm7dldi-twl
 	-mv arm9/build/tgds_multiboot_payload.h	release/arm7dldi-twl
 	-mv arm9/build/tgds_multiboot_payload.c	release/arm7dldi-twl
