@@ -46,7 +46,8 @@ DIR_SRC			=	$(DIRS_ARM9_SRC)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm9_ld.specs	-Wl,--gc-sections,-Map,$(MAPFILE),-z,defs
+LDFLAGS	:=	-specs=nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),-z,defs
+LDFLAGS_DSI	:=	-specs=dsi_arm9_ld.specs	-Wl,--no-gc-sections,-Map,arm9-nonstripped_dsi.map
 LIBRARIES_NTR =	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lstdc++	-lcnano9	-lgcc
 LIBRARIES_TWL =	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lstdc++	-lcnano9	-lgcc
 
@@ -102,6 +103,11 @@ all: makebuild	$(TARGET_LIBRARY_CRT0_FILE_9).o	$(BINSTRIP_RULE_9)
 makebuild:
 	-mkdir -p $(OBJDIR)
 
+#convert a TGA BMP16 into a native 3D texture unit format (GL_COLOR 16bpp)
+$(OBJDIR)/%.o : %.tga
+	-$(GRITTOOL) ${<:.o=.c} -ftc -o $@ -gu32 -gb -gB16
+	$(CC) $(DEP_CFLAGS) $(CFLAGS) $(DIRLIBS_HDR) $(DIRLIBS_SRC)	-c -o $@ ${@:.o=.c}	
+
 #rule for reading *.bin in /data folder, converts to .C source code, which then gets compiled as object so it can be linked later
 $(OBJDIR)/%.o : %.bin
 	-@echo 'trying to convert .BIN ($<) -> .C output: ${@:.o=.c} : arrayName: $(subst build/,,${@:.o=})'
@@ -146,20 +152,23 @@ $(TARGET_LIBRARY_CRT0_FILE_9).o:	$(TARGET_LIBRARY_LINKER_FILE_9)
 #Linkage. 
 $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 	-@echo 'Entering Linking phase'
-	$(LD2) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_NTR)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
+	-$(LD2) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_NTR)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
+	-$(LD2) $^	$(LDFLAGS_DSI)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_TWL)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o	${@:.elf=_dsi.elf}
 	-@echo 'Leaving Linking phase. Output: $@'
 
 #xxxx-nonstripped.elf -> xxxx.elf STRIP operation
 $(ELF_ARM9): $(OBJPROG)
 	-@echo '$@ Unstripped. STRIP Start!'
+	-mv build/${@:.elf=-nonstripped_dsi.elf}	$(CURDIR)
 	$(OBJSTRIP)	-s -R .comment -R .gnu.version	$<
 	-mv	$<	$@
 	
 $(BINSTRIP_RULE_9): $(ELF_ARM9)
+	-@echo 'STRIP End: Remove ELF header and build baremetal Binary executable: $<	->	$@ !'
 	$(OBJCOPY) 	-S -O binary	$<	$@
 	-rm	$<
 ################################################################################################
 
 clean:
 	-@echo 'cleanup $(DIR_ARM9)'
-	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE) $(OBJDIR)	data/tgds_multiboot_payload.bin
+	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE) $(OBJDIR)	data/tgds_multiboot_payload.bin	$(CURDIR)/arm9-nonstripped_dsi.elf $(CURDIR)/arm9-nonstripped_dsi.map

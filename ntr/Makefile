@@ -138,7 +138,8 @@ $(EXECUTABLE_FNAME)	:	compile
 	-mv arm9/build/tgds_multiboot_payload.h	release/arm7dldi-ntr
 	-mv arm9/build/tgds_multiboot_payload.c	release/arm7dldi-ntr
 	-mv arm9/data/tgds_multiboot_payload.bin release/arm7dldi-ntr
-	
+	-$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7 arm7/arm7-nonstripped_dsi.elf -9 arm9/arm9-nonstripped_dsi.elf
+	-mv ${@:.nds=.srl}	E:/nds
 	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------
@@ -162,7 +163,7 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
-	-@rm -fr $(EXECUTABLE_FNAME)	$(CURDIR)/common/templateCode/	arm9/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	release/arm7dldi-ntr/$(EXECUTABLE_FNAME)	release/arm7dldi-ntr/tgds_multiboot_payload.h	release/arm7dldi-ntr/tgds_multiboot_payload.c	release/arm7dldi-ntr/tgds_multiboot_payload.bin
+	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl		$(CURDIR)/common/templateCode/	arm9/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	release/arm7dldi-ntr/$(EXECUTABLE_FNAME)	release/arm7dldi-ntr/tgds_multiboot_payload.h	release/arm7dldi-ntr/tgds_multiboot_payload.c	release/arm7dldi-ntr/tgds_multiboot_payload.bin
 
 rebase:
 	git reset --hard HEAD
