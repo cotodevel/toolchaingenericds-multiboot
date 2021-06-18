@@ -31,14 +31,14 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	
 	waitWhileNotSetStatus(NDSLOADER_LOAD_OK);	//this bootstub will proceed only when file has been loaded properly
 	
-	//NDS_LOADER_IPC_ARM7BIN_UNCACHED has ARM7.bin bootcode now
-	int arm7BootCodeSize = NDS_LOADER_IPC_CTX_UNCACHED->bootCode7FileSize;
-	u32 arm7entryaddress = NDS_LOADER_IPC_CTX_UNCACHED->arm7EntryAddress;
-	dmaTransferWord(3, (uint32)NDS_LOADER_IPC_ARM7BIN_UNCACHED, (uint32)arm7entryaddress, (uint32)arm7BootCodeSize);
+	//NDS_LOADER_IPC_ARM7BIN_UNCACHED_NTR has ARM7.bin bootcode now
+	int arm7BootCodeSize = NDS_LOADER_IPC_CTX_UNCACHED_NTR->bootCode7FileSize;
+	u32 arm7entryaddress = NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm7EntryAddress;
+	dmaTransferWord(3, (uint32)NDS_LOADER_IPC_ARM7BIN_UNCACHED_NTR, (uint32)arm7entryaddress, (uint32)arm7BootCodeSize);
 	
 	//reload ARM7.bin
 	setNDSLoaderInitStatus(NDSLOADER_START);	
-	reloadARMCore(NDS_LOADER_IPC_CTX_UNCACHED->arm7EntryAddress);
+	reloadARMCore(NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm7EntryAddress);
 	
 	//enterGDBFromARM7();	//debug
     

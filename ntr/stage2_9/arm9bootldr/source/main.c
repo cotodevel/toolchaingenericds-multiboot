@@ -61,6 +61,9 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	coherent_user_range((u8*)&TGDSIPC->DSFWHEADERInst.stub[0], (u8*)&TGDSIPC->DSFWHEADERInst.stub[0] + 512);
 	memcpy((u8*)&TGDSIPC->DSFWHEADERInst.stub[0], (u8*)flashMem, sizeof(TGDSIPC->DSFWHEADERInst.stub));
 	
+	REG_IME = 0;
+	coherent_user_range((u32)arm9_payload_addr_phys, (u32)arm9_size);
+	
 	typedef void (*t_bootAddr)();
 	t_bootAddr bootARM9Payload = (t_bootAddr)arm9_payload_addr_phys;
 	bootARM9Payload();

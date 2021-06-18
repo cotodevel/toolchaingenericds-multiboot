@@ -121,28 +121,28 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		//Common
 		int clusterSizeBytes = getDiskClusterSizeBytes();
 		int sectorsPerCluster = dldiFs.csize;
-		NDS_LOADER_IPC_CTX_UNCACHED->sectorsPerCluster = sectorsPerCluster;
-		NDS_LOADER_IPC_CTX_UNCACHED->sectorSize = sectorSize;
+		NDS_LOADER_IPC_CTX_UNCACHED_NTR->sectorsPerCluster = sectorsPerCluster;
+		NDS_LOADER_IPC_CTX_UNCACHED_NTR->sectorSize = sectorSize;
 		
 		//ARM7
 		int arm7BootCodeSize = NDSHdr->arm7size;
 		u32 arm7BootCodeOffsetInFile = NDSHdr->arm7romoffset;
-		NDS_LOADER_IPC_CTX_UNCACHED->arm7EntryAddress = NDSHdr->arm7entryaddress;
-		NDS_LOADER_IPC_CTX_UNCACHED->bootCode7FileSize = arm7BootCodeSize;
+		NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm7EntryAddress = NDSHdr->arm7entryaddress;
+		NDS_LOADER_IPC_CTX_UNCACHED_NTR->bootCode7FileSize = arm7BootCodeSize;
 		int sectorOffsetStart7 = arm7BootCodeOffsetInFile % sectorSize;
 		int sectorOffsetEnd7 = (arm7BootCodeOffsetInFile + arm7BootCodeSize - sectorOffsetStart7) % sectorSize;
-		NDS_LOADER_IPC_CTX_UNCACHED->sectorOffsetStart7 = sectorOffsetStart7;
-		NDS_LOADER_IPC_CTX_UNCACHED->sectorOffsetEnd7 = sectorOffsetEnd7;
+		NDS_LOADER_IPC_CTX_UNCACHED_NTR->sectorOffsetStart7 = sectorOffsetStart7;
+		NDS_LOADER_IPC_CTX_UNCACHED_NTR->sectorOffsetEnd7 = sectorOffsetEnd7;
 		
 		//ARM9
 		int arm9BootCodeSize = NDSHdr->arm9size;
 		u32 arm9BootCodeOffsetInFile = NDSHdr->arm9romoffset;
-		NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress = NDSHdr->arm9entryaddress;
-		NDS_LOADER_IPC_CTX_UNCACHED->bootCode9FileSize = arm9BootCodeSize;
+		NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress = NDSHdr->arm9entryaddress;
+		NDS_LOADER_IPC_CTX_UNCACHED_NTR->bootCode9FileSize = arm9BootCodeSize;
 		int sectorOffsetStart9 = arm9BootCodeOffsetInFile % sectorSize;
 		int sectorOffsetEnd9 = (arm9BootCodeOffsetInFile + arm9BootCodeSize - sectorOffsetStart9) % sectorSize;
-		NDS_LOADER_IPC_CTX_UNCACHED->sectorOffsetStart9 = sectorOffsetStart9;
-		NDS_LOADER_IPC_CTX_UNCACHED->sectorOffsetEnd9 = sectorOffsetEnd9;
+		NDS_LOADER_IPC_CTX_UNCACHED_NTR->sectorOffsetStart9 = sectorOffsetStart9;
+		NDS_LOADER_IPC_CTX_UNCACHED_NTR->sectorOffsetEnd9 = sectorOffsetEnd9;
 		
 		clrscr();
 		printf("-");
@@ -156,18 +156,18 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		fseek(fh,0,SEEK_END);
 		int fileSize = ftell(fh);
 		fseek(fh,0,SEEK_SET);
-		NDS_LOADER_IPC_CTX_UNCACHED->fileSize = fileSize;
+		NDS_LOADER_IPC_CTX_UNCACHED_NTR->fileSize = fileSize;
 		
 		printf("ReloadNDSBinaryFromContext3():");
 		printf("arm7BootCodeSize:%d", arm7BootCodeSize);
 		printf("arm7BootCodeOffsetInFile:%x", arm7BootCodeOffsetInFile);
-		printf("arm7BootCodeEntryAddress:%x", NDS_LOADER_IPC_CTX_UNCACHED->arm7EntryAddress);
+		printf("arm7BootCodeEntryAddress:%x", NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm7EntryAddress);
 		printf("arm9BootCodeSize:%d", arm9BootCodeSize);
 		printf("arm9BootCodeOffsetInFile:%x", arm9BootCodeOffsetInFile);
-		printf("arm9BootCodeEntryAddress:%x", NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress);
+		printf("arm9BootCodeEntryAddress:%x", NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress);
 		
 		//Generate cluster filemap
-		uint32_t* cluster_table = (uint32_t*)&NDS_LOADER_IPC_CTX_UNCACHED->sectorTableBootCode[0];
+		uint32_t* cluster_table = (uint32_t*)&NDS_LOADER_IPC_CTX_UNCACHED_NTR->sectorTableBootCode[0];
 		uint32_t  cur_cluster = getStructFDFirstCluster(fdinst);
 		while (cur_cluster >= 2 && cur_cluster != 0xFFFFFFFF)
 		{
@@ -182,14 +182,14 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		u8 * outBuf = (u8 *)TGDSARM9Malloc(sectorSize * sectorsPerCluster);
 		
 		//Uncached to prevent cache issues right at once
-		outBuf7 = (u8 *)(NDS_LOADER_IPC_ARM7BIN_UNCACHED);	//will not be higher than: arm7BootCodeSize
-		outBuf9 = (u8 *)(NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress | 0x400000); //will not be higher than: arm9BootCodeSize or 0x2D0000 (2,949,120 bytes)
+		outBuf7 = (u8 *)(NDS_LOADER_IPC_ARM7BIN_UNCACHED_NTR);	//will not be higher than: arm7BootCodeSize
+		outBuf9 = (u8 *)(NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress | 0x400000); //will not be higher than: arm9BootCodeSize or 0x2D0000 (2,949,120 bytes)
 		
 		u8 * outBuf7Seek = outBuf7;
 		u8 * outBuf9Seek = outBuf9;
 		
 		int globalPtr = 0; //this one maps the entire file in 512 bytes (sectorSize)
-		u32 cur_clustersector = NDS_LOADER_IPC_CTX_UNCACHED->sectorTableBootCode[0];
+		u32 cur_clustersector = NDS_LOADER_IPC_CTX_UNCACHED_NTR->sectorTableBootCode[0];
 		uint32_t data_max = (uint32_t)(fileSize);
 		uint32_t data_read = 0;
 		while((cur_clustersector != 0xFFFFFFFF) && ((data_read * (sectorSize * sectorsPerCluster)) < data_max) )
@@ -233,7 +233,7 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 			
 			//ARM7 Range check
 			data_read++;
-			cur_clustersector = (u32)NDS_LOADER_IPC_CTX_UNCACHED->sectorTableBootCode[data_read];
+			cur_clustersector = (u32)NDS_LOADER_IPC_CTX_UNCACHED_NTR->sectorTableBootCode[data_read];
 		}
 		
 		printf("ARM7 %d bytes. [Addr: %x]", arm7BootCodeSize, (unsigned int)(outBuf7 - 0x400000));
@@ -247,14 +247,14 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		TGDSARM9Free(outBuf);
 		TGDSARM9Free(NDSHeader);
 		
-		bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize, (u32)&_io_dldi_stub);
+		bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress, (u32)arm9BootCodeSize, (u32)&_io_dldi_stub);
 		if(stat == false){
 			printf("DLDI Patch failed. APP does not support DLDI format.");
 		}
 		
 		//Patch DLDI to file before launching it
 		fseek(fh, (int)arm9BootCodeOffsetInFile, SEEK_SET);
-		int wrote = fwrite((u8*)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, 1, arm9BootCodeSize, fh);
+		int wrote = fwrite((u8*)NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress, 1, arm9BootCodeSize, fh);
 		if(wrote >= 0){
 			sint32 FDToSync = fileno(fh);
 			fsync(FDToSync);	//save cached changes into disk
@@ -274,8 +274,8 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		waitWhileNotSetStatus(NDSLOADER_START);		//		\
 		
 		//reload ARM9.bin
-		coherent_user_range_by_size((uint32)NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress, (u32)arm9BootCodeSize);
-		reloadARMCore(NDS_LOADER_IPC_CTX_UNCACHED->arm9EntryAddress);
+		coherent_user_range_by_size((uint32)NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress, (u32)arm9BootCodeSize);
+		reloadARMCore(NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress);
 	}
 	return false;
 }

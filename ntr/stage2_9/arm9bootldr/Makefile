@@ -92,16 +92,16 @@ ARCH_CFLAGS += \
 COMPILER_SPECIFIC_CFLAGS += \
   --target=arm-none-eabi \
   --sysroot= \
-  -O2	\
+  -O0	\
   -DARM7
   
 CFLAGS = \
   -g3 \
+  -ffunction-sections -fdata-sections \
   -nostdlib \
   -fshort-enums	\
   $(COMPILER_SPECIFIC_CFLAGS) \
   $(ARCH_CFLAGS) \
-  $(NEWLIB_NANO_COMPILE_FLAGS_C_9)	\
   $(CLI_CFLAG_OVERRIDES)
 	
 #------------------------------------------ CLANG END

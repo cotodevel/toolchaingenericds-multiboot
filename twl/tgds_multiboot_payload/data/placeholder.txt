@@ -1,1 +1,0 @@
-DSi binary (DSi header) stage 3 payload here: has arm7i and arm9i binaries

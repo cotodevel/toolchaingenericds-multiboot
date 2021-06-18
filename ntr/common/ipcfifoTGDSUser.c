@@ -180,7 +180,7 @@ void HandleFifoNotEmptyWeakRef(volatile u32 cmd1){
 		case(NDSLOADER_INITDLDIARM7_BUSY):{
 			#ifdef ARM9
 			coherent_user_range_by_size((u32)&_io_dldi_stub, (int)16*1024);	//prevent cache problems
-			memcpy((u32*)NDS_LOADER_DLDISECTION_UNCACHED, (u32*)&_io_dldi_stub, (int)16*1024);
+			memcpy((u32*)NDS_LOADER_DLDISECTION_UNCACHED_NTR, (u32*)&_io_dldi_stub, (int)16*1024);
 			setNDSLoaderInitStatus(NDSLOADER_INITDLDIARM7_DONE);
 			#endif
 		}

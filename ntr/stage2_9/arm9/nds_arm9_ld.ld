@@ -22,7 +22,6 @@ USA
 MEMORY
 {
 	DTCM : ORIGIN = 0x0b000000, LENGTH = 16K
-	VECTORS : ORIGIN = 0x01FFC000, LENGTH = 256	
 	ITCM : ORIGIN = 0x01FF8000, LENGTH = 32K
 	GBAROM : ORIGIN = 0x08000000, LENGTH = 32M
 	EWRAM : ORIGIN = 0x02300000, LENGTH = 4M
@@ -30,9 +29,6 @@ MEMORY
 
 _itcm_start = ORIGIN(ITCM);
 _itcm_end = ORIGIN(ITCM)	+	LENGTH(ITCM);
-
-_vector_start = ORIGIN(VECTORS);
-_vector_end = ORIGIN(VECTORS)	+	LENGTH(VECTORS);
 
 _ewram_start = ORIGIN(EWRAM);
 _ewram_end = ORIGIN(EWRAM)	+	LENGTH(EWRAM);
@@ -70,7 +66,8 @@ SECTIONS
 	__init_end__ = .;
 	.dldiSection : SUBALIGN(4) { 
 		. += (0x300 - 0x180);	/* 0x02300300                _io_dldi_stub */
-		KEEP(*(.dldiSection*));	/* DLDI section is always at this address so it's detected by DLDI patchers */
+		KEEP(*(.initDldiSection))
+		KEEP(*(.dldiSection));	/* DLDI section is always at this address so it's detected by DLDI patchers */
 		. = ALIGN(4);
 	} > EWRAM = 0xff
 	.text      :	SUBALIGN(4)
@@ -122,19 +119,16 @@ SECTIONS
 	} > EWRAM = 0xff
 	
 	__itcm_vma_start = .;
+	__vectors_vma_start = .;
+	__vectors_vma_end__ = .;
 	.itcm      : SUBALIGN(4)
 	{
+		KEEP (*(.vectors*))
 		KEEP (*(.itcm*))
 	} > ITCM AT > EWRAM
 	__itcm_vma_end__ = .;
 	
-	__vectors_vma_start = .;
-	.vectors : SUBALIGN(4) {
-		KEEP (*(.vectors*))
-		. = ALIGN(4);
-	} > VECTORS AT > EWRAM
-	__vectors_vma_end__ = .;
-
+	
 	__dtcm_vma_start = .;
 	.dtcm      : SUBALIGN(4)
 	{

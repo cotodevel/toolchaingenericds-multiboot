@@ -166,4 +166,13 @@ SECTIONS
 	__fini_end__ = .;
 	__lib__end__ = __fini_end__;
 	__vma_stub_end__ = __lib__end__;
+	
+	/* stubbed for ARM7i binaries crt0 in NTR mode, but actually used in TWL mode */
+	__arm7i_lma__ = __vma_stub_end__ + 4;
+	__arm7i_start__ = __arm7i_lma__ + 4;
+	__arm7i_end__ = __arm7i_start__ + 4;
+	
+	__arm7_lma__ = __arm7i_end__ + 4;
+	__arm7_start__ = __arm7_lma__ + 4;
+	__arm7_end__ = __arm7_start__ + 4;
 }

@@ -98,7 +98,7 @@ _start2:
 	
 	mov	r0, #0xdf		@ sys
 	msr	cpsr, r0
-	ldr 	sp, =(0x027FF000 + 0x1000 - 0x8000)
+	ldr 	sp, =(0x027FF000 + 0x1000)
 	
 	push {r0-r3,lr}
 	ldr	r3, =set0xFFFF0000FastMPUSettings
