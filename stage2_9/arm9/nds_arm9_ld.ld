@@ -118,9 +118,8 @@ SECTIONS
 		PROVIDE (__exidx_end = ABSOLUTE(.));
 	} > EWRAM = 0xff
 	
-	__itcm_vma_start = .;
-	__vectors_vma_start = .;
-	__vectors_vma_end__ = .;
+	__itcm_vma_start = LOADADDR(.itcm);
+	__vectors_vma_start = __itcm_vma_start;
 	.itcm      : SUBALIGN(4)
 	{
 		KEEP (*(.vectors*))
@@ -128,8 +127,7 @@ SECTIONS
 	} > ITCM AT > EWRAM
 	__itcm_vma_end__ = .;
 	
-	
-	__dtcm_vma_start = .;
+	__dtcm_vma_start = LOADADDR(.dtcm);
 	.dtcm      : SUBALIGN(4)
 	{
 		KEEP (*(.dtcm*))

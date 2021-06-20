@@ -35,6 +35,7 @@ include $(DEFAULT_GCC_PATH_WIN)/Makefile.basenewlib
 # Project Specific
 export TGDSPROJECTNAME = stage2_9
 export EXECUTABLE_FNAME = $(TGDSPROJECTNAME).bin
+export EXECUTABLE_FNAME_TWL = $(TGDSPROJECTNAME)i.bin
 export EXECUTABLE_VERSION_HEADER =	0.1
 export EXECUTABLE_VERSION =	"$(EXECUTABLE_VERSION_HEADER)"
 
@@ -49,11 +50,13 @@ export NONSTRIPELF_ARM7 = arm7-nonstripped.elf
 export NONSTRIPELF_ARM9 = arm9-nonstripped.elf
 
 export DECOMPRESSOR_BOOTCODE_9 = arm9bootldr
+export DECOMPRESSOR_BOOTCODE_9i = arm9ibootldr
 
 export BINSTRIP_RULE_7 :=	$(DIR_ARM7).bin
 export BINSTRIP_RULE_arm7bootldr =	arm7bootldr.bin
 export BINSTRIP_RULE_9 :=	$(DIR_ARM9).bin
 export BINSTRIP_RULE_COMPRESSED_9 :=	$(DECOMPRESSOR_BOOTCODE_9).bin
+export BINSTRIP_RULE_COMPRESSED_9i :=	$(DECOMPRESSOR_BOOTCODE_9i).bin
 
 export TARGET_LIBRARY_CRT0_FILE_7 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_9 = nds_arm_ld_crt0
@@ -62,6 +65,8 @@ export TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9 = nds_arm_ld_crt0
 export TARGET_LIBRARY_LINKER_FILE_7 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_7).S
 export TARGET_LIBRARY_LINKER_FILE_9 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_9).S
 export TARGET_LIBRARY_LINKER_FILE_COMPRESSED_9 = ../$(DECOMPRESSOR_BOOTCODE_9)/$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).S
+export TARGET_LIBRARY_LINKER_FILE_COMPRESSED_9i = ../$(DECOMPRESSOR_BOOTCODE_9i)/$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).S
+
 
 export TARGET_LIBRARY_TGDS_NTR_7 = toolchaingen7
 export TARGET_LIBRARY_TGDS_NTR_9 = toolchaingen9
@@ -107,10 +112,16 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	$(MAKE)	-R	-C	$(DIR_ARM9)/
 	$(MAKE)	-R	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/
+	$(MAKE)	-R	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9i)/
+	
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
-	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/../arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9) -e9  0x02000000	-b	../icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
-	-mv $(EXECUTABLE_FNAME)	../tgds_multiboot_payload/data
+	$(NDSTOOL)	-v	-c $(EXECUTABLE_FNAME)	-7  $(CURDIR)/../arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9) -e9  0x02000000	-b	../icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
+	-mv $(EXECUTABLE_FNAME)	../tgds_multiboot_payload/data/
+	
+	$(NDSTOOL)	-v	-c $(EXECUTABLE_FNAME_TWL)	-7  $(CURDIR)/../arm7/arm7-nonstripped_dsi_ntr_map.bin	-e7  0x03800000	-9 $(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9i)/$(BINSTRIP_RULE_COMPRESSED_9i) -e9  0x02000000	-b	../icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
+	-mv $(EXECUTABLE_FNAME_TWL)	../tgds_multiboot_payload_twl/data 
+	
 	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------
@@ -119,12 +130,13 @@ each_obj = $(foreach dirres,$(dir_read_arm9_files),$(dirres).)
 	
 clean:
 	$(MAKE) clean	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/
+	$(MAKE) clean	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9i)/
 	$(MAKE)	clean	-C	$(DIR_ARM9)/
 ifeq ($(SOURCE_MAKEFILE9),default)
 	-@rm -rf $(CURDIR)/$(DIR_ARM9)/Makefile
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
-	-@rm -fr $(EXECUTABLE_FNAME)	$(CURDIR)/common/templateCode/	arm9/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)
+	-@rm -fr $(EXECUTABLE_FNAME)	$(CURDIR)/common/templateCode/	arm9/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9i)/$(BINSTRIP_RULE_COMPRESSED_9i)
 
 rebase:
 	git reset --hard HEAD

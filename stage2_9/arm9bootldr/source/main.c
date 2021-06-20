@@ -24,6 +24,7 @@ USA
 #include "arm9.h"
 #include "dmaTGDS.h"
 #include "utilsTGDS.h"
+#include "debugNocash.h"
 
 //This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 int main(int argc, char **argv)  __attribute__ ((optnone)) {
@@ -63,6 +64,8 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	
 	REG_IME = 0;
 	coherent_user_range((u32)arm9_payload_addr_phys, (u32)arm9_size);
+	
+	nocashMessage("stage2_9->arm9bootldr->main()");
 	
 	typedef void (*t_bootAddr)();
 	t_bootAddr bootARM9Payload = (t_bootAddr)arm9_payload_addr_phys;

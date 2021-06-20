@@ -32,33 +32,9 @@ Simply DLDI patch ToolchainGenericDS-multiboot.nds, if the loader used to boot t
 And implement this method:
 //NTR Bootcode:
 __attribute__((section(".itcm")))
-void TGDSMultibootRunNDSPayload(char * filename) __attribute__ ((optnone)) {
-	strcpy((char*)(0x02280000 - (MAX_TGDSFILENAME_LENGTH+1)), filename);	//Arg0:	
-	
-	FILE * tgdsPayloadFh = fopen("0:/tgds_multiboot_payload.bin", "r");
-	if(tgdsPayloadFh != NULL){
-		fseek(tgdsPayloadFh, 0, SEEK_SET);
-		int	tgds_multiboot_payload_size = FS_getFileSizeFromOpenHandle(tgdsPayloadFh);
-		fread((u32*)0x02280000, 1, tgds_multiboot_payload_size, tgdsPayloadFh);
-		coherent_user_range_by_size(0x02280000, (int)tgds_multiboot_payload_size);
-		fclose(tgdsPayloadFh);
-		int ret=FS_deinit();
-		//Copy and relocate current TGDS DLDI section into target ARM9 binary
-		bool stat = dldiPatchLoader((data_t *)0x02280000, (u32)tgds_multiboot_payload_size, (u32)&_io_dldi_stub);
-		if(stat == false){
-			//printf("DLDI Patch failed. APP does not support DLDI format.");
-		}
-		REG_IME = 0;
-		typedef void (*t_bootAddr)();
-		t_bootAddr bootARM9Payload = (t_bootAddr)0x02280000;
-		bootARM9Payload();
-	}
-}
+void TGDSMultibootRunNDSPayload(char * filename);
 
 3) Boot NDS file by calling this method along the NDS Binary to-be run.
-
-
-
 
 
 

@@ -47,7 +47,7 @@ DIR_SRC			=	$(DIRS_ARM9_SRC)
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
 LDFLAGS	:=	-specs=nds_arm9_ld.specs	-Wl,--gc-sections,-Map,$(MAPFILE),-z,defs
-LDFLAGS_DSI	:=	-specs=dsi_arm9_ld.specs	-Wl,--no-gc-sections,-Map,arm9-nonstripped_dsi.map
+LDFLAGS_DSI	:=	-specs=dsi_arm9_ld.specs	-Wl,--gc-sections,-Map,arm9-nonstripped_dsi.map,-z,defs
 LIBRARIES_NTR =	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lstdc++	-lcnano9	-lgcc
 LIBRARIES_TWL =	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lstdc++	-lcnano9	-lgcc
 
@@ -166,10 +166,11 @@ $(ELF_ARM9): $(OBJPROG)
 	
 $(BINSTRIP_RULE_9): $(ELF_ARM9)
 	-@echo 'STRIP End: Remove ELF header and build baremetal Binary executable: $<	->	$@ !'
+	$(OBJCOPY) 	-S -O binary	${<:.elf=-nonstripped_dsi.elf}	${<:.elf=-nonstripped_dsi.bin}
 	$(OBJCOPY) 	-S -O binary	$<	$@
 	-rm	$<
 ################################################################################################
 
 clean:
 	-@echo 'cleanup $(DIR_ARM9)'
-	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE) $(OBJDIR)	data/tgds_multiboot_payload.bin	$(CURDIR)/arm9-nonstripped_dsi.elf $(CURDIR)/arm9-nonstripped_dsi.map
+	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE) $(OBJDIR)	data/tgds_multiboot_payload.bin	$(CURDIR)/arm9-nonstripped_dsi.elf $(CURDIR)/arm9-nonstripped_dsi.bin	$(CURDIR)/arm9-nonstripped_dsi.map

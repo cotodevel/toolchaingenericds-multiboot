@@ -38,6 +38,8 @@ USA
 #include "global_settings.h"
 #include "posixHandleTGDS.h"
 #include "TGDSMemoryAllocator.h"
+#include "debugNocash.h"
+#include "utilsTGDS.h"
 
 //3D Cube start 
 #include "videoGL.h"
@@ -86,6 +88,15 @@ void menuShow(){
 //new: this bootcode will run from VRAM, once the NDSBinary context has been created and handled by the reload bootcode.
 //generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
 bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
+	
+	nocashMessage("stage2_9->arm9->ReloadNDSBinaryFromContext() Start");
+	
+	char dbgMsg[96];
+	memset(dbgMsg, 0, sizeof(dbgMsg));
+	strcpy(dbgMsg, "Trying to open: ");
+	strcat(dbgMsg, filename);
+	nocashMessage(dbgMsg);
+	
 	volatile u8 * outBuf7 = NULL;
 	volatile u8 * outBuf9 = NULL;
 
@@ -93,17 +104,24 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	coherent_user_range_by_size((uint32)&arm7bootldr[0], (int)arm7bootldr_size);					
 	memcpy ((void *)NDS_LOADER_IPC_BOOTSTUBARM7_CACHED, (u32*)&arm7bootldr[0], arm7bootldr_size); 	//memcpy ( void * destination, const void * source, size_t num );	//memset(void *str, int c, size_t n)
 	
-	FILE * fh = fopen(filename, "r+");
+	FILE * fh = NULL;
+	if(__dsimode == false){
+		fh = fopen(filename, "r+");	//NTR DLDI R/W enabled
+	}
+	else{
+		fh = fopen(filename, "r");	//TWL mode hasn't TWL SD Write implemented yet
+	}
 	if(fh != NULL){
-		
 		int headerSize = sizeof(struct sDSCARTHEADER);
 		u8 * NDSHeader = (u8 *)TGDSARM9Malloc(headerSize*sizeof(u8));
 		if (fread(NDSHeader, 1, headerSize, fh) != headerSize){
+			nocashMessage("header read error");
 			printf("header read error");
 			TGDSARM9Free(NDSHeader);
 			fclose(fh);
 			return false;
 		}
+		nocashMessage("header parsed correctly.");
 		printf("header parsed correctly.");
 		struct sDSCARTHEADER * NDSHdr = (struct sDSCARTHEADER *)NDSHeader;
 		
@@ -166,6 +184,20 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		printf("arm9BootCodeOffsetInFile:%x", arm9BootCodeOffsetInFile);
 		printf("arm9BootCodeEntryAddress:%x", NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress);
 		
+		nocashMessage("ReloadNDSBinaryFromContext3():");
+		sprintf(dbgMsg, "arm7BootCodeSize:%d", arm7BootCodeSize);
+		nocashMessage(dbgMsg);
+		sprintf(dbgMsg, "arm7BootCodeOffsetInFile:%x", arm7BootCodeOffsetInFile);
+		nocashMessage(dbgMsg);
+		sprintf(dbgMsg, "arm7BootCodeEntryAddress:%x", NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm7EntryAddress);
+		nocashMessage(dbgMsg);
+		sprintf(dbgMsg, "arm9BootCodeSize:%d", arm9BootCodeSize);
+		nocashMessage(dbgMsg);
+		sprintf(dbgMsg, "arm9BootCodeOffsetInFile:%x", arm9BootCodeOffsetInFile);
+		nocashMessage(dbgMsg);
+		sprintf(dbgMsg, "arm9BootCodeEntryAddress:%x", NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress);
+		nocashMessage(dbgMsg);
+		
 		//Generate cluster filemap
 		uint32_t* cluster_table = (uint32_t*)&NDS_LOADER_IPC_CTX_UNCACHED_NTR->sectorTableBootCode[0];
 		uint32_t  cur_cluster = getStructFDFirstCluster(fdinst);
@@ -183,7 +215,7 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		
 		//Uncached to prevent cache issues right at once
 		outBuf7 = (u8 *)(NDS_LOADER_IPC_ARM7BIN_UNCACHED_NTR);	//will not be higher than: arm7BootCodeSize
-		outBuf9 = (u8 *)(NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress | 0x400000); //will not be higher than: arm9BootCodeSize or 0x2D0000 (2,949,120 bytes)
+		outBuf9 = (u8 *)(NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress); //will not be higher than: arm9BootCodeSize or 0x2D0000 (2,949,120 bytes)
 		
 		u8 * outBuf7Seek = outBuf7;
 		u8 * outBuf9Seek = outBuf9;
@@ -236,8 +268,8 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 			cur_clustersector = (u32)NDS_LOADER_IPC_CTX_UNCACHED_NTR->sectorTableBootCode[data_read];
 		}
 		
-		printf("ARM7 %d bytes. [Addr: %x]", arm7BootCodeSize, (unsigned int)(outBuf7 - 0x400000));
-		printf("ARM9 %d bytes. [Addr: %x]", arm9BootCodeSize, (unsigned int)(outBuf9 - 0x400000));
+		printf("ARM7 %d bytes. [Addr: %x]", arm7BootCodeSize, (unsigned int)(outBuf7));
+		printf("ARM9 %d bytes. [Addr: %x]", arm9BootCodeSize, (unsigned int)(outBuf9));
 		
 		//Build NDS Header
 		memcpy((u8*)0x027FFE00, NDSHeader, (headerSize*sizeof(u8)));
@@ -247,17 +279,21 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		TGDSARM9Free(outBuf);
 		TGDSARM9Free(NDSHeader);
 		
-		bool stat = dldiPatchLoader((data_t *)NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress, (u32)arm9BootCodeSize, (u32)&_io_dldi_stub);
-		if(stat == false){
-			printf("DLDI Patch failed. APP does not support DLDI format.");
-		}
-		
-		//Patch DLDI to file before launching it
-		fseek(fh, (int)arm9BootCodeOffsetInFile, SEEK_SET);
-		int wrote = fwrite((u8*)NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress, 1, arm9BootCodeSize, fh);
-		if(wrote >= 0){
-			sint32 FDToSync = fileno(fh);
-			fsync(FDToSync);	//save cached changes into disk
+		//NTR Mode: DLDI R/W
+		//TWL mode hasn't TWL SD Write implemented yet
+		if(__dsimode == false){
+			bool stat = dldiPatchLoader((data_t *)outBuf9, (u32)arm9BootCodeSize, (u32)&_io_dldi_stub);
+			if(stat == false){
+				printf("DLDI Patch failed. APP does not support DLDI format.");
+			}
+			
+			//Patch DLDI to file before launching it
+			fseek(fh, (int)arm9BootCodeOffsetInFile, SEEK_SET);
+			int wrote = fwrite((u8*)outBuf9, 1, arm9BootCodeSize, fh);
+			if(wrote >= 0){
+				sint32 FDToSync = fileno(fh);
+				fsync(FDToSync);	//save cached changes into disk
+			}
 		}
 		fclose(fh);
 		int ret=FS_deinit();
@@ -274,8 +310,8 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		waitWhileNotSetStatus(NDSLOADER_START);		//		\
 		
 		//reload ARM9.bin
-		coherent_user_range_by_size((uint32)NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress, (u32)arm9BootCodeSize);
-		reloadARMCore(NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress);
+		coherent_user_range_by_size((uint32)outBuf9, (u32)arm9BootCodeSize);
+		reloadARMCore(outBuf9);
 	}
 	return false;
 }
@@ -305,6 +341,9 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
+	nocashMessage("stage2_9->arm9->main() Before DLDI Init.");
+	reportTGDSPayloadMode();
+	
 	printf("     ");
 	printf("     ");
 	
@@ -312,10 +351,12 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	if (ret == 0)
 	{
 		printf("FS Init ok.");
+		nocashMessage("stage2_9->arm9->main() DLDI Init OK.");
 	}
 	else if(ret == -1)
 	{
 		printf("FS Init error.");
+		nocashMessage("stage2_9->arm9->main() DLDI Init fail.");
 	}
 	switch_dswnifi_mode(dswifi_idlemode);
 	asm("mcr	p15, 0, r0, c7, c10, 4");

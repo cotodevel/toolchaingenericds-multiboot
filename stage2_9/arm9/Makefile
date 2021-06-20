@@ -48,6 +48,7 @@ DIR_SRC			=	$(DIRS_ARM9_SRC)
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
 LDFLAGS	=	-specs=nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),-z,defs
+LDFLAGS_DSI	:=	-specs=nds_arm9_ld.specs	-Wl,--gc-sections,-Map,arm9_nonstripped_dsi.map,-z,defs
 LIBRARIES_NTR =	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lstdc++	-lcnano9	-lgcc
 LIBRARIES_TWL =	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lstdc++	-lcnano9	-lgcc
 
@@ -153,7 +154,8 @@ $(TARGET_LIBRARY_CRT0_FILE_9).o:	$(TARGET_LIBRARY_LINKER_FILE_9)
 #Linkage. 
 $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 	-@echo 'Entering Linking phase'
-	$(LD2) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_NTR)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
+	-$(LD2) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_NTR)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
+	-$(LD2) $^	$(LDFLAGS_DSI)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_TWL)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o	${@:.elf=_dsi.elf}
 	-@echo 'Leaving Linking phase. Output: $@'
 
 #xxxx-nonstripped.elf -> xxxx.elf STRIP operation
@@ -161,13 +163,16 @@ $(ELF_ARM9): $(OBJPROG)
 	-@echo '$@ Unstripped. STRIP Start!'
 	$(OBJSTRIP)	-s -R .comment -R .gnu.version	$<
 	-mv	$<	$@
+	-mv	${<:.elf=_dsi.elf}	${@:.elf=_nonstripped_dsi.elf}
 	
 $(BINSTRIP_RULE_9): $(ELF_ARM9)
+	$(OBJCOPY) 	-S -O binary	${<:.elf=_nonstripped_dsi.elf}	${<:.elf=i.bin}
 	$(OBJCOPY) 	-S -O binary	$<	$@
 	-mv	$@ ../$(DECOMPRESSOR_BOOTCODE_9)/data
+	-mv	${<:.elf=i.bin} ../$(DECOMPRESSOR_BOOTCODE_9i)/data
 	-rm	$<
 ################################################################################################
 
 clean:
 	-@echo 'cleanup $(DIR_ARM9)'
-	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE) $(OBJDIR)
+	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE) $(OBJDIR)	$(CURDIR)/arm9_nonstripped_dsi.elf	$(CURDIR)/arm9_nonstripped_dsi.map

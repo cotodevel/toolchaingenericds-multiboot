@@ -71,16 +71,13 @@ _start:
 	msr	cpsr, r0
 	ldr	sp, =sp_SYS
 	
+	@so far OK
+
 	/* copy the VMA sections to each LMA sections for hardware RAM not initialized at self boot crt0 stage*/
 	ldr                 r1,=__itcm_vma_start                 /* point our source register to the start of the .itcm section (VMA)*/
 	ldr                 r2,=_itcm_start                 /* point our destination register to the I-TCM dedicated to our writable data (LMA)*/
 	ldr                 r3,=_itcm_end                  /* point r3 after the last byte we will be writing (LMA)*/
 	bl                  copy  
-	
-	ldr                 r1,=__vectors_vma_start                /* point our source register to the start of the .vectors section (VMA)*/
-	ldr                 r2,=_vector_start                 /* point our destination register to the VECTORS dedicated to our writable data (LMA)*/
-	ldr                 r3,=_vector_end                  /* point r3 after the last byte we will be writing (LMA)*/
-	bl                  copy
 	
 	ldr                 r1,=__dtcm_vma_start                /* point our source register to the start of the .dtcm section (VMA)*/
 	ldr                 r2,=_dtcm_start                 /* point our destination register to the D-TCM dedicated to our writable data (LMA)*/
@@ -91,12 +88,14 @@ _start:
 	ldr                 r0,=__bss_vma_start
 	ldr                 r1,=__bss_vma_end
 	bl clear
-	
+
+@so far OK
 	blx ARM7ReloadFlashSync
 	bl initHardware
 	
 	ldr	lr, =exception_sysexit
 	
+@so far OK
 	blx	mainARGV			@entrypoint
 
 .ltorg

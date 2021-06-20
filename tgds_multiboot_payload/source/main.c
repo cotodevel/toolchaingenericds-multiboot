@@ -39,6 +39,7 @@ USA
 #include "posixHandleTGDS.h"
 #include "TGDSMemoryAllocator.h"
 #include "stage2_9.h"
+#include "debugNocash.h"
 
 bool stopSoundStreamUser(){
 	return false;
@@ -111,6 +112,7 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	int fileSize = stage2_9_size;
 	NDS_LOADER_IPC_CTX_UNCACHED_NTR->fileSize = fileSize;
 	
+	nocashMessage("tgds_multiboot_payload_ntr.bin:ReloadNDSBinaryFromContext1():");
 	printf("ReloadNDSBinaryFromContext1():");
 	printf("arm7BootCodeSize:%d", arm7BootCodeSize);
 	printf("arm7BootCodeOffsetInFile:%x", arm7BootCodeOffsetInFile);
@@ -125,10 +127,13 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	
 	//Uncached to prevent cache issues right at once
 	outBuf7 = (u8 *)(NDS_LOADER_IPC_ARM7BIN_UNCACHED_NTR);	//will not be higher than: arm7BootCodeSize
-	outBuf9 = (u8 *)(NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress | 0x400000); //will not be higher than: arm9BootCodeSize or 0x2D0000 (2,949,120 bytes)
+	outBuf9 = (u8 *)(NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress); //will not be higher than: arm9BootCodeSize or 0x2D0000 (2,949,120 bytes)
 	
 	memcpy(outBuf7, (u8*)&stage2_9[arm7BootCodeOffsetInFile], arm7BootCodeSize);
+	
+	coherent_user_range_by_size((u32)&stage2_9[arm9BootCodeOffsetInFile], (int)arm9BootCodeSize);	//prevent cache problems
 	memcpy(outBuf9, (u8*)&stage2_9[arm9BootCodeOffsetInFile], arm9BootCodeSize);
+	coherent_user_range_by_size((u32)outBuf9, (int)arm9BootCodeSize);	//prevent cache problems
 	
 	//Build NDS Header
 	memcpy((u8*)0x027FFE00, NDSHeader, (headerSize*sizeof(u8)));
@@ -154,10 +159,14 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	setNDSLoaderInitStatus(NDSLOADER_LOAD_OK);	//		|	Wait until ARM7.bin is copied back to IWRAM's target address
 	//waitWhileNotSetStatus(NDSLOADER_START);		//		\
 	
-	u32 arm9Addr = (uint32)NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm9EntryAddress;
-	coherent_user_range_by_size(arm9Addr, (u32)arm9BootCodeSize);
+	coherent_user_range_by_size((u32)outBuf9, (u32)arm9BootCodeSize);
 	memset(0x023C0000, 0, 0x4000);
-	reloadARMCore(arm9Addr);
+	
+	char msgDebug[96];
+	memset(msgDebug, 0, sizeof(msgDebug));
+	sprintf(msgDebug,"%s%x","tgds_multiboot_payload_ntr.bin:ReloadNDSBinaryFromContext() ARM9 Boot Addr: ", (u32)outBuf9);
+	nocashMessage(msgDebug);
+	reloadARMCore((u32)outBuf9);
 	
 	return false;
 }
@@ -190,11 +199,16 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	if (ret == 0)
 	{
 		printf("FS Init ok.");
+		nocashMessage("tgds_multiboot_payload_ntr.bin: DLDI Init OK");
 	}
 	else if(ret == -1)
 	{
 		printf("FS Init error.");
+		nocashMessage("tgds_multiboot_payload_ntr.bin: DLDI Init Fail");
 	}
+	
+	nocashMessage("tgds_multiboot_payload_ntr.bin: Boot OK");
+	
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	flush_icache_all();
 	flush_dcache_all();

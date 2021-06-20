@@ -61,12 +61,13 @@ static inline char * canGoBackToLoader(){
 void menuShow(){
 	clrscr();
 	printf("                              ");
-	printf("ToolchainGenericDS-multiboot:");
+	printf("ToolchainGenericDS-multiboot (arm9.bin):");
 	printf("                              ");
 	printf("Button (Start): File browser ");
 	printf("    Button (A) Load TGDS/devkitARM NDS Binary. ");
 	printf("                              ");
 	printf("(Select): back to Loader. >%d", TGDSPrintfColor_Green);
+	printf("Button (A): TGDS Binary SDK Ver. (NTR/TWL) ");
 	printf("Available heap memory: %d", getMaxRam());
 	printf("Select: this menu");
 	printarm7DebugBuffer();
@@ -229,6 +230,20 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 				}
 				menuShow();
 			}
+		}
+		
+		if (keysDown() & KEY_A){
+			clrscr();
+			printf(" ---- ");
+			printf(" ---- ");
+			printf(" ---- ");
+			printf(" ---- ");
+			
+			reportTGDSPayloadMode();
+			while(keysHeld() & KEY_A){
+				scanKeys();
+			}
+			menuShow();
 		}
 		
 		handleARM9SVC();	/* Do not remove, handles TGDS services */
