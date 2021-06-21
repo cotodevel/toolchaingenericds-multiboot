@@ -48,7 +48,7 @@ DIR_SRC			=	$(DIRS_ARM9_SRC)
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
 LDFLAGS	=	-specs=nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),-z,defs
-LDFLAGS_DSI	:=	-specs=nds_arm9_ld.specs	-Wl,--gc-sections,-Map,arm9_nonstripped_dsi.map,-z,defs
+LDFLAGS_DSI	:=	-specs=nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,arm9_nonstripped_dsi.map,-z,defs
 LIBRARIES_NTR =	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lstdc++	-lcnano9	-lgcc
 LIBRARIES_TWL =	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lstdc++	-lcnano9	-lgcc
 
@@ -90,6 +90,7 @@ COMPILER_SPECIFIC_CFLAGS += \
   
 CFLAGS = \
   -g3 \
+  -ffunction-sections -fdata-sections \
   -nostdlib \
   -fshort-enums	\
   -Wno-narrowing	\
