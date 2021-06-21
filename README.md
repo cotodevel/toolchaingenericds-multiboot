@@ -17,24 +17,13 @@ TGDS homebrew loader. Loads .NDS TGDS/DevkitARM binaries from within a menu. As 
 Simply DLDI patch ToolchainGenericDS-multiboot.nds, if the loader used to boot this app does not perform auto-DLDI patching.
 
 
-############################################### HOW TO EMBED PAYLOAD TGDS-MULTIBOOT INTO TARGET NDS BINARY ############################################### 
-1) Build the project, then move the tgds_multiboot.h and tgds_multiboot.c into ARM9 /source folder, embedding TGDS-multiboot into target NDS Binary. 
-   Optionally, there's a standalone NDS Binary of TGDS-multiboot.
-   Optionally, if none of these work for you (such as saving binary space), a payload of TGDS-multiboot is read from filesystem by default.
-   
-   
-2) TGDS-multiboot implementation: in target's TGDS project, C source add: 
+############################################### HOW TO USE TGDS-MULTIBOOT IN TGDS PROJECTS ############################################### 
+1) 1a) There's a standalone NDS Binary of TGDS-multiboot (ToolchainGenericDS-multiboot.nds/ToolchainGenericDS-multiboot.srl) for launching homebrew.
+   1b) TGDS-multiboot is also embedded into TGDS projects: in target's TGDS project, simply call 
+		void TGDSMultibootRunNDSPayload(char * filename);
 
-#include "dmaTGDS.h"
-#include "nds_cp15_misc.h"
-#include "fatfslayerTGDS.h"
-
-And implement this method:
-//NTR Bootcode:
-__attribute__((section(".itcm")))
-void TGDSMultibootRunNDSPayload(char * filename);
-
-3) Boot NDS file by calling this method along the NDS Binary to-be run.
+	Note: 	-TWL binaries are WIP. 
+			-For both cases it's required to have tgds_multiboot_payload_ntr.bin/tgds_multiboot_payload_twl.bin copied in SD root folder.
 
 
 
