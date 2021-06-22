@@ -44,7 +44,7 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
     
 	while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQWait(IRQ_VBLANK);
+		IRQWait(0, IRQ_VBLANK);
 	}
    
 	return 0;

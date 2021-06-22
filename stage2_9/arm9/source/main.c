@@ -401,7 +401,7 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	
 	while (1){
 		handleARM9SVC();	/* Do not remove, handles TGDS services */
-		IRQWait(IRQ_VBLANK);
+		IRQWait(0, IRQ_VBLANK);
 	}
 }
 

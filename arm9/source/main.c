@@ -247,7 +247,7 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 		}
 		
 		handleARM9SVC();	/* Do not remove, handles TGDS services */
-		IRQWait(IRQ_VBLANK);
+		IRQVBlankWait();
 	}
 }
 

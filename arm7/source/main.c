@@ -48,7 +48,7 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 		//up to this point, is free to reload the EWRAM code
 		
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQWait(IRQ_VBLANK);
+		IRQWait(0, IRQ_VBLANK);
 	}
 	return 0;
 }
