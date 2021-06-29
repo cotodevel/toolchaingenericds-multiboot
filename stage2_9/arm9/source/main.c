@@ -316,6 +316,7 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	return false;
 }
 
+int internalCodecType = SRC_NONE;//Internal because WAV raw decompressed buffers are used if Uncompressed WAV or ADPCM
 bool stopSoundStreamUser(){
 	return false;
 }

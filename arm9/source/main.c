@@ -73,6 +73,7 @@ void menuShow(){
 	printarm7DebugBuffer();
 }
 
+int internalCodecType = SRC_NONE;//Internal because WAV raw decompressed buffers are used if Uncompressed WAV or ADPCM
 bool stopSoundStreamUser(){
 	return false;
 }
