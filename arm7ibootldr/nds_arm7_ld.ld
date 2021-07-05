@@ -21,7 +21,7 @@ USA
 /* attributes can actually help in debugging because if you try to move functions to DTCM, for example, compiler will rant since DTCM is DATA only path and not execution*/
 MEMORY
 {
-	IWRAMBOOTCODE	(rwx)	: ORIGIN = 0x023CC000, LENGTH = 64K
+	IWRAMBOOTCODE	(rwx)	: ORIGIN = 0x023C4000, LENGTH = 96K
 }
 
 _iwram_start = ORIGIN(IWRAMBOOTCODE);

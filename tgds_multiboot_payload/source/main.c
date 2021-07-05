@@ -161,7 +161,8 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	//waitWhileNotSetStatus(NDSLOADER_START);		//		\
 	
 	coherent_user_range_by_size((u32)outBuf9, (u32)arm9BootCodeSize);
-	memset(0x023C0000, 0, 0x4000);
+	//ARM7 DLDI section code
+	memset(0x023AC000, 0, 0x4000);
 	
 	char msgDebug[96];
 	memset(msgDebug, 0, sizeof(msgDebug));
