@@ -1,7 +1,7 @@
 #ifdef __cplusplus 
 extern "C" {
 #endif
-	extern unsigned char tgds_multiboot_payload[962108];
+	extern unsigned char tgds_multiboot_payload[962172];
 	extern int tgds_multiboot_payload_size;
 #ifdef __cplusplus 
 } 

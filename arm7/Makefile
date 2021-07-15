@@ -48,7 +48,7 @@ DIR_SRC			= 	$(DIRS_ARM7_SRC)
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
 LDFLAGS	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),--fix-v4bx
 LDFLAGS_DSI	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/dsi_arm7_ld.specs	-Wl,--no-gc-sections,-Map,arm7-nonstripped_dsi.map,--fix-v4bx
-LDFLAGS_DSI_USING_NTR_MAP	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,arm7-nonstripped_dsi_ntr_map.map,--fix-v4bx
+LDFLAGS_DSI_USING_NTR_MAP	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm7_ld.specs	-Wl,--gc-sections,-Map,arm7-nonstripped_dsi_ntr_map.map,--fix-v4bx
 
 LIBRARIES_NTR =	-l$(TARGET_LIBRARY_TGDS_NTR_7)	-lstdc++	-lcnano7	-lgcc
 LIBRARIES_TWL =	-l$(TARGET_LIBRARY_TGDS_TWL_7)	-lstdc++	-lcnano7	-lgcc
@@ -99,7 +99,6 @@ CFLAGS = \
   -fshort-enums	\
   $(COMPILER_SPECIFIC_CFLAGS) \
   $(ARCH_CFLAGS) \
-  $(NEWLIB_NANO_COMPILE_FLAGS_C)	\
   $(CLI_CFLAG_OVERRIDES)
 	
 #------------------------------------------ CLANG END
