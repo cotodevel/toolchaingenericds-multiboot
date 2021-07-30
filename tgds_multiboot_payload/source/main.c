@@ -164,6 +164,11 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	//ARM7 DLDI section code
 	memset(0x023AC000, 0, 0x4000);
 	
+	extern u8 argvIntraTGDSMB[256];
+	memcpy ((void*)0x02FFFE70, (char*)&argvIntraTGDSMB[0], 256);
+	
+	//argv is available at  this point	
+	
 	char msgDebug[96];
 	memset(msgDebug, 0, sizeof(msgDebug));
 	sprintf(msgDebug,"%s%x","tgds_multiboot_payload_ntr.bin:ReloadNDSBinaryFromContext() ARM9 Boot Addr: ", (u32)outBuf9);

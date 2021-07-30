@@ -298,6 +298,10 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 		fclose(fh);
 		int ret=FS_deinit();
 		
+		extern u8 argvIntraTGDSMB[256];
+		memcpy ((void*)0x02FFFE70, (char*)&argvIntraTGDSMB[0], 256);
+		//argv is available at  this point	
+		
 		asm("mcr	p15, 0, r0, c7, c10, 4");
 		WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
 		flush_icache_all();

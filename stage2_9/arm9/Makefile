@@ -100,7 +100,7 @@ CFLAGS = \
 	
 #------------------------------------------ CLANG END
 
-all: makebuild	$(TARGET_LIBRARY_CRT0_FILE_9).o	$(BINSTRIP_RULE_9)
+all: makebuild	nds_arm_ld_crt0Custom.o	$(BINSTRIP_RULE_9)
 #all: debug
 
 makebuild:
@@ -146,7 +146,7 @@ $(OBJDIR)/%.o : %.S
 	-@echo 'S Compile end: $@'
 
 #Special rule: compile crt0 for arm9 entrypoint
-$(TARGET_LIBRARY_CRT0_FILE_9).o:	$(TARGET_LIBRARY_LINKER_FILE_9)
+nds_arm_ld_crt0Custom.o:	nds_arm_ld_crt0Custom.S
 	-@echo 'S Compile start: crt0s'
 	rm -fr $(BUILD)/$(TARGET_LIBRARY_CRT0_FILE_9).o
 	$(CPP)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $(OBJDIR)/$@ -c $<

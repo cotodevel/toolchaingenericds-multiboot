@@ -29,6 +29,7 @@ USA
 //This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	
+	//argv is available at this point
 	u32 * dest = 0x02000000;
 	int arm9_payload_addr = (int)dest[0];
 	int arm9_size = (int)dest[1];
@@ -67,6 +68,7 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	
 	nocashMessage("stage2_9->arm9bootldr->main()");
 	
+	//argv is available at this point
 	typedef void (*t_bootAddr)();
 	t_bootAddr bootARM9Payload = (t_bootAddr)arm9_payload_addr_phys;
 	bootARM9Payload();
