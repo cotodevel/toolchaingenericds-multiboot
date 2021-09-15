@@ -50,8 +50,8 @@ LDFLAGS	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm7_ld.specs	-Wl,--no-gc
 LDFLAGS_DSI	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/dsi_arm7_ld.specs	-Wl,--no-gc-sections,-Map,arm7-nonstripped_dsi.map,--fix-v4bx
 LDFLAGS_DSI_USING_NTR_MAP	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm7_ld.specs	-Wl,--gc-sections,-Map,arm7-nonstripped_dsi_ntr_map.map,--fix-v4bx
 
-LIBRARIES_NTR =	-l$(TARGET_LIBRARY_TGDS_NTR_7)	-lstdc++	-lcnano7	-lgcc
-LIBRARIES_TWL =	-l$(TARGET_LIBRARY_TGDS_TWL_7)	-lstdc++	-lcnano7	-lgcc
+LIBRARIES_NTR =	-l$(TARGET_LIBRARY_TGDS_NTR_7)	-lhardware7		-lstdc++	-lcnano7	-lgcc
+LIBRARIES_TWL =	-l$(TARGET_LIBRARY_TGDS_TWL_7)	-lhardware7i	-lstdc++	-lcnano7	-lgcc
 
 ################################################################################################
 
