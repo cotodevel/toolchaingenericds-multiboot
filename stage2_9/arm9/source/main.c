@@ -46,6 +46,7 @@ USA
 #include "videoTGDS.h"
 #include "math.h"
 #include "imagepcx.h"
+#include "Texture_Cube.h"
 
 float camDist = -0.3*4;
 float rotateX = 0.0;
@@ -387,7 +388,7 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 		
 		glReset();
 		
-		LoadGLTextures();
+		LoadGLTextures((u8*)&Texture_Cube);
 		
 		glEnable(GL_ANTIALIAS);
 		glEnable(GL_TEXTURE_2D);
