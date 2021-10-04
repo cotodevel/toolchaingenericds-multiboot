@@ -79,31 +79,12 @@ void HandleFifoNotEmptyWeakRef(volatile u32 cmd1){
 	switch (cmd1) {
 		//NDS7: 
 		#ifdef ARM7
-		case(FIFO_ARM7_RELOAD):{
-			
-			uint32 * fifomsg = (uint32 *)&getsIPCSharedTGDSSpecific()->fifoMesaggingQueue[0];
-			u32 arm7entryaddress = getValueSafe(&fifomsg[34]);
-			int arm7BootCodeSize = getValueSafe(&fifomsg[33]);
-			u32 arm7EntryAddressPhys = getValueSafe(&fifomsg[32]);
-			//dmaTransferWord(0, (uint32)arm7EntryAddressPhys, (uint32)arm7entryaddress, (uint32)arm7BootCodeSize);
-			memcpy((void *)arm7entryaddress,(const void *)arm7EntryAddressPhys, arm7BootCodeSize);
-			reloadARMCore((u32)arm7entryaddress);	//Run Bootstrap7 
-		}
-		break;
-		
-		case(FIFO_TGDSMBRELOAD_SETUP):{
-			reloadNDSBootstub();
-		}
-		break;
 		
 		#endif
 		
 		//NDS9: 
 		#ifdef ARM9
-		case(FIFO_ARM7_RELOAD_OK):{
-			reloadStatus = 0;
-		}
-		break;
+		
 		#endif
 	}
 	
@@ -136,10 +117,11 @@ void freeSoundCustomDecoder(u32 srcFrmt){
 __attribute__((optimize("O0")))
 void reloadARM7PlayerPayload(u32 arm7entryaddress, int arm7BootCodeSize){
 	coherent_user_range_by_size((u32)&arm7bootldr[0], arm7BootCodeSize);
-	uint32 * fifomsg = (uint32 *)&getsIPCSharedTGDSSpecific()->fifoMesaggingQueue[0];
-	setValueSafe(&fifomsg[32], (u32)&arm7bootldr[0]);
-	setValueSafe(&fifomsg[33], (u32)arm7BootCodeSize);
-	setValueSafe(&fifomsg[34], (u32)arm7entryaddress);
+	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
+	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
+	setValueSafe(&fifomsg[0], (u32)&arm7bootldr[0]);
+	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
+	setValueSafe(&fifomsg[2], (u32)arm7entryaddress);
 	SendFIFOWords(FIFO_ARM7_RELOAD);
 }
 #endif

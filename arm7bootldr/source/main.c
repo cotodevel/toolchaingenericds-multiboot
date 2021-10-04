@@ -54,32 +54,3 @@ int main(int argc, char **argv) {
    
 	return 0;
 }
-
-//TGDS-MB Bootcode v2: todo: must run from VRAM
-__attribute__((optimize("O0")))
-void reloadNDSBootstub(){
-	uint32 * fifomsg = (uint32 *)&getsIPCSharedTGDSSpecific()->fifoMesaggingQueue[0];
-	{
-		REG_IME = 0;
-		REG_IF = 0;
-		REG_IE = 0;
-		
-		//ARM7 reloads here (only if within 0x037f8000 range)
-		int arm7BootCodeSize = getValueSafe(&fifomsg[33]);
-		u32 arm7EntryAddress = getValueSafe(&fifomsg[32]);
-		
-		//is ARM7 Payload within 0x02xxxxxx range?
-		if((arm7EntryAddress >= 0x02000000) && (arm7EntryAddress != 0x037f8000) && (arm7EntryAddress != 0x03800000) ){
-			
-		}
-		//ARM7 Payload within 0x03xxxxxx range
-		else{
-			memcpy((void *)arm7EntryAddress,(const void *)ARM7_PAYLOAD, arm7BootCodeSize);
-		}
-		//reload ARM7!
-		setValueSafe(&fifomsg[32], (u32)0);
-		typedef void (*t_bootAddr)();
-		t_bootAddr bootARM7Payload = (t_bootAddr)arm7EntryAddress;
-		bootARM7Payload();
-	}
-}

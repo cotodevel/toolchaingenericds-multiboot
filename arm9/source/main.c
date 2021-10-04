@@ -89,9 +89,6 @@ int TGDSProjectReturnFromLinkedModule() __attribute__ ((optnone)) {
 	return -1;
 }
 
-__attribute__((section(".dtcm")))
-u32 reloadStatus = 0;
-
 int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/

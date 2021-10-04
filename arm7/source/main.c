@@ -45,7 +45,3 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	}
 	return 0;
 }
-
-void reloadNDSBootstub(){
-
-}

@@ -32,7 +32,6 @@ extern "C" {
 #endif
 
 extern int main(int argc, char **argv);
-extern void reloadNDSBootstub();
 
 #ifdef __cplusplus
 }

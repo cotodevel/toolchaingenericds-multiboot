@@ -111,18 +111,15 @@ bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
 	REG_IME = 0;
 	REG_IE = 0;
 	REG_IF = 0;
-	uint32 * fifomsg = (uint32 *)&getsIPCSharedTGDSSpecific()->fifoMesaggingQueue[0];
-	setValueSafe(&fifomsg[32], (u32)arm7EntryAddress);
-	setValueSafe(&fifomsg[33], (u32)arm7BootCodeSize);
+	
+	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
+	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
+	setValueSafe(&fifomsg[0], (u32)arm7EntryAddress);
+	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
 	SendFIFOWords(FIFO_TGDSMBRELOAD_SETUP);
-	while (getValueSafe(&fifomsg[32]) == (u32)arm7EntryAddress){
+	while (getValueSafe(&fifomsg[0]) == (u32)arm7EntryAddress){
 		swiDelay(1);
 	}
-	
-	//clrscr();
-	//printf(" --");
-	//printf(" --");
-	//printf(" --");
 	
 	printf("ARM7: %x - ARM9: %x", arm7EntryAddress, arm9EntryAddress);
 	//DLDI patch it. If TGDS DLDI RAMDISK: Use standalone version, otherwise direct DLDI patch
@@ -152,9 +149,6 @@ char *argvs[8];
 int TGDSProjectReturnFromLinkedModule() __attribute__ ((optnone)) {
 	return -1;
 }
-
-__attribute__((section(".dtcm")))
-u32 reloadStatus = 0;
 
 //This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 //This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.

@@ -64,9 +64,6 @@ int TGDSProjectReturnFromLinkedModule() __attribute__ ((optnone)) {
 	return -1;
 }
 
-__attribute__((section(".dtcm")))
-u32 reloadStatus = 0;
-
 //This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	

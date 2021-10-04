@@ -34,17 +34,9 @@ extern "C" {
 #endif
 
 extern int main(int argc, char **argv);
-extern void enterGDBFromARM7(void);
-
 extern FATFS Fatfs;					// Petit-FatFs work area 
 extern char fname[256];
-
-extern void handleARM7FSSetup();
-extern void handleARM7FSRender();
-extern int fetchVideoFrame(int fileOffset, int bufferSize);
-
 extern bool stopSoundStreamUser();
-extern void reloadNDSBootstub();
 
 #ifdef __cplusplus
 }

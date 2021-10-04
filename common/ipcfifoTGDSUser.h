@@ -34,20 +34,13 @@ USA
 
 //---------------------------------------------------------------------------------
 typedef struct sIPCSharedTGDSSpecific{
-	//FIFO Mesagging: used when 3+ args sent between ARM cores through FIFO interrupts.
-	uint32 fifoMesaggingQueue[(0x40) + (0x4 * 4)];	//68 * 4 Words for various command handling
+	
 }  IPCSharedTGDSSpecific	__attribute__((aligned (4)));
 
 //TGDS Memory Layout ARM7/ARM9 Cores
 #define TGDS_ARM7_MALLOCSTART (u32)(0x06000000)
 #define TGDS_ARM7_MALLOCSIZE (int)(112*1024)
 #define TGDSDLDI_ARM7_ADDRESS (u32)(TGDS_ARM7_MALLOCSTART + TGDS_ARM7_MALLOCSIZE)
-
-#define FIFO_TGDSMBRELOAD_SETUP (u32)(0xFFFFABC8)
-#define FIFO_ARM7_RELOAD_OK (u32)(0xFFFFABC9)
-#define FIFO_ARM7_RELOAD (u32)(0xFFFFABCA)
-
-#define ARM7_PAYLOAD (u32)((int)0x02400000 - 0x18000)
 
 #endif
 
