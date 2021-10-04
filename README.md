@@ -1,6 +1,6 @@
 ![ToolchainGenericDS](img/TGDS-Logo.png)
 
-Branch: master
+master: Development branch. Use TGDS1.64Stable: branch for stable features.
 
 This is the Toolchain Generic multiboot project:
 
