@@ -35,7 +35,7 @@ include $(DEFAULT_GCC_PATH_WIN)/Makefile.basenewlib
 # Project Specific
 export TGDSPROJECTNAME = ToolchainGenericDS-multiboot
 export EXECUTABLE_FNAME = $(TGDSPROJECTNAME).nds
-export EXECUTABLE_VERSION_HEADER =	0.1
+export EXECUTABLE_VERSION_HEADER =	0.2
 export EXECUTABLE_VERSION =	"$(EXECUTABLE_VERSION_HEADER)"
 export TGDSPKG_TARGET_NAME = /
 #The ndstool I use requires to have the elf section removed, so these rules create elf headerless- binaries.
@@ -76,12 +76,14 @@ export TARGET_LIBRARY_TGDS_TWL_9 = $(TARGET_LIBRARY_TGDS_NTR_9)i
 #####################################################ARM7#####################################################
 
 export DIRS_ARM7_SRC = source/	\
+			source/petitfs-src/	\
 			source/interrupts/	\
 			../common/	\
 			../common/templateCode/source/	\
 			../common/templateCode/data/arm7/	
 			
 export DIRS_ARM7_HEADER = source/	\
+			source/petitfs-src/	\
 			source/interrupts/	\
 			include/	\
 			../common/	\
@@ -128,14 +130,12 @@ ifeq ($(SOURCE_MAKEFILE7),default)
 endif
 	$(MAKE)	-R	-C	$(DIR_ARM7)/
 	$(MAKE)	-R	-C	arm7bootldr/
-	$(MAKE)	-R	-C	arm7ibootldr/
 	-mv arm7bootldr/arm7bootldr.bin	tgds_multiboot_payload/data
 	-mv arm7ibootldr/arm7ibootldr.bin	tgds_multiboot_payload_twl/data
 	
 ifeq ($(SOURCE_MAKEFILE9),default)
 	cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC9_NOFPIC)	$(CURDIR)/$(DIR_ARM9)
 endif
-	$(MAKE)	-R	-C	$(CURDIR)/stage2_9/
 	$(MAKE)	-R	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/
 	$(MAKE)	-R	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9i)/
 	$(MAKE)	-R	-C	$(DIR_ARM9)/
@@ -163,12 +163,10 @@ clean:
 	$(MAKE)	clean	-C	$(DIR_ARM7)/
 	$(MAKE) clean	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/
 	$(MAKE) clean	-C	arm7bootldr/
-	$(MAKE) clean	-C	arm7ibootldr/
 ifeq ($(SOURCE_MAKEFILE7),default)
 	-@rm -rf $(CURDIR)/$(DIR_ARM7)/Makefile
 endif
 #--------------------------------------------------------------------	
-	$(MAKE) clean	-C	$(CURDIR)/stage2_9/
 	$(MAKE) clean	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/
 	$(MAKE) clean	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9i)/
 	$(MAKE)	clean	-C	$(DIR_ARM9)/
@@ -178,7 +176,7 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
-	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl		$(CURDIR)/common/templateCode/	arm9/data/arm7bootldr.bin	arm9/data/arm7ibootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	release/arm7dldi-ntr/$(EXECUTABLE_FNAME)	release/arm7dldi-ntr/tgds_multiboot_payload.h	release/arm7dldi-ntr/tgds_multiboot_payload.c	release/arm7dldi-ntr/tgds_multiboot_payload_twl.h	release/arm7dldi-ntr/tgds_multiboot_payload_twl.c	release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin	release/arm7dldi-ntr/tgds_multiboot_payload_twl.bin
+	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl		$(CURDIR)/common/templateCode/	tgds_multiboot_payload/data/arm7bootldr.bin	tgds_multiboot_payload/data/arm7ibootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	release/arm7dldi-ntr/$(EXECUTABLE_FNAME)	release/arm7dldi-ntr/tgds_multiboot_payload.h	release/arm7dldi-ntr/tgds_multiboot_payload.c	release/arm7dldi-ntr/tgds_multiboot_payload_twl.h	release/arm7dldi-ntr/tgds_multiboot_payload_twl.c	release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin	release/arm7dldi-ntr/tgds_multiboot_payload_twl.bin
 
 rebase:
 	git reset --hard HEAD

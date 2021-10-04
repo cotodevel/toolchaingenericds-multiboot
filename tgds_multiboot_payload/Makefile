@@ -51,9 +51,9 @@ d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_
 
 #ARM9 specific definitions. -fno-common so we force initialized data to rodata
 MAPFILE = $(BINSTRIP_RULE_COMPRESSED_9).map
-AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_AS_COMPILER_FLAGS_7)		$(GLOBAL_AS_COMPILER_FLAGS)
-CC_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_CC_COMPILER_FLAGS_7)		$(GLOBAL_CC_COMPILER_FLAGS)		-fPIE	-pie
-CPP_FLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_CXX_COMPILER_FLAGS_7)	$(GLOBAL_CXX_COMPILER_FLAGS)	-fPIE	-pie
+AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_AS_COMPILER_FLAGS_9)		$(GLOBAL_AS_COMPILER_FLAGS)
+CC_ASFLAGS		=	-marm	-O0	-mthumb-interwork	-DNTRMODE	-DARM9	-Dappver='$(EXECUTABLE_VERSION)'	
+CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	
 BUILD			= 	$(BUILD_ARM9)
 DIR_SRC			=	$(DIRS_ARM9_SRC)
 
@@ -96,7 +96,8 @@ COMPILER_SPECIFIC_CFLAGS += \
   --target=arm-none-eabi \
   --sysroot= \
   -O0	\
-  -DARM9
+  -DARM9	\
+  -DNTRMODE
   
 CFLAGS = \
   -g3 \

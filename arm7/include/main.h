@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 extern int main(int argc, char **argv);
-extern void initDLDIARM7(u32 srcDLDIAddr);
+extern void reloadNDSBootstub();
 
 #ifdef __cplusplus
 }

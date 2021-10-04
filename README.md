@@ -13,7 +13,7 @@ After compiling, run the project in NDS.
 
 Project Specific description: 
 
-TGDS homebrew loader. Loads .NDS TGDS/DevkitARM binaries from within a menu. As long ARM7 entry address sits between 0x037f8000 ~ 0x03810000.
+TGDS homebrew loader. Loads .NDS TGDS/DevkitARM binaries from within a menu. 
 Simply DLDI patch ToolchainGenericDS-multiboot.nds, if the loader used to boot this app does not perform auto-DLDI patching.
 
 
@@ -28,5 +28,9 @@ Simply DLDI patch ToolchainGenericDS-multiboot.nds, if the loader used to boot t
 
 
 Issues: 
-Some dkARM DS binaries aren't working. As a workaround you can reload moonshell2 through tgds-multiboot, then reload the problematic ds binary.
+- NTR Binary only, for now
+- Some dkARM DS binaries aren't working. As a workaround you can reload moonshell2 through tgds-multiboot, then reload the problematic ds binary.
+
 Coto
+
+

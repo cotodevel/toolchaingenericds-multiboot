@@ -80,13 +80,7 @@ void HblankUser(){
 __attribute__((section(".itcm")))
 #endif
 void VblankUser(){
-	struct sIPCSharedTGDSSpecific* TGDSUSERIPC = getsIPCSharedTGDSSpecific();
-	if(TGDSUSERIPC->frameCounter9 < 60){
-		TGDSUSERIPC->frameCounter9++;
-	}
-	else{
-		TGDSUSERIPC->frameCounter9 = 0;
-	}
+
 }
 
 #ifdef ARM9

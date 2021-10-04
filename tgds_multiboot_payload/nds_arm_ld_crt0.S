@@ -92,7 +92,7 @@ _start:
 	
 @so far OK
 	blx ARM7ReloadFlashSync
-	bl initHardware
+	bl IRQInit
 	
 	ldr	lr, =exception_sysexit
 	

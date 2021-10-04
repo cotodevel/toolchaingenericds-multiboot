@@ -51,6 +51,10 @@ USA
 #include "nds_cp15_misc.h"
 #include "dldi.h"
 
+#ifdef NTRMODE
+#include "arm7bootldr.h"
+#endif
+
 #endif
 
 #ifdef ARM9
@@ -64,127 +68,43 @@ struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific(){
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void HandleFifoNotEmptyWeakRef(volatile u32 cmd1){	
 	switch (cmd1) {
 		//NDS7: 
 		#ifdef ARM7
-		case(ARM7COMMAND_RELOADNDS):{
-			runBootstrapARM7();	//ARM7 Side
+		case(FIFO_ARM7_RELOAD):{
+			
+			uint32 * fifomsg = (uint32 *)&getsIPCSharedTGDSSpecific()->fifoMesaggingQueue[0];
+			u32 arm7entryaddress = getValueSafe(&fifomsg[34]);
+			int arm7BootCodeSize = getValueSafe(&fifomsg[33]);
+			u32 arm7EntryAddressPhys = getValueSafe(&fifomsg[32]);
+			//dmaTransferWord(0, (uint32)arm7EntryAddressPhys, (uint32)arm7entryaddress, (uint32)arm7BootCodeSize);
+			memcpy((void *)arm7entryaddress,(const void *)arm7EntryAddressPhys, arm7BootCodeSize);
+			reloadARMCore((u32)arm7entryaddress);	//Run Bootstrap7 
 		}
 		break;
+		
+		case(FIFO_TGDSMBRELOAD_SETUP):{
+			reloadNDSBootstub();
+		}
+		break;
+		
 		#endif
 		
 		//NDS9: 
 		#ifdef ARM9
-		
-		case(0x11ff00ff):{
-			/*
-			clrscr();
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			*/
-			printf("DLDI FAIL @ ARM7");
+		case(FIFO_ARM7_RELOAD_OK):{
+			reloadStatus = 0;
 		}
 		break;
-		
-		case(0x22ff11ff):{
-			/*
-			clrscr();
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			*/
-			printf("DLDI OK @ ARM7");
-		}
-		break;
-		
-		
-		case(0xff11ff22):{
-			/*
-			clrscr();
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			*/
-			printf("ARM7 Reloading... please wait");
-		}
-		break;
-		
-		case(0xff11ff44):{
-			/*
-			clrscr();
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			*/
-			printf("ARM7 ALIVE!");
-		}
-		break;
-		case(0xff33ff55):{
-			/*
-			clrscr();
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("----");
-			*/
-			printf("ARM7 RELOAD SECTION OK!");
-		}
-		break;
-		
 		#endif
-		
-		
-		//shared
-		case(NDSLOADER_INITDLDIARM7_BUSY):{
-			#ifdef ARM9
-			coherent_user_range_by_size((u32)&_io_dldi_stub, (int)16*1024);	//prevent cache problems
-			memcpy((u32*)NDS_LOADER_DLDISECTION_UNCACHED_NTR, (u32*)&_io_dldi_stub, (int)16*1024);
-			setNDSLoaderInitStatus(NDSLOADER_INITDLDIARM7_DONE);
-			#endif
-		}
-		break;
 	}
 	
 }
@@ -197,16 +117,6 @@ void HandleFifoEmptyWeakRef(uint32 cmd1,uint32 cmd2){
 
 //project specific stuff
 
-void EWRAMPrioToARM7(){
-	//give EWRAM to ARM7
-	*(u16*)0x04000204 = (  (*(u16*)0x04000204 & ~(1<<15)) | (1<<15));
-}
-
-void EWRAMPrioToARM9(){
-	//give EWRAM to ARM9
-	*(u16*)0x04000204 = (  (*(u16*)0x04000204 & ~(1<<15)) | (0<<15));
-}
-
 #ifdef ARM9
 
 void updateStreamCustomDecoder(u32 srcFrmt){
@@ -216,5 +126,22 @@ void updateStreamCustomDecoder(u32 srcFrmt){
 void freeSoundCustomDecoder(u32 srcFrmt){
 
 }
+
+#endif
+
+
+#ifdef ARM9
+
+#ifdef NTRMODE
+__attribute__((optimize("O0")))
+void reloadARM7PlayerPayload(u32 arm7entryaddress, int arm7BootCodeSize){
+	coherent_user_range_by_size((u32)&arm7bootldr[0], arm7BootCodeSize);
+	uint32 * fifomsg = (uint32 *)&getsIPCSharedTGDSSpecific()->fifoMesaggingQueue[0];
+	setValueSafe(&fifomsg[32], (u32)&arm7bootldr[0]);
+	setValueSafe(&fifomsg[33], (u32)arm7BootCodeSize);
+	setValueSafe(&fifomsg[34], (u32)arm7entryaddress);
+	SendFIFOWords(FIFO_ARM7_RELOAD);
+}
+#endif
 
 #endif

@@ -23,11 +23,6 @@ USA
 #include "posixHandleTGDS.h"
 #include "wifi_arm7.h"
 
-
-void initDLDIARM7(u32 srcDLDIAddr){	//stubbed
-	
-}
-
 //---------------------------------------------------------------------------------
 int main(int argc, char **argv)  __attribute__ ((optnone)) {
 //---------------------------------------------------------------------------------
@@ -45,10 +40,12 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
 	
     while (1) {
-		//up to this point, is free to reload the EWRAM code
-		
+		//up to this point, is free to reload the EWRAM code		
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQWait(0, IRQ_VBLANK);
 	}
 	return 0;
+}
+
+void reloadNDSBootstub(){
+
 }

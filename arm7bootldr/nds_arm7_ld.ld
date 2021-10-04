@@ -21,7 +21,7 @@ USA
 /* attributes can actually help in debugging because if you try to move functions to DTCM, for example, compiler will rant since DTCM is DATA only path and not execution*/
 MEMORY
 {
-	IWRAMBOOTCODE	(rwx)	: ORIGIN = 0x023C4000, LENGTH = 96K
+	IWRAMBOOTCODE	(rwx)	: ORIGIN = 0x06020000, LENGTH = 96K
 }
 
 _iwram_start = ORIGIN(IWRAMBOOTCODE);
@@ -32,13 +32,13 @@ _arm7_irqcheckbits = 0x04000000 - 8;	/* __irq_flags */
 _arm7_irqhandler = 0x04000000 - 4;	/* __irq_vector */
 
 /* ARM ABI says stacks are full decreasing */
-sp_SVC	= _iwram_end - 0x200;	/* reset, swi exception*/
+sp_SVC	= 0x06020000 + (128*1024) - 0x200;	/* reset, swi exception*/
 sp_IRQ	= sp_SVC - 0x200;	/*irq exception*/
 sp_FIQ	= sp_IRQ - 0x200;	/* fiq exception */
 sp_ABT	= sp_FIQ - 0x200;	/* prefetch / data aborts exception */
 sp_UND	= sp_ABT - 0x200;	/* undefined exception */
 sp_USR	= sp_UND - 0x200;	/* usr / sys stacks */
-sp_SYS	= sp_USR - 0x200;	/* usr / sys stacks */
+sp_SYS	= sp_USR;	/* usr / sys stacks */
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm","elf32-littlearm")
 OUTPUT_ARCH(arm)

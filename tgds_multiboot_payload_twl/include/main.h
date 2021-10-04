@@ -37,6 +37,7 @@ extern bool ReloadNDSBinaryFromContext(char * filename);
 //ToolchainGenericDS-LinkedModule User implementation: Vanilla TGDS Project
 extern char args[8][MAX_TGDSFILENAME_LENGTH];
 extern char *argvs[8];
+extern u32 reloadStatus;
 
 #ifdef __cplusplus
 }

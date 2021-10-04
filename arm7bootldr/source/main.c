@@ -1,4 +1,5 @@
 /*
+
 			Copyright (C) 2017  Coto
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,34 +19,67 @@ USA
 
 #include "main.h"
 #include "biosTGDS.h"
-#include "loader.h"
-#include "busTGDS.h"
-#include "dmaTGDS.h"
 #include "spifwTGDS.h"
+#include "posixHandleTGDS.h"
+#include "eventsTGDS.h"
 #include "wifi_arm7.h"
+#include "pff.h"
+#include "ipcfifoTGDSUser.h"
+#include "loader.h"
 
-int main(int argc, char **argv)  __attribute__ ((optnone)) {
+FATFS Fatfs;					// Petit-FatFs work area 
+char fname[256];
+
+//TGDS-MB Bootcode v2: todo: must run from VRAM
+__attribute__((optimize("O0")))
+int main(int argc, char **argv) {
+//---------------------------------------------------------------------------------
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
 	installWifiFIFO();		
+	
+	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
+	while (!(*((vuint8*)0x04000240) & 0x2));
+	
+	int argBuffer[MAXPRINT7ARGVCOUNT];
+	memset((unsigned char *)&argBuffer[0], 0, sizeof(argBuffer));
+	argBuffer[0] = 0xc070ffff;
+	writeDebugBuffer7("TGDS ARM7.bin Boot OK!", 1, (int*)&argBuffer[0]);
+	
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
-	
-	waitWhileNotSetStatus(NDSLOADER_LOAD_OK);	//this bootstub will proceed only when file has been loaded properly
-	
-	//NDS_LOADER_IPC_ARM7BIN_UNCACHED_NTR has ARM7.bin bootcode now
-	int arm7BootCodeSize = NDS_LOADER_IPC_CTX_UNCACHED_NTR->bootCode7FileSize;
-	u32 arm7entryaddress = NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm7EntryAddress;
-	dmaTransferWord(3, (uint32)NDS_LOADER_IPC_ARM7BIN_UNCACHED_NTR, (uint32)arm7entryaddress, (uint32)arm7BootCodeSize);
-	
-	//reload ARM7.bin
-	setNDSLoaderInitStatus(NDSLOADER_START);	
-	reloadARMCore(NDS_LOADER_IPC_CTX_UNCACHED_NTR->arm7EntryAddress);
-	
-	//enterGDBFromARM7();	//debug
-    
-	while (1) {
+	SendFIFOWords(FIFO_ARM7_RELOAD_OK);
+    while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
-		IRQWait(0, IRQ_VBLANK);
+		IRQWait(0, IRQ_VBLANK | IRQ_VCOUNT | IRQ_IPCSYNC | IRQ_RECVFIFO_NOT_EMPTY | IRQ_SCREENLID);
 	}
    
 	return 0;
+}
+
+//TGDS-MB Bootcode v2: todo: must run from VRAM
+__attribute__((optimize("O0")))
+void reloadNDSBootstub(){
+	uint32 * fifomsg = (uint32 *)&getsIPCSharedTGDSSpecific()->fifoMesaggingQueue[0];
+	{
+		REG_IME = 0;
+		REG_IF = 0;
+		REG_IE = 0;
+		
+		//ARM7 reloads here (only if within 0x037f8000 range)
+		int arm7BootCodeSize = getValueSafe(&fifomsg[33]);
+		u32 arm7EntryAddress = getValueSafe(&fifomsg[32]);
+		
+		//is ARM7 Payload within 0x02xxxxxx range?
+		if((arm7EntryAddress >= 0x02000000) && (arm7EntryAddress != 0x037f8000) && (arm7EntryAddress != 0x03800000) ){
+			
+		}
+		//ARM7 Payload within 0x03xxxxxx range
+		else{
+			memcpy((void *)arm7EntryAddress,(const void *)ARM7_PAYLOAD, arm7BootCodeSize);
+		}
+		//reload ARM7!
+		setValueSafe(&fifomsg[32], (u32)0);
+		typedef void (*t_bootAddr)();
+		t_bootAddr bootARM7Payload = (t_bootAddr)arm7EntryAddress;
+		bootARM7Payload();
+	}
 }

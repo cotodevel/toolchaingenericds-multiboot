@@ -24,7 +24,7 @@ MEMORY
 	DTCM : ORIGIN = 0x0b000000, LENGTH = 16K
 	ITCM : ORIGIN = 0x01FF8000, LENGTH = 32K
 	GBAROM : ORIGIN = 0x08000000, LENGTH = 32M
-	EWRAM : ORIGIN = 0x02280000, LENGTH = 4M
+	EWRAM : ORIGIN = 0x02280000, LENGTH = 2M
 }
 
 _itcm_start = ORIGIN(ITCM);
@@ -68,8 +68,9 @@ SECTIONS
 	} > EWRAM = 0xFF
 	__init_end__ = .;
 	.dldiSection : SUBALIGN(4) { 
-		. += (0x300 - 0x180);	/* 0x02300300                _io_dldi_stub */
-		KEEP(*(.dldiSection*));	/* DLDI section is always at this address so it's detected by DLDI patchers */
+		. += (0xC0);	/* 0x02300300                _io_dldi_stub */
+		KEEP(*(.initDldiSection*));	/* DLDI section is always at this address so it's detected by DLDI patchers */
+		KEEP(*(.dldiSection*));	
 		. = ALIGN(4);
 	} > EWRAM = 0xff
 	.text      :	SUBALIGN(4)
