@@ -58,7 +58,8 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 bool ReloadNDSBinaryFromContext(char * filename) {
-	printf("tgds_multiboot_payload:ReloadNDSBinaryFromContext()");
+	printf("tgds_multiboot_payload_twl:");
+	printf("ReloadNDSBinaryFromContext()");
 	printf("fname:[%s]", filename);
 	FILE * fh = NULL;
 	fh = fopen(filename, "r+");
@@ -177,9 +178,6 @@ int main(int argc, char **argv) {
 	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
 	sint32 fwlanguage = (sint32)getLanguage();
-	
-	printf("     ");
-	printf("     ");
 	
 	int ret=FS_init();
 	if (ret == 0)

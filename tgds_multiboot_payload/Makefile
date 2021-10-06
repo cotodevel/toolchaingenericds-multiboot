@@ -177,7 +177,7 @@ $(BINSTRIP_RULE_COMPRESSED_9): $(ELF_ARM9)
 	
 clean:
 	-@echo 'cleanup $(BINSTRIP_RULE_COMPRESSED_9)'
-	-@rm -fr $(BINSTRIP_RULE_COMPRESSED_9)	$(MAPFILE)	$(BUILD_ARM9)	data/$(DIR_ARM9).bin	data/arm7bootldr.bin	data/stage2_9.bin
+	-@rm -fr $(BINSTRIP_RULE_COMPRESSED_9)	$(MAPFILE)	$(BUILD_ARM9)	data/$(DIR_ARM9).bin	data/arm7bootldr.bin
 	
 debug:
 	-@echo 'debug $(objs_arm9)'

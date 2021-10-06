@@ -92,7 +92,7 @@ int TGDSProjectReturnFromLinkedModule() __attribute__ ((optnone)) {
 int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
-	bool isTGDSCustomConsole = true;	//set default console or custom console: default console
+	bool isTGDSCustomConsole = false;	//set default console or custom console: default console
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
 	
