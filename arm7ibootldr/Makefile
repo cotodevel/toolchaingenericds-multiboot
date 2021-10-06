@@ -38,7 +38,7 @@ objs_arm7:=		${file_arm7_src_tga:.tga=.o}	${file_arm7_src_bin:.bin=.o}	${file_ar
 d_objs_arm7:=	${file_arm7_src_c:.c=.d}	${file_arm7_src_s:.s=.d}	${file_arm7_src_SUPP:.S=.d}	${file_arm7_src_cpp:.cpp=.d}
 
 #ARM7 specific definitions.	-fno-common so we force initialized data to rodata
-MAPFILE = $(DIR_ARM7).map
+MAPFILE = arm7-nonstripped_dsi.map
 AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_7)	$(SPECIFIC_AS_COMPILER_FLAGS_7)		$(GLOBAL_AS_COMPILER_FLAGS)
 CC_ASFLAGS		=	-marm	-Ofast	-mthumb-interwork	-DARM7	-DTWLMODE	-Dappver='$(EXECUTABLE_VERSION)'	-fno-exceptions	-nostdlib
 CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	-fno-rtti	
@@ -47,7 +47,7 @@ DIR_SRC			=	$(DIRS_ARM7_SRC)	$(DIRS_ARM7_HEADER)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm7.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS_DSI	:=	-specs=nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,arm7-nonstripped_dsi.map,--fix-v4bx
+LDFLAGS_DSI	:=	-specs=nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),--fix-v4bx
 LIBRARIES_TWL =	-l$(TARGET_LIBRARY_TGDS_TWL_7)	-lhardware7i	-lstdc++	-lcnano7	-lgcc
 
 ################################################################################################
