@@ -52,15 +52,17 @@ void closeSoundUser(){
 
 //generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
 __attribute__((section(".itcm")))
-bool ReloadNDSBinaryFromContext(char * filename) __attribute__ ((optnone)) {
-	
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+bool ReloadNDSBinaryFromContext(char * filename) {
 	printf("tgds_multiboot_payload:ReloadNDSBinaryFromContext()");
 	printf("fname:[%s]", filename);
-	
-	char fname[256+1];
-	strcat(fname, (char*)filename);
 	FILE * fh = NULL;
-	fh = fopen(fname, "r+");
+	fh = fopen(filename, "r+");
 	int headerSize = sizeof(struct sDSCARTHEADER);
 	u8 * NDSHeader = (u8 *)TGDSARM9Malloc(headerSize*sizeof(u8));
 	if (fread(NDSHeader, 1, headerSize, fh) != headerSize){
@@ -191,6 +193,39 @@ int main(int argc, char **argv) {
 		printf("FS Init error.");
 	}/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
-	ReloadNDSBinaryFromContext(argv[0]);	//Boot NDS file
+	//Copy ARGVS
+	int i = 0;
+	for(i = 0; i < argc; i++){
+		strcpy((char*)&args[i][0], argv[i]);
+		argvs[i] = (char*)&args[i][0];
+	}
+	addARGV(argc, (char*)&args);
+	
+	//Libnds compatibility: If (recv) mainARGV fat:/ change to 0:/
+	char thisARGV[MAX_TGDSFILENAME_LENGTH];
+	memset(thisARGV, 0, sizeof(thisARGV));
+	strcpy(thisARGV, argvs[0]);
+	
+	if(
+		(thisARGV[0] == 'f')
+		&&
+		(thisARGV[1] == 'a')
+		&&
+		(thisARGV[2] == 't')
+		&&
+		(thisARGV[3] == ':')
+		&&
+		(thisARGV[4] == '/')
+		){
+		char thisARGV2[MAX_TGDSFILENAME_LENGTH];
+		memset(thisARGV2, 0, sizeof(thisARGV2));
+		strcpy(thisARGV2, "0:/");
+		strcat(thisARGV2, &thisARGV[5]);
+		
+		//copy back
+		memset(thisARGV, 0, sizeof(thisARGV));
+		strcpy(thisARGV, thisARGV2);
+	}
+	ReloadNDSBinaryFromContext((char*)thisARGV);	//Boot NDS file
 	return 0;
 }
