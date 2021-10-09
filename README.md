@@ -1,6 +1,8 @@
 ![ToolchainGenericDS](img/TGDS-Logo.png)
 
-Branch: master
+NTR/TWL SDK: TGDS1.64
+
+master: Development branch. Use TGDS1.64Stable: branch for stable features.
 
 This is the Toolchain Generic multiboot project:
 
@@ -26,8 +28,11 @@ Simply DLDI patch ToolchainGenericDS-multiboot.nds, if the loader used to boot t
 			-For both cases it's required to have tgds_multiboot_payload_ntr.bin/tgds_multiboot_payload_twl.bin copied in SD root folder.
 
 
+/release folder has the latest binary precompiled for your convenience.
 
-Issues: 
+Latest stable release: https://bitbucket.org/Coto88/ToolchainGenericDS-multiboot/get/TGDS1.64Stable.zip
+
+Notes/Issues: 
 - NTR Binary only, for now
 - Some dkARM DS binaries aren't working. As a workaround you can reload moonshell2 through tgds-multiboot, then reload the problematic ds binary.
 
