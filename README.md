@@ -23,9 +23,7 @@ Simply DLDI patch ToolchainGenericDS-multiboot.nds, if the loader used to boot t
 1) 1a) There's a standalone NDS Binary of TGDS-multiboot (ToolchainGenericDS-multiboot.nds/ToolchainGenericDS-multiboot.srl) for launching homebrew.
    1b) TGDS-multiboot is also embedded into TGDS projects: in target's TGDS project, simply call 
 		void TGDSMultibootRunNDSPayload(char * filename);
-
-	Note: 	-TWL binaries are WIP. 
-			-For both cases it's required to have tgds_multiboot_payload_ntr.bin/tgds_multiboot_payload_twl.bin copied in SD root folder.
+	-For both cases it's required to have tgds_multiboot_payload_ntr.bin/tgds_multiboot_payload_twl.bin copied in SD root folder.
 
 
 /release folder has the latest binary precompiled for your convenience.
@@ -33,9 +31,7 @@ Simply DLDI patch ToolchainGenericDS-multiboot.nds, if the loader used to boot t
 Latest stable release: https://bitbucket.org/Coto88/ToolchainGenericDS-multiboot/get/TGDS1.64Stable.zip
 
 Notes/Issues: 
-- NTR Binary only, for now
+- NTR Binary only, TWL binaries are WIP.
 - Some dkARM DS binaries aren't working. As a workaround you can reload moonshell2 through tgds-multiboot, then reload the problematic ds binary.
 
 Coto
-
-
