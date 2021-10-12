@@ -38,17 +38,17 @@ objs_arm7:=		${file_arm7_src_tga:.tga=.o}	${file_arm7_src_bin:.bin=.o}	${file_ar
 d_objs_arm7:=	${file_arm7_src_c:.c=.d}	${file_arm7_src_s:.s=.d}	${file_arm7_src_SUPP:.S=.d}	${file_arm7_src_cpp:.cpp=.d}
 
 #ARM7 specific definitions.	-fno-common so we force initialized data to rodata
-MAPFILE = $(DIR_ARM7).map
+MAPFILE = arm7-nonstripped_dsi.map
 AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_7)	$(SPECIFIC_AS_COMPILER_FLAGS_7)		$(GLOBAL_AS_COMPILER_FLAGS)
-CC_ASFLAGS		=	-marm	-Ofast	-mthumb-interwork	-DARM7	-DNTRMODE	-Dappver='$(EXECUTABLE_VERSION)'	-fno-exceptions	-nostdlib
+CC_ASFLAGS		=	-marm	-Ofast	-mthumb-interwork	-DARM7	-DTWLMODE	-Dappver='$(EXECUTABLE_VERSION)'	-fno-exceptions	-nostdlib
 CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	-fno-rtti	
 BUILD			= 	$(BUILD_ARM7)
 DIR_SRC			=	$(DIRS_ARM7_SRC)	$(DIRS_ARM7_HEADER)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm7.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	:=	-specs=nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),-z,defs,--fix-v4bx
-LIBRARIES_NTR =	-l$(TARGET_LIBRARY_TGDS_NTR_7)	-lhardware7	-lstdc++	-lcnano7	-lgcc
+LDFLAGS_DSI	:=	-specs=nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),--fix-v4bx
+LIBRARIES_TWL =	-l$(TARGET_LIBRARY_TGDS_TWL_7)	-lhardware7i	-lstdc++	-lcnano7	-lgcc
 
 ################################################################################################
 
@@ -58,7 +58,7 @@ OBJDIR 	=	./$(BUILD)
 VPATH 	=	$(DIR_SRC)	
 OBJPROG = 	$(addprefix $(OBJDIR)/, $(NONSTRIPELF_ARM7))
 
-all: makebuild	$(TARGET_LIBRARY_CRT0_FILE_7).o	$(BINSTRIP_RULE_arm7bootldr)
+all: makebuild	$(TARGET_LIBRARY_CRT0_FILE_7).o	$(BINSTRIP_RULE_arm7ibootldr)
 #all: debug
 
 makebuild:
@@ -113,7 +113,7 @@ $(TARGET_LIBRARY_CRT0_FILE_7).o:	$(TARGET_LIBRARY_LINKER_FILE_7)
 #Linkage. 
 $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 	-@echo 'Entering Linking phase'
-	$(CC) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_NTR)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
+	$(CC) $^	$(LDFLAGS_DSI)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_TWL)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
 	-@echo 'Leaving Linking phase. Output: $@'
 
 #xxxx-nonstripped.elf -> xxxx.elf STRIP operation
@@ -122,13 +122,13 @@ $(ELF_ARM7): $(OBJPROG)
 	$(OBJSTRIP)	-s -R .comment -R .gnu.version	$<
 	-mv	$<	$@
 	
-$(BINSTRIP_RULE_arm7bootldr): $(ELF_ARM7)
+$(BINSTRIP_RULE_arm7ibootldr): $(ELF_ARM7)
 	-@echo 'STRIP End: Remove ELF header and build baremetal Binary executable: $<	->	$@ !'
 	$(OBJCOPY) 	-S -O binary	$<	$@
 	-rm	$<
-	-mv $@	../tgds_multiboot_payload/data/
+	-mv $@	../tgds_multiboot_payload_twl/data/
 ################################################################################################
 	
 clean:
 	-@echo 'cleanup $(DIR_ARM7)'
-	-@rm -fr $(BINSTRIP_RULE_arm7bootldr)	$(MAPFILE)	$(BUILD_ARM7)
+	-@rm -fr $(BINSTRIP_RULE_arm7ibootldr)	$(MAPFILE)	$(BUILD_ARM7)
