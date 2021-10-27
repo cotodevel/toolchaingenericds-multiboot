@@ -216,6 +216,11 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 		if (keysDown() & KEY_SELECT){
 			char * loaderName = canGoBackToLoader();
 			if(loaderName != NULL){
+				char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+				memset(thisArgv, 0, sizeof(thisArgv));
+				strcpy(&thisArgv[0][0], loaderName);	//Arg0:	NDS Binary loaded
+				strcpy(&thisArgv[1][0], "");				//Arg1: ARGV0
+				addARGV(2, (char*)&thisArgv);
 				TGDSMultibootRunNDSPayload(loaderName);
 			}
 			else{
