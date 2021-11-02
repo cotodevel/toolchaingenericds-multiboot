@@ -200,4 +200,4 @@ switchMaster:
 #ToolchainGenericDS Package deploy format required by ToolchainGenericDS-OnlineApp.
 BuildTGDSPKG:
 	-@echo 'Build TGDS Package. '
-	-$(TGDSPKGBUILDER) $(TGDSPROJECTNAME) $(TGDSPKG_TARGET_NAME) $(LIBPATH) /release/arm7dldi-ntr/
+	-$(TGDSPKGBUILDER) $(TGDSPROJECTNAME) $(TGDSPROJECTNAME).srl	$(TGDSPKG_TARGET_NAME) $(LIBPATH) /release/arm7dldi-ntr/

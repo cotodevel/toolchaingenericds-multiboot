@@ -90,7 +90,7 @@ _start:
 	bl clear
 
 @so far OK
-	blx ARM7ReloadFlashSync	@r0 = DS Hardware model: @ARM7 and ARM9 already has irqs running up to this point, so just reinit hardware
+	blx ARM7ReadFWVersionFromFlashByFIFOIRQ	@r0 = DS Hardware model: @ARM7 and ARM9 already has irqs running up to this point, so just reinit hardware
 	bl initHardware
 	
 	ldr	lr, =exception_sysexit
