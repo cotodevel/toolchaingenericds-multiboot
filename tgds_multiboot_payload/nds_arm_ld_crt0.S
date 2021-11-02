@@ -91,7 +91,7 @@ _start:
 	bl                  copy
 	
 @so far OK
-	blx ARM7ReloadFlashSync
+	blx ARM7ReloadFlashSync	@r0 = DS Hardware model: @ARM7 and ARM9 already has irqs running up to this point, so just reinit hardware
 	bl IRQInit
 	
 	ldr	lr, =exception_sysexit
