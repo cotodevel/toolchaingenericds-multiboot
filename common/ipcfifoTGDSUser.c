@@ -36,18 +36,14 @@ USA
 
 #ifdef ARM7
 #include <string.h>
-
 #include "main.h"
-#include "wifi_arm7.h"
 #include "spifwTGDS.h"
-
 #endif
 
 #ifdef ARM9
 
 #include <stdbool.h>
 #include "main.h"
-#include "wifi_arm9.h"
 #include "nds_cp15_misc.h"
 #include "dldi.h"
 
@@ -79,7 +75,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-void HandleFifoNotEmptyWeakRef(volatile u32 cmd1){	
+void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){	
 	switch (cmd1) {
 		//NDS7: 
 		#ifdef ARM7
@@ -141,6 +137,6 @@ void reloadARM7PlayerPayload(u32 arm7entryaddress, int arm7BootCodeSize){
 	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
 	setValueSafe(&fifomsg[2], (u32)arm7entryaddress);
 	#endif
-	SendFIFOWords(FIFO_ARM7_RELOAD);
+	SendFIFOWords(FIFO_ARM7_RELOAD, 0xFF);
 }
 #endif

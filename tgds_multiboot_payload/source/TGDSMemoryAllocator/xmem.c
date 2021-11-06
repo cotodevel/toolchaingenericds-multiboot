@@ -34,11 +34,27 @@ unsigned char *xmem_table;
 //XMEM_BLOCK *xmem_blocks;
 unsigned char *xmem_blocks;
 
+//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void XmemSetup(unsigned int size, unsigned short blocks) {
 	XMEMTOTALSIZE = size;
 	XMEM_BLOCKSIZE = blocks;
 }
 
+//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void XmemInit(unsigned int mallocLinearMemoryStart, unsigned int mallocLinearMemorySize) {
 	// init XMEM
 	memset((u8*)mallocLinearMemoryStart, 0, mallocLinearMemorySize);
@@ -74,6 +90,14 @@ void XmemInit(unsigned int mallocLinearMemoryStart, unsigned int mallocLinearMem
 	}
 }
 
+//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void *Xmalloc(const int size) {
 	int i, blocks, sblock, fbr;
 	bool found;
@@ -132,6 +156,15 @@ void *Xmalloc(const int size) {
 	return (void *) ((unsigned int) xmem_blocks + (sblock*XMEM_BLOCKSIZE));
 
 }
+
+//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void *Xcalloc(const int size, const int count) {
 
 	void *temp;
@@ -149,6 +182,15 @@ void *Xcalloc(const int size, const int count) {
 	return temp;
 
 }
+
+//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void Xfree(const void *ptr) {
 
 	int block,sblock;
@@ -187,6 +229,14 @@ void Xfree(const void *ptr) {
 
 }
 
+//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 unsigned int XMEM_FreeMem(void) {
 
 	int i,j;

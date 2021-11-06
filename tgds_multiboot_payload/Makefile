@@ -21,7 +21,10 @@ export DIRS_ARM9_SRC = data/	\
 	source/TGDSMemoryAllocator	\
 	source/	\
 	source/interrupts/	\
-	../common/
+	../common/	\
+	../common/templateCode/data/arm9/	\
+	../common/templateCode/source/
+	
 
 export DIRS_ARM9_HEADER = source/	\
 	source/gui	\
@@ -52,8 +55,8 @@ d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_
 #ARM9 specific definitions. -fno-common so we force initialized data to rodata
 MAPFILE = $(BINSTRIP_RULE_COMPRESSED_9).map
 AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_AS_COMPILER_FLAGS_9)		$(GLOBAL_AS_COMPILER_FLAGS)
-CC_ASFLAGS		=	-marm	-O0	-mthumb-interwork	-DNTRMODE	-DARM9	-Dappver='$(EXECUTABLE_VERSION)'	
-CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	
+CC_ASFLAGS		=	-march=armv5te	-mthumb-interwork	-mfloat-abi=soft	-O0	-marm	-Wall	-FPIE	-DNDS	-fno-common	-DARM9	-DNTRMODE		-std=c99	-ffunction-sections	-fdata-sections	-DTGDSBinVersion='$(TOOLCHAIN_GENERIC_DS_VER)'
+CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	-fno-rtti	
 BUILD			= 	$(BUILD_ARM9)
 DIR_SRC			=	$(DIRS_ARM9_SRC)
 

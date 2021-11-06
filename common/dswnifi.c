@@ -20,18 +20,12 @@ USA
 
 //DSWNIFI Library revision: 1.2
 #include "ipcfifoTGDSUser.h"
-#include "wifi_shared.h"
 #include "clockTGDS.h"
 #include "ipcfifoTGDS.h"
 
 #ifdef ARM9
-#include "dswnifi_lib.h"
 #include "dswnifi.h"
-#include "wifi_arm9.h"
-#include "dswifi9.h"
-#include "wifi_shared.h"
 #include "utilsTGDS.h"
-#include <netdb.h>
 #include <ctype.h>
 #include <string.h>
 #include <unistd.h>
@@ -41,8 +35,6 @@ USA
 #include <stdlib.h>
 #include <dirent.h>
 #include <stdbool.h>
-#include <socket.h>
-#include <in.h>
 #include <assert.h>
 
 #endif
@@ -64,31 +56,6 @@ __attribute__((section(".itcm")))
 bool TGDSRecvHandlerUser(struct frameBlock * frameBlockRecv, int DSWnifiMode){
 	//frameBlockRecv->framebuffer	//Pointer to received Frame
 	//frameBlockRecv->frameSize		//Size of received Frame
-	switch(DSWnifiMode){
-		//single player, has no access to shared buffers.
-		case(dswifi_idlemode):{
-			//DSWNIFIStatus:SinglePlayer
-			return false;
-		}
-		break;
-		
-		//NIFI local
-		case(dswifi_localnifimode):{
-			clrscr();
-			printf("DSWNIFIStatus:LocalNifi!");
-			return true;
-		}
-		break;
-		
-		//UDP NIFI
-		case(dswifi_udpnifimode):{
-			clrscr();
-			printf("DSWNIFIStatus:UDPNifi!");
-			return true;
-		}
-		break;
-		
-	}
 	return false;
 }
 

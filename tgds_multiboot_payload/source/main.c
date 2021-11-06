@@ -21,7 +21,6 @@ USA
 #include "dsregs_asm.h"
 #include "typedefsTGDS.h"
 #include "gui_console_connector.h"
-#include "dswnifi_lib.h"
 #include "TGDSLogoLZSSCompressed.h"
 #include "ipcfifoTGDSUser.h"
 #include "fatfslayerTGDS.h"
@@ -40,11 +39,33 @@ USA
 #include "debugNocash.h"
 #include "tgds_ramdisk_dldi.h"
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int internalCodecType = SRC_NONE;//Internal because WAV raw decompressed buffers are used if Uncompressed WAV or ADPCM
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 bool stopSoundStreamUser(){
 	return false;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void closeSoundUser(){
 	//Stubbed. Gets called when closing an audiostream of a custom audio decoder
 }
@@ -52,7 +73,7 @@ void closeSoundUser(){
 //generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
 __attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
+__attribute__((optimize("Os")))
 #endif
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
@@ -117,7 +138,7 @@ bool ReloadNDSBinaryFromContext(char * filename) {
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
 	setValueSafe(&fifomsg[0], (u32)arm7EntryAddress);
 	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
-	SendFIFOWords(FIFO_TGDSMBRELOAD_SETUP);
+	SendFIFOWords(FIFO_TGDSMBRELOAD_SETUP, 0xFF);
 	while (getValueSafe(&fifomsg[0]) == (u32)arm7EntryAddress){
 		swiDelay(1);
 	}
@@ -145,13 +166,36 @@ bool ReloadNDSBinaryFromContext(char * filename) {
 }
 
 //ToolchainGenericDS-LinkedModule User implementation: Called if TGDS-LinkedModule fails to reload ARM9.bin from DLDI.
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 char args[8][MAX_TGDSFILENAME_LENGTH];
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 char *argvs[8];
-int TGDSProjectReturnFromLinkedModule() __attribute__ ((optnone)) {
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Os")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+int TGDSProjectReturnFromLinkedModule() {
 	return -1;
 }
 
-//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
+char thisARGV[MAX_TGDSFILENAME_LENGTH];
+
 //This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -189,21 +233,9 @@ int main(int argc, char **argv) {
 	else if(ret == -1)
 	{
 		printf("FS Init error.");
-	}/*			TGDS 1.6 Standard ARM9 Init code end	*/
+	}//			TGDS 1.6 Standard ARM9 Init code end	
 	
-	//Copy ARGVS
-	int i = 0;
-	for(i = 0; i < argc; i++){
-		strcpy((char*)&args[i][0], argv[i]);
-		argvs[i] = (char*)&args[i][0];
-	}
-	addARGV(argc, (char*)&args);
-	
-	//Libnds compatibility: If (recv) mainARGV fat:/ change to 0:/
-	char thisARGV[MAX_TGDSFILENAME_LENGTH];
-	memset(thisARGV, 0, sizeof(thisARGV));
-	strcpy(thisARGV, argvs[0]);
-	
+	char * thisARGV = &argvIntraTGDSMB[0+20];
 	if(
 		(thisARGV[0] == 'f')
 		&&
@@ -224,6 +256,7 @@ int main(int argc, char **argv) {
 		memset(thisARGV, 0, sizeof(thisARGV));
 		strcpy(thisARGV, thisARGV2);
 	}
+	
 	ReloadNDSBinaryFromContext((char*)thisARGV);	//Boot NDS file
 	return 0;
 }

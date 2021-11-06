@@ -23,6 +23,7 @@ USA
 #include "xmem.h"
 #include "dldi.h"
 #include "dsregs.h"
+#include "utilsTGDS.h"
 
 ////////[For custom Memory Allocator implementation]:////////
 //You need to override getProjectSpecificMemoryAllocatorSetup():
@@ -40,7 +41,7 @@ struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7Malloc
 	customMemoryAllocator->ARM7MallocSize = ARM7MallocSize;
 	
 	customMemoryAllocator->ARM9MallocStartaddress = (u32)sbrk(0);
-	customMemoryAllocator->memoryToAllocate = (2048*1024);	//Alloc, but if overflow, just discard the memory (right after program address), clean up, and re-use it.
+	customMemoryAllocator->memoryToAllocate = (1024*1024);	//Alloc, but if overflow, just discard the memory (right after program address), clean up, and re-use it.
 	customMemoryAllocator->CustomTGDSMalloc9 = (TGDSARM9MallocHandler)&Xmalloc;
 	customMemoryAllocator->CustomTGDSCalloc9 = (TGDSARM9CallocHandler)&Xcalloc;
 	customMemoryAllocator->CustomTGDSFree9 = (TGDSARM9FreeHandler)&Xfree;
@@ -58,10 +59,16 @@ struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7Malloc
 	customMemoryAllocator->TargetARM7DLDIAddress = TargetARM7DLDIAddress;
 	
 	//Memory Setup: 
-	//NTR: ARM7 TGDS 64K = 0x03800000 ~ 0x03810000. TGDS Sound Streaming code: Enabled
 	//TWL: ARM7 TGDS 96K = 0x037f8000 ~ 0x03810000. TGDS Sound Streaming code: Disabled/Custom
-	if(__dsimode == true){
-		WRAM_CR = WRAM_0KARM9_32KARM7;
-	}
+	WRAM_CR = WRAM_0KARM9_32KARM7;
+	
+	//libutils
+	initializeLibUtils(
+		NULL, //HandleFifoNotEmptyWeakRefLibUtils_fn: NULL because TGDS project doesn't use extended FIFO calls from libutils
+		NULL, //wifiUpdateVBLANKARM7LibUtils_fn: NULL because TGDS project doesn't use extended FIFO calls from libutils
+		NULL, //wifiInterruptARM7LibUtils_fn: NULL because TGDS project doesn't use extended FIFO calls from libutils
+		NULL //timerWifiInterruptARM9LibUtils_fn: NULL because TGDS project doesn't use extended FIFO calls from libutils
+	);
+	
 	return customMemoryAllocator;
 }

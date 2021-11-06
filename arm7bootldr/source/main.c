@@ -21,8 +21,6 @@ USA
 #include "biosTGDS.h"
 #include "spifwTGDS.h"
 #include "posixHandleTGDS.h"
-#include "eventsTGDS.h"
-#include "wifi_arm7.h"
 #include "pff.h"
 #include "ipcfifoTGDSUser.h"
 #include "loader.h"
@@ -35,18 +33,12 @@ __attribute__((optimize("O0")))
 int main(int argc, char **argv) {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
-	installWifiFIFO();		
 	
 	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
-	while (!(*((vuint8*)0x04000240) & 0x2));
-	
-	int argBuffer[MAXPRINT7ARGVCOUNT];
-	memset((unsigned char *)&argBuffer[0], 0, sizeof(argBuffer));
-	argBuffer[0] = 0xc070ffff;
-	writeDebugBuffer7("TGDS ARM7.bin Boot OK!", 1, (int*)&argBuffer[0]);
+	while (!(*((vuint8*)0x04000240) & 0x2)){}
 	
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
-	SendFIFOWords(FIFO_ARM7_RELOAD_OK);
+	SendFIFOWords(FIFO_ARM7_RELOAD_OK, 0xFF);
     while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
 		IRQWait(0, IRQ_VBLANK | IRQ_VCOUNT | IRQ_IPCSYNC | IRQ_RECVFIFO_NOT_EMPTY | IRQ_SCREENLID);
