@@ -75,7 +75,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-void HandleFifoNotEmptyWeakRef(uint32 cmd1,uint32 cmd2){	
+void HandleFifoNotEmptyWeakRef(uint32 cmd1, uint32 cmd2){
 	switch (cmd1) {
 		//NDS7: 
 		#ifdef ARM7
