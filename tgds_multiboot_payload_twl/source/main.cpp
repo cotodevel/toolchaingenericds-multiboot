@@ -21,7 +21,6 @@ USA
 #include "dsregs_asm.h"
 #include "typedefsTGDS.h"
 #include "gui_console_connector.h"
-#include "dswnifi_lib.h"
 #include "TGDSLogoLZSSCompressed.h"
 #include "ipcfifoTGDSUser.h"
 #include "fatfslayerTGDS.h"
@@ -118,7 +117,7 @@ bool ReloadNDSBinaryFromContext(char * filename) {
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
 	setValueSafe(&fifomsg[0], (u32)arm7EntryAddress);
 	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
-	SendFIFOWords(FIFO_TGDSMBRELOAD_SETUP);
+	SendFIFOWords(FIFO_TGDSMBRELOAD_SETUP, 0xFF);
 	while (getValueSafe(&fifomsg[0]) == (u32)arm7EntryAddress){
 		swiDelay(1);
 	}
