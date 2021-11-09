@@ -33,21 +33,18 @@ USA
 #include "biosTGDS.h"
 #include "loader.h"
 #include "dmaTGDS.h"
+#include "libutilsShared.h"
 
 #ifdef ARM7
 #include <string.h>
-
 #include "main.h"
-#include "wifi_arm7.h"
 #include "spifwTGDS.h"
-
 #endif
 
 #ifdef ARM9
 
 #include <stdbool.h>
 #include "main.h"
-#include "wifi_arm9.h"
 #include "nds_cp15_misc.h"
 #include "dldi.h"
 
@@ -79,7 +76,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-void HandleFifoNotEmptyWeakRef(volatile u32 cmd1){	
+void HandleFifoNotEmptyWeakRef(uint32 cmd1, uint32 cmd2){
 	switch (cmd1) {
 		//NDS7: 
 		#ifdef ARM7
@@ -141,6 +138,38 @@ void reloadARM7PlayerPayload(u32 arm7entryaddress, int arm7BootCodeSize){
 	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
 	setValueSafe(&fifomsg[2], (u32)arm7entryaddress);
 	#endif
-	SendFIFOWords(FIFO_ARM7_RELOAD);
+	SendFIFOWords(FIFO_ARM7_RELOAD, 0xFF);
 }
 #endif
+
+//Libutils setup: TGDS project doesn't use any libutils extensions.
+void setupLibUtils(){
+	//libutils:
+	
+	//Stage 0
+	#ifdef ARM9
+	initializeLibUtils9(
+		NULL, //ARM7 & ARM9
+		NULL, //ARM9 
+		NULL, //ARM7 & ARM9: void EnableSoundSampleContext(int SndSamplemode)
+		NULL, //ARM7 & ARM9: void DisableSoundSampleContext()
+		NULL, //ARM9: bool stopSoundStream(struct fd * tgdsStructFD1, struct fd * tgdsStructFD2, int * internalCodecType)
+		NULL  //ARM9: void updateStream() 
+	);
+	#endif
+	
+	//Stage 1
+	#ifdef ARM7
+	initializeLibUtils7(
+		NULL, //ARM7 & ARM9
+		NULL, //ARM7
+		NULL, //ARM7
+		NULL, //ARM7: void TIMER1Handler()
+		NULL, //ARM7: void stopSound()
+		NULL, //ARM7: void setupSound()
+		NULL, //ARM7: initSoundSampleContext()
+		NULL, //ARM7 & ARM9: void EnableSoundSampleContext(int SndSamplemode)
+		NULL  //ARM7 & ARM9: void DisableSoundSampleContext()
+	);
+	#endif
+}

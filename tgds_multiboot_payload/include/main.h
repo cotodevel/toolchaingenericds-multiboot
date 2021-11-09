@@ -36,7 +36,6 @@ extern int main(int argc, char **argv);
 //ToolchainGenericDS-LinkedModule User implementation: Vanilla TGDS Project
 extern char args[8][MAX_TGDSFILENAME_LENGTH];
 extern char *argvs[8];
-
 extern u8 argvIntraTGDSMB[256];
 
 #ifdef __cplusplus

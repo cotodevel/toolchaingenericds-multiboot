@@ -21,7 +21,10 @@ export DIRS_ARM9_SRC = data/	\
 	source/TGDSMemoryAllocator	\
 	source/	\
 	source/interrupts/	\
-	../common/
+	../common/	\
+	../common/templateCode/data/arm9/	\
+	../common/templateCode/source/
+	
 
 export DIRS_ARM9_HEADER = source/	\
 	source/gui	\

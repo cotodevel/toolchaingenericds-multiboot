@@ -83,20 +83,33 @@ _start:
 	ldr                 r2,=_dtcm_start                 /* point our destination register to the D-TCM dedicated to our writable data (LMA)*/
 	ldr                 r3,=_dtcm_end                  /* point r3 after the last byte we will be writing (LMA)*/
 	bl                  copy
+		
+	@TGDS-MB intra argv save-restore
+	ldr                 r1,=0x02FFFE70                /* point our source register to the start of the .dtcm section (VMA)*/
+	ldr                 r2,=argvIntraTGDSMB                 /* point our destination register to the D-TCM dedicated to our writable data (LMA)*/
+	add                 r3,r2,#(256)                  /* point r3 after the last byte we will be writing (LMA)*/
+	bl                  copy
 	
-	/*  Clear BSS */
-	ldr                 r0,=__bss_vma_start
-	ldr                 r1,=__bss_vma_end
-	bl clear
-
 @so far OK
 	blx ARM7ReadFWVersionFromFlashByFIFOIRQ	@r0 = DS Hardware model: @ARM7 and ARM9 already has irqs running up to this point, so just reinit hardware
-	bl initHardware
+	bl IRQInit
 	
 	ldr	lr, =exception_sysexit
 	
 @so far OK
-	blx	mainARGV			@entrypoint
+	
+	ldr                 r1,=argvIntraTGDSMB                /* point our source register to the start of the .dtcm section (VMA)*/
+	ldr                 r2,=0x02FFFE70                 /* point our destination register to the D-TCM dedicated to our writable data (LMA)*/
+	add                 r3,r2,#(256)                  /* point r3 after the last byte we will be writing (LMA)*/
+	bl                  copy
+	
+	blx handleARGV
+	bl getGlobalArgv
+	mov r1,r0
+	push {r1}
+	bl getGlobalArgc
+	pop {r1}
+	b	main			@entrypoint
 
 .ltorg
 
@@ -116,6 +129,10 @@ copy:
 	blo                 copy                        /* if end not reached, branch back to loop */
 	bx                  lr                          /* return to caller */
 
+.global argvIntraTGDSMB
+argvIntraTGDSMB:
+	.skip 0x100
+	
 .pool
 .align
 .end

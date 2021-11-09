@@ -21,22 +21,14 @@ USA
 #include "loader.h"
 #include "spifwTGDS.h"
 #include "posixHandleTGDS.h"
-#include "wifi_arm7.h"
 
 //---------------------------------------------------------------------------------
 int main(int argc, char **argv)  __attribute__ ((optnone)) {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
 	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
-	while (!(*((vuint8*)0x04000240) & 0x2));
-		
-	installWifiFIFO();		
-		
-	int argBuffer[MAXPRINT7ARGVCOUNT];
-	memset((unsigned char *)&argBuffer[0], 0, sizeof(argBuffer));
-	argBuffer[0] = 0xc070ffff;
-	writeDebugBuffer7("TGDS ARM7.bin Boot OK!", 1, (int*)&argBuffer[0]);
-	
+	while (!(*((vuint8*)0x04000240) & 0x2)){
+	}
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
 	
     while (1) {

@@ -97,7 +97,19 @@ _start:
 	ldr	lr, =exception_sysexit
 	
 @so far OK
-	blx	mainARGV			@entrypoint
+	
+	ldr                 r1,=argvIntraTGDSMB                /* point our source register to the start of the .dtcm section (VMA)*/
+	ldr                 r2,=0x02FFFE70                 /* point our destination register to the D-TCM dedicated to our writable data (LMA)*/
+	add                 r3,r2,#(256)                  /* point r3 after the last byte we will be writing (LMA)*/
+	bl                  copy
+	
+	blx handleARGV
+	bl getGlobalArgv
+	mov r1,r0
+	push {r1}
+	bl getGlobalArgc
+	pop {r1}
+	b	main			@entrypoint
 
 .ltorg
 

@@ -22,7 +22,6 @@ USA
 #include "dsregs_asm.h"
 #include "typedefsTGDS.h"
 #include "gui_console_connector.h"
-#include "dswnifi_lib.h"
 #include "TGDSLogoLZSSCompressed.h"
 #include "ipcfifoTGDSUser.h"
 #include "fatfslayerTGDS.h"
@@ -70,7 +69,6 @@ void menuShow(){
 	printf("Button (A): TGDS Binary SDK Ver. (NTR/TWL) ");
 	printf("Available heap memory: %d", getMaxRam());
 	printf("Select: this menu");
-	printarm7DebugBuffer();
 }
 
 int internalCodecType = SRC_NONE;//Internal because WAV raw decompressed buffers are used if Uncompressed WAV or ADPCM
@@ -96,11 +94,21 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
 	
+	//xmalloc init removes args, so save them
+	int i = 0;
+	for(i = 0; i < argc; i++){
+		argvs[i] = argv[i];
+	}
+
 	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
-	switch_dswnifi_mode(dswifi_idlemode);
+	//argv destroyed here because of xmalloc init, thus restore them
+	for(i = 0; i < argc; i++){
+		argv[i] = argvs[i];
+	}
+
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	flush_icache_all();
 	flush_dcache_all();	
@@ -247,7 +255,7 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 			printf(" ---- ");
 			printf(" ---- ");
 			
-			reportTGDSPayloadMode();
+			reportTGDSPayloadMode(&bufModeARM7[0]);
 			while(keysHeld() & KEY_A){
 				scanKeys();
 			}
