@@ -70,6 +70,8 @@ void closeSoundUser(){
 	//Stubbed. Gets called when closing an audiostream of a custom audio decoder
 }
 
+char thisArgv[10][MAX_TGDSFILENAME_LENGTH];
+
 //generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
 __attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -146,18 +148,19 @@ bool ReloadNDSBinaryFromContext(char * filename) {
 	printf("ARM7: %x - ARM9: %x", arm7EntryAddress, arm9EntryAddress);
 	//DLDI patch it. If TGDS DLDI RAMDISK: Use standalone version, otherwise direct DLDI patch
 	coherent_user_range_by_size((uint32)arm9EntryAddress, arm9BootCodeSize);
-	u32 dldiSrc = (u32)&_io_dldi_stub;
 	if(strncmp((char*)&dldiGet()->friendlyName[0], "TGDS RAMDISK", 12) == 0){
-		dldiSrc = (u32)&tgds_ramdisk_dldi[0];
-		//printf("GOT TGDS DLDI: %s", (char*)&dldiGet()->friendlyName[0]);
+		printf("GOT TGDS DLDI: Skipping patch");
 	}
 	else{
-		//printf("GOT direct DLDI: %s", (char*)&dldiGet()->friendlyName[0]);
+		u32 dldiSrc = (u32)&_io_dldi_stub;
+		bool stat = dldiPatchLoader((data_t *)arm9EntryAddress, (u32)arm9BootCodeSize, dldiSrc);
+		if(stat == true){
+			printf("DLDI patch success!");
+		}
 	}
-	bool stat = dldiPatchLoader((data_t *)arm9EntryAddress, (u32)arm9BootCodeSize, dldiSrc);
-	if(stat == true){
-		printf("DLDI patch success!");
-	}
+	
+	//Copy CMD line
+	memcpy((void *)__system_argv, (const void *)&argvIntraTGDSMB[0], 256);
 	
 	typedef void (*t_bootAddr)();
 	t_bootAddr bootARM9Payload = (t_bootAddr)arm9EntryAddress;
@@ -194,8 +197,6 @@ int TGDSProjectReturnFromLinkedModule() {
 	return -1;
 }
 
-char thisARGV[MAX_TGDSFILENAME_LENGTH];
-
 //This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -205,6 +206,40 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 int main(int argc, char **argv) {
+	
+	//Copy ARGVS
+	int i = 0;
+	for(i = 0; i < argc; i++){
+		strcpy((char*)&args[i][0], argv[i]);
+		argvs[i] = (char*)&args[i][0];
+	}
+	addARGV(argc, (char*)&args);
+	
+	//Libnds compatibility: If (recv) mainARGV fat:/ change to 0:/
+	char thisARGV[MAX_TGDSFILENAME_LENGTH];
+	memset(thisARGV, 0, sizeof(thisARGV));
+	strcpy(thisARGV, argvs[0]);
+	
+	if(
+		(thisARGV[0] == 'f')
+		&&
+		(thisARGV[1] == 'a')
+		&&
+		(thisARGV[2] == 't')
+		&&
+		(thisARGV[3] == ':')
+		&&
+		(thisARGV[4] == '/')
+		){
+		char thisARGV2[MAX_TGDSFILENAME_LENGTH];
+		memset(thisARGV2, 0, sizeof(thisARGV2));
+		strcpy(thisARGV2, "0:/");
+		strcat(thisARGV2, &thisARGV[5]);
+		
+		//copy back
+		memset(thisARGV, 0, sizeof(thisARGV));
+		strcpy(thisARGV, thisARGV2);
+	}
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	bool isTGDSCustomConsole = true;	//set default console or custom console: default console
@@ -233,29 +268,7 @@ int main(int argc, char **argv) {
 	else if(ret == -1)
 	{
 		printf("FS Init error.");
-	}//			TGDS 1.6 Standard ARM9 Init code end	
-	
-	char * thisARGV = &argvIntraTGDSMB[0+20];
-	if(
-		(thisARGV[0] == 'f')
-		&&
-		(thisARGV[1] == 'a')
-		&&
-		(thisARGV[2] == 't')
-		&&
-		(thisARGV[3] == ':')
-		&&
-		(thisARGV[4] == '/')
-		){
-		char thisARGV2[MAX_TGDSFILENAME_LENGTH];
-		memset(thisARGV2, 0, sizeof(thisARGV2));
-		strcpy(thisARGV2, "0:/");
-		strcat(thisARGV2, &thisARGV[5]);
-		
-		//copy back
-		memset(thisARGV, 0, sizeof(thisARGV));
-		strcpy(thisARGV, thisARGV2);
-	}
+	}/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
 	ReloadNDSBinaryFromContext((char*)thisARGV);	//Boot NDS file
 	return 0;
