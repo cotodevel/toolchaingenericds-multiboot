@@ -81,19 +81,28 @@ __attribute__((optimize("Os")))
 __attribute__ ((optnone))
 #endif
 bool ReloadNDSBinaryFromContext(char * filename) { //Loads NTR (TWL will come soon) // so far here breaks, do the todo things
-	printf("tgds_multiboot_payload:ReloadNDSBinaryFromContext()");
-	printf("fname:[%s]", filename);
+	char bufWrite[128];
+	memset(bufWrite, 0, sizeof(bufWrite));
+	
+	sprintf(bufWrite, "%s", "tgds_multiboot_payload:ReloadNDSBinaryFromContext()");
+	nocashMessage(bufWrite);
+	
+	sprintf(bufWrite, "fname:[%s]", filename);
+	nocashMessage(bufWrite);
+	
 	FILE * fh = NULL;
 	fh = fopen(filename, "r+");
 	int headerSize = sizeof(struct sDSCARTHEADER);
 	u8 * NDSHeader = (u8 *)TGDSARM9Malloc(headerSize*sizeof(u8));
 	if (fread(NDSHeader, 1, headerSize, fh) != headerSize){
-		printf("header read error");
+		sprintf(bufWrite, "header read error");
+		nocashMessage(bufWrite);
 		TGDSARM9Free(NDSHeader);
 		fclose(fh);
 	}
 	else{
-		printf("header parsed correctly.");
+		sprintf(bufWrite, "header parsed correctly.");
+		nocashMessage(bufWrite);
 	}
 	struct sDSCARTHEADER * NDSHdr = (struct sDSCARTHEADER *)NDSHeader;
 	//- ARM9 passes the filename to ARM7
@@ -111,7 +120,8 @@ bool ReloadNDSBinaryFromContext(char * filename) { //Loads NTR (TWL will come so
 		fseek(fh, (int)arm7BootCodeOffsetInFile, SEEK_SET);
 		int readSize = fread((void *)arm7EntryAddress, 1, arm7BootCodeSize, fh);
 		coherent_user_range_by_size((uint32)arm7EntryAddress, arm7BootCodeSize);
-		printf("ARM7 (EWRAM payload) written! %d bytes", readSize);
+		sprintf(bufWrite, "ARM7 (EWRAM payload) written! %d bytes", readSize);
+		nocashMessage(bufWrite);
 	}
 	//ARM7 Payload within 0x03xxxxxx range
 	else{
@@ -122,7 +132,9 @@ bool ReloadNDSBinaryFromContext(char * filename) { //Loads NTR (TWL will come so
 		fseek(fh, (int)arm7BootCodeOffsetInFile, SEEK_SET);
 		int readSize = fread((void *)ARM7_PAYLOAD, 1, arm7BootCodeSize, fh);
 		coherent_user_range_by_size((uint32)ARM7_PAYLOAD, arm7BootCodeSize);
-		printf("ARM7 (IWRAM payload) written! %d bytes", readSize);
+		
+		sprintf(bufWrite, "ARM7 (IWRAM payload) written! %d bytes", readSize);
+		nocashMessage(bufWrite);
 	}
 	
 	//ARM9
@@ -134,7 +146,10 @@ bool ReloadNDSBinaryFromContext(char * filename) { //Loads NTR (TWL will come so
 	fseek(fh, (int)arm9BootCodeOffsetInFile, SEEK_SET);
 	int readSize9 = fread((void *)arm9EntryAddress, 1, arm9BootCodeSize, fh);
 	coherent_user_range_by_size((uint32)arm9EntryAddress, arm9BootCodeSize);
-	printf("ARM9 written! %d bytes", readSize9);
+	
+	sprintf(bufWrite, "ARM9 written! %d bytes", readSize9);
+	nocashMessage(bufWrite);
+	
 	fclose(fh);
 	
 	REG_IME = 0;
@@ -150,17 +165,23 @@ bool ReloadNDSBinaryFromContext(char * filename) { //Loads NTR (TWL will come so
 		swiDelay(1);
 	}
 	
-	printf("ARM7: %x - ARM9: %x", arm7EntryAddress, arm9EntryAddress);
+	sprintf(bufWrite, "ARM7: %x - ARM9: %x", arm7EntryAddress, arm9EntryAddress);
+	nocashMessage(bufWrite);
+	
 	//DLDI patch it. If TGDS DLDI RAMDISK: Use standalone version, otherwise direct DLDI patch
 	coherent_user_range_by_size((uint32)arm9EntryAddress, arm9BootCodeSize);
 	if(strncmp((char*)&dldiGet()->friendlyName[0], "TGDS RAMDISK", 12) == 0){
-		printf("GOT TGDS DLDI: Skipping patch");
+		
+		sprintf(bufWrite, "GOT TGDS DLDI: Skipping patch");
+		nocashMessage(bufWrite);
 	}
 	else{
 		u32 dldiSrc = (u32)&_io_dldi_stub;
 		bool stat = dldiPatchLoader((data_t *)arm9EntryAddress, (u32)arm9BootCodeSize, dldiSrc);
 		if(stat == true){
-			printf("DLDI patch success!");
+			sprintf(bufWrite, "DLDI patch success!");
+			nocashMessage(bufWrite);
+		
 		}
 	}
 	
@@ -286,13 +307,11 @@ int main(int argc, char **argv) {
 	printf("     ");
 	
 	int ret=FS_init();
-	if (ret == 0)
-	{
-		printf("FS Init ok.");
+	if (ret == 0){
+		nocashMessage("FS Init ok.");
 	}
-	else if(ret == -1)
-	{
-		printf("FS Init error.");
+	else if(ret == -1){
+		nocashMessage("FS Init error.");
 	}/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
 	/*
