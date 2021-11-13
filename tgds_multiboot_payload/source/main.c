@@ -107,8 +107,10 @@ bool ReloadNDSBinaryFromContext(char * filename) {
 	//is ARM7 Payload within 0x02xxxxxx range?
 	if((arm7EntryAddress >= 0x02000000) && (arm7EntryAddress != 0x037f8000) && (arm7EntryAddress != 0x03800000) ){
 		memset((void *)arm7EntryAddress, 0x0, arm7BootCodeSize);
+		coherent_user_range_by_size((uint32)arm7EntryAddress, arm7BootCodeSize);
 		fseek(fh, (int)arm7BootCodeOffsetInFile, SEEK_SET);
-		int readSize = fread((void *)(arm7EntryAddress | 0x400000), 1, arm7BootCodeSize, fh);
+		int readSize = fread((void *)arm7EntryAddress, 1, arm7BootCodeSize, fh);
+		coherent_user_range_by_size((uint32)arm7EntryAddress, arm7BootCodeSize);
 		printf("ARM7 (EWRAM payload) written! %d bytes", readSize);
 	}
 	//ARM7 Payload within 0x03xxxxxx range
@@ -116,6 +118,7 @@ bool ReloadNDSBinaryFromContext(char * filename) {
 		WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
 		asm("mcr	p15, 0, r0, c7, c10, 4");
 		memset((void *)ARM7_PAYLOAD, 0x0, arm7BootCodeSize);
+		coherent_user_range_by_size((uint32)ARM7_PAYLOAD, arm7BootCodeSize);
 		fseek(fh, (int)arm7BootCodeOffsetInFile, SEEK_SET);
 		int readSize = fread((void *)ARM7_PAYLOAD, 1, arm7BootCodeSize, fh);
 		coherent_user_range_by_size((uint32)ARM7_PAYLOAD, arm7BootCodeSize);
@@ -127,8 +130,10 @@ bool ReloadNDSBinaryFromContext(char * filename) {
 	u32 arm9BootCodeOffsetInFile = NDSHdr->arm9romoffset;
 	u32 arm9EntryAddress = NDSHdr->arm9entryaddress;	
 	memset((void *)arm9EntryAddress, 0x0, arm9BootCodeSize);
+	coherent_user_range_by_size((uint32)arm9EntryAddress, arm9BootCodeSize);
 	fseek(fh, (int)arm9BootCodeOffsetInFile, SEEK_SET);
-	int readSize9 = fread((void *)(arm9EntryAddress | 0x400000), 1, arm9BootCodeSize, fh);
+	int readSize9 = fread((void *)arm9EntryAddress, 1, arm9BootCodeSize, fh);
+	coherent_user_range_by_size((uint32)arm9EntryAddress, arm9BootCodeSize);
 	printf("ARM9 written! %d bytes", readSize9);
 	fclose(fh);
 	
