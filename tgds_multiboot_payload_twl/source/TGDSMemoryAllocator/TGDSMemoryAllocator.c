@@ -32,6 +32,13 @@ USA
 	////////[Custom Memory implementation ]////////
 
 //Definition that overrides the weaksymbol expected from toolchain to init ARM9's TGDS memory allocation
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7MallocStartAddress, int ARM7MallocSize, bool isCustomTGDSMalloc, u32 TargetARM7DLDIAddress){
 	struct AllocatorInstance * customMemoryAllocator = &CustomAllocatorInstance;
 	memset((u8*)customMemoryAllocator, 0, sizeof(CustomAllocatorInstance));
@@ -59,6 +66,7 @@ struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7Malloc
 	
 	//Memory Setup: 
 	//ARM7 TGDS 64K = 0x03800000 ~ 0x03810000. TGDS Sound Streaming code: Enabled
-
+	WRAM_CR = WRAM_0KARM9_32KARM7;
+	
 	return customMemoryAllocator;
 }

@@ -1,8 +1,8 @@
 ![ToolchainGenericDS](img/TGDS-Logo.png)
 
-NTR/TWL SDK: TGDS1.64
+NTR/TWL SDK: TGDS1.65
 
-master: Development branch. Use TGDS1.64Stable: branch for stable features.
+master: Development branch. Use TGDS1.65: branch for stable features.
 
 This is the Toolchain Generic multiboot project:
 
@@ -28,10 +28,10 @@ Simply DLDI patch ToolchainGenericDS-multiboot.nds, if the loader used to boot t
 
 /release folder has the latest binary precompiled for your convenience.
 
-Latest stable release: https://bitbucket.org/Coto88/ToolchainGenericDS-multiboot/get/TGDS1.64Stable.zip
+Latest stable release: https://bitbucket.org/Coto88/ToolchainGenericDS-multiboot/get/TGDS1.65.zip
 
 Notes/Issues: 
-- NTR Binary only, TWL binaries are WIP.
-- Some dkARM DS binaries aren't working. As a workaround you can reload moonshell2 through tgds-multiboot, then reload the problematic ds binary.
-
+- Ntr mode: NTR Binaries booting all TGDS ones and older passme devkitARM ones, use moonshell2 through tgds-multiboot to load the ones that don't work (because these use newer passme code).
+- TWL mode: NTR binaries actually booting TGDS NTR homebrew. Older passme code in NTR devkitARM loops, thus, skipping the loop instruction makes them bootable in TGDS-MB TWL. And for newer passme code, these don't work.
+- TWL mode: TWL Binaries-- WIP.
 Coto
