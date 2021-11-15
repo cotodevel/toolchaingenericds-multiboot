@@ -37,7 +37,7 @@ export DIRS_ARM9_HEADER = source/	\
 RELATIVE_PATH =	
 
 #Prepare ARM9 dirs
-DIRLIBS_HDR = $(foreach dirres,$(DIRS_ARM9_HEADER),-I "$(CURDIR)/$(RELATIVE_PATH)$(dirres)" )	$(DIRLIBS_ALLOWED)	$(TARGET_LIBRARY_HEADERS_9_INC)
+DIRLIBS_HDR = $(foreach dirres,$(DIRS_ARM9_HEADER),-I "$(RELATIVE_PATH)$(dirres)" )	$(DIRLIBS_ALLOWED)	$(TARGET_LIBRARY_HEADERS_9_INC)
 DIRLIBS_SRC = $(foreach dirres,$(DIRS_ARM9_SRC),-I "$(CURDIR)/$(RELATIVE_PATH)$(dirres)" )
 
 file_arm9_src_c=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.c))  )
@@ -73,67 +73,39 @@ OBJDIR 	=	./$(BUILD)
 VPATH 	=	$(DIR_SRC)
 OBJPROG =	$(addprefix $(OBJDIR)/, $(NONSTRIPELF_ARM9))
 
-#------------------------------------------ CLANG START
-LD2 := $(CC)
-CC := clang-8
-AR2 := llvm-ar
-DEP_DIR := $(BUILD_DIR)/dep
-DEP_CFLAGS := -MT $@ -MMD -MP 
-
-# CFLAGS which can provided from the CLI
-# They will be appended last and will consequently override
-# any pre-existing settings
-CLI_CFLAG_OVERRIDES ?=
-CLI_LDFLAG_OVERRIDES ?=
-
-# Note: These arguments will be used by clang to select
-# the specific architecture target when we use the
-# generic --target=arm-none-eabi
-ARCH_CFLAGS += \
-  -marm 	\
-  -mcpu=arm946e-s \
-  -mfloat-abi=soft	\
-  -mfpu=none	
-
-COMPILER_SPECIFIC_CFLAGS += \
-  --target=arm-none-eabi \
-  --sysroot= \
-  -O0	\
-  -DARM9	\
-  -DNTRMODE
-  
-CFLAGS = \
-  -g3 \
-  -nostdlib \
-  -fshort-enums	\
-  $(COMPILER_SPECIFIC_CFLAGS) \
-  $(ARCH_CFLAGS) \
-  $(CLI_CFLAG_OVERRIDES)
-	
-#------------------------------------------ CLANG END
-
 all: makebuild	$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).o	$(BINSTRIP_RULE_COMPRESSED_9)
 #all: debug
 
 makebuild:
 	-mkdir -p $(OBJDIR)
 
+#convert a TGA BMP16 into a native 3D texture unit format (GL_COLOR 16bpp)
+$(OBJDIR)/%.o : %.tga
+	-$(GRITTOOL) ${<:.o=.c} -ftc -o $@ -gu32 -gb -gB16
+	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o $@ -c ${@:.o=.c}
+	
 #rule for reading *.bin in /data folder, converts to .C source code, which then gets compiled as object so it can be linked later
 $(OBJDIR)/%.o : %.bin
 	-@echo 'trying to convert .BIN ($<) -> .C output: ${@:.o=.c} : arrayName: $(subst build/,,${@:.o=})'
 	$(BIN2C)	$<	${@:.o=.c}	$(subst build/,,${@:.o=})
-	$(CC) $(DEP_CFLAGS) $(CFLAGS) $(DIRLIBS_HDR) $(DIRLIBS_SRC)	-c -o $@ ${@:.o=.c}
-	
+	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_PROHIBITED)	-o $@ -c ${@:.o=.c}
+
+#pcx parsing (Blender 3D export -> native DS Callist + texture)
+$(OBJDIR)/%.o : %.pcx	
+	-@echo 'trying to convert .BIN ($<) -> .C output: ${@:.o=.c} : arrayName: $(subst build/,,${@:.o=})'
+	$(BIN2C)	$<	${@:.o=.c}	$(subst build/,,${@:.o=})
+	$(CC) $(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o $@ -c ${@:.o=.c}	
+
 #Do C Compile now!
 $(OBJDIR)/%.o : %.c
 	-@echo 'C Compile start: $@'
-	$(CC) $(DEP_CFLAGS) $(CFLAGS) $(DIRLIBS_HDR) $(DIRLIBS_SRC)	-c -o $@ $< 
+	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o $@ -c $<
 	-@echo 'C Compile End: $@'
 
 #Do C++ (CXX) Compile now!
 $(OBJDIR)/%.o : %.cpp
 	-@echo 'C++ Compile start: $@'
-	$(CC) $(DEP_CFLAGS) $(CFLAGS) $(DIRLIBS_HDR) $(DIRLIBS_SRC)	-c -o $@ $< 
+	$(CPP)	$(CPP_FLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o	$@	-c	$<
 	-@echo 'C Compile End: $@'
 
 #Coto: Special "exception" rule. Fixes tricky projects such as SnemulDS's opcodes2.s where GCC AS is used, while compatibility with .S is required for newer projects.
@@ -156,13 +128,13 @@ $(OBJDIR)/%.o : %.S
 $(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).o:	$(TARGET_LIBRARY_LINKER_FILE_COMPRESSED_9)
 	-@echo 'S Compile start: crt0s'
 	rm -fr $(BUILD)/$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).o
-	$(CPP)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o $(OBJDIR)/$@ -c $<
+	$(CPP)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o	$(OBJDIR)/$@	-c	$<
 	-@echo 'S Compile end: crt0s'
 
 #Linkage.
 $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 	-@echo 'Entering Linking phase'
-	$(LD2) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_NTR)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
+	$(CC) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_NTR)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
 	-@echo 'Leaving Linking phase. Output: $@'
 
 #xxxx-nonstripped.elf -> xxxx.elf STRIP operation

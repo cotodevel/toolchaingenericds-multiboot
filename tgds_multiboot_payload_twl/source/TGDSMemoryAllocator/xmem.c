@@ -9,13 +9,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 #include "typedefsTGDS.h"
 #include "xmem.h"
-#include "posixHandleTGDS.h"
-#include "InterruptsARMCores_h.h"
 
-// default use 128K (ARM9 Mapped), may be overriden.
-unsigned int XMEMTOTALSIZE = (128*1024);
+// default use 1.5 MB
+unsigned int XMEMTOTALSIZE = (1500*1024);
 
 // how many bytes will each of our blocks be?
 unsigned short XMEM_BLOCKSIZE = 128;
@@ -30,11 +29,11 @@ unsigned int XMEM_TABLESIZE = 0;
 #define XMEM_ENDBLOCK 0x02
 #define XMEM_USEDBLOCK 0x04
 
+
 unsigned char *xmem_table;
 //XMEM_BLOCK *xmem_blocks;
 unsigned char *xmem_blocks;
 
-//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -43,11 +42,12 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void XmemSetup(unsigned int size, unsigned short blocks) {
+
 	XMEMTOTALSIZE = size;
 	XMEM_BLOCKSIZE = blocks;
+	
 }
 
-//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -70,7 +70,7 @@ void XmemInit(unsigned int mallocLinearMemoryStart, unsigned int mallocLinearMem
 	xmem_blocks = (unsigned char *) malloc(XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT);
 	
 	if ((xmem_table == NULL) || (xmem_blocks == NULL)) {
-		printf("XMEM: Could not allocate %d bytes of main ram for XMEM...",XMEM_TABLESIZE+(XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT));
+		GUI_printf("XMEM: Could not allocate %d bytes of main ram for XMEM...",XMEM_TABLESIZE+(XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT));
 		if (xmem_table) free(xmem_table);
 		if (xmem_blocks) free(xmem_blocks);
 		return;
@@ -78,19 +78,18 @@ void XmemInit(unsigned int mallocLinearMemoryStart, unsigned int mallocLinearMem
 	
 	//free(XT);
 	
-	printf("***       XMEM       *** ");
-	printf("TABLE: %8.8X (%d) ",xmem_table,XMEM_TABLESIZE);
-	printf("BLOCK: %8.8X (%d) ",xmem_blocks,XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT);
-	printf("***XMEM INIT COMPLETE*** ");
+	GUI_printf("***       XMEM       *** ");
+	GUI_printf("TABLE: %8.8X (%d) ",xmem_table,XMEM_TABLESIZE);
+	GUI_printf("BLOCK: %8.8X (%d) ",xmem_blocks,XMEM_BLOCKSIZE*XMEM_BLOCKCOUNT);
+	GUI_printf("***XMEM INIT COMPLETE*** ");
 	
 	xmem_table[0] = XMEM_STARTBLOCK | XMEM_ENDBLOCK | XMEM_USEDBLOCK; // reserved i suppose
-	
-	for (int i=1;(unsigned)i<XMEM_TABLESIZE;i++) {
+	int i=0;
+	for (i=1;(unsigned)i<XMEM_TABLESIZE;i++) {
 		xmem_table[i] = 0;
 	}
 }
 
-//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -99,10 +98,11 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void *Xmalloc(const int size) {
+
 	int i, blocks, sblock, fbr;
 	bool found;
 	
-	//printf("XMS");
+	//GUI_printf("XMS");
 	
 	// find size amount of memory to give to 
 	blocks = (size / XMEM_BLOCKSIZE) + 1;
@@ -112,7 +112,7 @@ void *Xmalloc(const int size) {
 	found = false;
 	fbr = 0;
 	
-	//printf("XM: Blocks: %d (%d b) ",blocks,size);
+	//GUI_printf("XM: Blocks: %d (%d b) ",blocks,size);
 	
 	for (i=0;(unsigned)i<XMEM_TABLESIZE;i++) {
 		if ((xmem_table[i] & XMEM_USEDBLOCK) == 0) {
@@ -133,11 +133,10 @@ void *Xmalloc(const int size) {
 
 	if (!found) {
 		// couldnt find enough free blocks!
-		printf("XM: Couldnt Find Mem: %d/%d ",size, XMEM_FreeMem());
-		
+		GUI_printf("XM: Couldnt Find Mem: %d/%d ",size, XMEM_FreeMem());
 		return NULL;
 	}
-	//printf("XM: SBLOCK: %d ",sblock);
+	//GUI_printf("XM: SBLOCK: %d ",sblock);
 
 	// we found enough blocks!
 	// allocate them...
@@ -152,12 +151,12 @@ void *Xmalloc(const int size) {
 		xmem_table[sblock+(blocks-1)] |= XMEM_ENDBLOCK;
 	}
 	
-	//printf("XM: %d %d %8.8X ", size, sblock, ((unsigned int) xmem_blocks + (sblock*XMEM_BLOCKSIZE))); 
+	
+	//GUI_printf("XM: %d %d %8.8X ", size, sblock, ((unsigned int) xmem_blocks + (sblock*XMEM_BLOCKSIZE))); 
 	return (void *) ((unsigned int) xmem_blocks + (sblock*XMEM_BLOCKSIZE));
 
 }
 
-//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -183,7 +182,6 @@ void *Xcalloc(const int size, const int count) {
 
 }
 
-//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -196,12 +194,12 @@ void Xfree(const void *ptr) {
 	int block,sblock;
 	
 	while (1) {
-		if ((unsigned char*)ptr < xmem_blocks) {
-			//printf("XM: Free: NXML %8.8X ",(unsigned int)ptr);
+		if (ptr < xmem_blocks) {
+			//GUI_printf("XM: Free: NXML %8.8X ",(unsigned int)ptr);
 			break;
 		}
-		if ((unsigned char*)ptr > (xmem_blocks+(XMEM_BLOCKCOUNT*XMEM_BLOCKSIZE))) {
-			//printf("XM: Free: NXMG %8.8X ",(u32)ptr);
+		if (ptr > (xmem_blocks+(XMEM_BLOCKCOUNT*XMEM_BLOCKSIZE))) {
+			//GUI_printf("XM: Free: NXMG %8.8X ",(u32)ptr);
 			break;
 		}
 		
@@ -222,14 +220,13 @@ void Xfree(const void *ptr) {
 			}
 		}
 		else {
-			//printf("XM: Free NSB: %8.8X ",(u32)ptr);
+			//GUI_printf("XM: Free NSB: %8.8X ",(u32)ptr);
 		}
 		break;
 	}
 
 }
 
-//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
