@@ -196,17 +196,9 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 			strcpy(tmpName, curChosenBrowseFile);
 			separateExtension(tmpName, ext);
 			strlwr(ext);
-			if(strncmp(ext,".nds", 4) == 0){
-				char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-				memset(thisArgv, 0, sizeof(thisArgv));
-				strcpy(&thisArgv[0][0], curChosenBrowseFile);	//Arg0:	NDS Binary loaded
-				strcpy(&thisArgv[1][0], argv0);					//Arg1: ARGV0
-				addARGV(2, (char*)&thisArgv);				
-				TGDSMultibootRunNDSPayload(curChosenBrowseFile);	
-			}
 			
 			//TGDS-LinkedModule Boot
-			else if(strncmp(ext,".bin", 4) == 0){
+			if(strncmp(ext,".bin", 4) == 0){
 				int argCount = 2;	
 				strcpy(&args[0][0], TGDSPROJECTNAME);	//Arg0: Parent TGDS Project name
 				strcpy(&args[1][0], curChosenBrowseFile);	//Arg1: self TGDS-LinkedModule filename
@@ -218,7 +210,30 @@ int main(int argc, char **argv)  __attribute__ ((optnone)) {
 				
 				TGDSProjectRunLinkedModule(curChosenBrowseFile, argCount, argvs, TGDSPROJECTNAME);
 			}
-			
+			else{
+				char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+				memset(thisArgv, 0, sizeof(thisArgv));
+				strcpy(&thisArgv[0][0], curChosenBrowseFile);	//Arg0:	NDS Binary loaded
+				strcpy(&thisArgv[1][0], argv0);					//Arg1: ARGV0
+				addARGV(2, (char*)&thisArgv);				
+				if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+					printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
+					printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
+					printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
+					printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+					while(1==1){
+						scanKeys();
+						if(keysDown()&KEY_A){
+							scanKeys();
+							while(keysDown() & KEY_A){
+								scanKeys();
+							}
+							break;
+						}
+					}
+					menuShow();
+				}
+			}
 		}
 		
 		if (keysDown() & KEY_SELECT){
