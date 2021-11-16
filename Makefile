@@ -19,7 +19,7 @@
 #TGDS1.6 compatible Makefile
 
 #ToolchainGenericDS specific: 
-export SOURCE_MAKEFILE7 = custom
+export SOURCE_MAKEFILE7 = default
 export SOURCE_MAKEFILE9 = custom
 
 #Translate paths to windows with forward slashes
@@ -146,7 +146,7 @@ $(EXECUTABLE_FNAME)	:	compile
 	-mv $(EXECUTABLE_FNAME)	release/arm7dldi-ntr
 	-mv arm9/data/tgds_multiboot_payload.bin release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
 	-mv arm9/data/tgds_multiboot_payload_twl.bin release/arm7dldi-ntr
-	-$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7 arm7/arm7-nonstripped_dsi.elf -9 arm9/arm9-nonstripped_dsi.bin	-e9  0x02000000
+	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7 arm7/arm7-nonstripped_dsi.elf -9 arm9/arm9-nonstripped_dsi.elf
 	-mv ${@:.nds=.srl}	release/arm7dldi-ntr
 	-mv release/arm7dldi-ntr/${@:.nds=.srl}	E:/
 	-mv release/arm7dldi-ntr/tgds_multiboot_payload_twl.bin	E:/
