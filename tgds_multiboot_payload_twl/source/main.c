@@ -310,9 +310,11 @@ int main(int argc, char **argv) {
 	if (ret == 0){
 		nocashMessage("FS Init ok.");
 	}
-	else if(ret == -1){
+	else{
 		nocashMessage("FS Init error.");
-	}/*			TGDS 1.6 Standard ARM9 Init code end	*/
+	}
+	
+	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
 	/*
 	nocashMessage("TWL Payload: DLDI7 Filesystem Init OK!");  //so far OK

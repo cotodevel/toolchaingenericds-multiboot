@@ -22,14 +22,8 @@
 export SOURCE_MAKEFILE7 = default
 export SOURCE_MAKEFILE9 = custom
 
-#Translate paths to windows with forward slashes
-cpath := $(shell pwd)
-ifeq ($(shell uname -o), Cygwin)
-    CURDIR := '$(shell cygpath -w -p ${cpath})'
-endif
-
 #Shared
-include $(DEFAULT_GCC_PATH_WIN)/Makefile.basenewlib
+include $(DEFAULT_GCC_PATH)/Makefile.basenewlib
 
 #Custom
 # Project Specific
@@ -148,8 +142,8 @@ $(EXECUTABLE_FNAME)	:	compile
 	-mv arm9/data/tgds_multiboot_payload_twl.bin release/arm7dldi-ntr
 	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7 arm7/arm7-nonstripped_dsi.elf -9 arm9/arm9-nonstripped_dsi.elf
 	-mv ${@:.nds=.srl}	release/arm7dldi-ntr
-	-mv release/arm7dldi-ntr/${@:.nds=.srl}	E:/
-	-mv release/arm7dldi-ntr/tgds_multiboot_payload_twl.bin	E:/
+	-mv release/arm7dldi-ntr/${@:.nds=.srl}	/E
+	-mv release/arm7dldi-ntr/tgds_multiboot_payload_twl.bin	/E
 	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------

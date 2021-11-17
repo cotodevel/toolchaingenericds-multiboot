@@ -269,10 +269,10 @@ int main(int argc, char **argv) {
 	{
 		printf("FS Init ok.");
 	}
-	else if(ret == -1)
-	{
-		printf("FS Init error.");
-	}/*			TGDS 1.6 Standard ARM9 Init code end	*/
+	else{
+		printf("FS Init error: %d", ret);
+	}
+	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
 	ReloadNDSBinaryFromContext((char*)thisARGV);	//Boot NDS file
 	return 0;
