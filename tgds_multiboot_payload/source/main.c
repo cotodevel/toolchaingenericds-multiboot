@@ -229,7 +229,7 @@ int main(int argc, char **argv) {
 	//Libnds compatibility: If (recv) mainARGV fat:/ change to 0:/
 	char thisARGV[MAX_TGDSFILENAME_LENGTH];
 	memset(thisARGV, 0, sizeof(thisARGV));
-	strcpy(thisARGV, argvs[0]);
+	strcpy(thisARGV, argvs[1]);
 	
 	if(
 		(thisARGV[0] == 'f')

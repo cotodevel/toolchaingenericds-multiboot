@@ -153,7 +153,76 @@ int main(int argc, char **argv) {
 	
 	menuShow();
 	
-	while (1){
+	//TGDS-MB chainload boot? Boot it then
+	if(argc > 3){		
+		//arg 0: caller binary 
+		//arg 1: this binary (toolchaingenericds-multiboot.nds / toolchaingenericds-multiboot.srl)
+		//arg 2: the NDS/TWL binary we are chainloading into
+		//arg 3: the arg we want to send to the chainloaded binary 
+		
+		//Libnds compatibility: If (recv) mainARGV fat:/ change to 0:/
+		char thisBinary[MAX_TGDSFILENAME_LENGTH];
+		memset(thisBinary, 0, sizeof(thisBinary));
+		strcpy(thisBinary, argv[2]);
+		if(
+			(thisBinary[0] == 'f')
+			&&
+			(thisBinary[1] == 'a')
+			&&
+			(thisBinary[2] == 't')
+			&&
+			(thisBinary[3] == ':')
+			&&
+			(thisBinary[4] == '/')
+			){
+			char thisBinary2[MAX_TGDSFILENAME_LENGTH];
+			memset(thisBinary2, 0, sizeof(thisBinary2));
+			strcpy(thisBinary2, "0:/");
+			strcat(thisBinary2, &thisBinary[5]);
+			
+			//copy back
+			memset(thisBinary, 0, sizeof(thisBinary));
+			strcpy(thisBinary, thisBinary2);
+		}
+		
+		/*
+		printf("NDS ARG0: %s", argv[0]);
+		printf("NDS ARG1: %s", argv[1]);
+		printf("NDS ARG2: %s", argv[2]);
+		printf("NDS ARG3: %s", argv[3]);
+		printf("args received: %d", argc);
+		while(1==1){}
+		*/
+		
+		char tempArgv[3][MAX_TGDSFILENAME_LENGTH];
+		memset(tempArgv, 0, sizeof(tempArgv));
+		strcpy(&tempArgv[0][0], (char*)argv[0]);	//Arg0:	original Binary caller (libnds format)
+		strcpy(&tempArgv[1][0], argv[2]);			//Arg1: target chainloaded NDS Binary from caller
+		strcpy(&tempArgv[2][0], argv[3]);			//Arg1: target chainloaded NDS Binary from caller's ARG0
+		
+		addARGV(3, (char*)&tempArgv);	
+		
+		strcpy(curChosenBrowseFile, (char*)(u32)&thisBinary[0]); //Arg1:	NDS Binary reloaded (TGDS format because we load directly now)
+		if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+			printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
+			printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
+			printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
+			printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+			while(1==1){
+				scanKeys();
+				if(keysDown()&KEY_A){
+					scanKeys();
+					while(keysDown() & KEY_A){
+						scanKeys();
+					}
+					break;
+				}
+			}
+			menuShow();
+		}
+	}
+	
+	while (1){		
 		scanKeys();
 		
 		if (keysDown() & KEY_START){
@@ -227,9 +296,10 @@ int main(int argc, char **argv) {
 			else{
 				char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
 				memset(thisArgv, 0, sizeof(thisArgv));
-				strcpy(&thisArgv[0][0], curChosenBrowseFile);	//Arg0:	NDS Binary loaded
-				strcpy(&thisArgv[1][0], argv0);					//Arg1: ARGV0
-				addARGV(2, (char*)&thisArgv);				
+				strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+				strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
+				strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
+				addARGV(3, (char*)&thisArgv);				
 				if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
 					printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 					printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
@@ -294,5 +364,6 @@ int main(int argc, char **argv) {
 		handleARM9SVC();	/* Do not remove, handles TGDS services */
 		IRQVBlankWait();
 	}
+	return 0;
 }
 
