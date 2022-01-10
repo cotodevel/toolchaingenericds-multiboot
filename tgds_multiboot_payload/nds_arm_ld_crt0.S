@@ -88,6 +88,7 @@ _start:
 	ldr                 r1,=0x02FFFE70                /* point our source register to the start of the .dtcm section (VMA)*/
 	ldr                 r2,=argvIntraTGDSMB                 /* point our destination register to the D-TCM dedicated to our writable data (LMA)*/
 	add                 r3,r2,#(256)                  /* point r3 after the last byte we will be writing (LMA)*/
+	add                 r3,r3,#(144)                  /* point r3 after the last byte we will be writing (LMA)*/
 	bl                  copy
 	
 @so far OK
@@ -101,6 +102,7 @@ _start:
 	ldr                 r1,=argvIntraTGDSMB                /* point our source register to the start of the .dtcm section (VMA)*/
 	ldr                 r2,=0x02FFFE70                 /* point our destination register to the D-TCM dedicated to our writable data (LMA)*/
 	add                 r3,r2,#(256)                  /* point r3 after the last byte we will be writing (LMA)*/
+	add                 r3,r3,#(144)                  /* point r3 after the last byte we will be writing (LMA)*/
 	bl                  copy
 	
 	blx handleARGV
@@ -131,7 +133,7 @@ copy:
 
 .global argvIntraTGDSMB
 argvIntraTGDSMB:
-	.skip 0x100
+	.skip 0x190
 	
 .pool
 .align
