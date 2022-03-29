@@ -38,6 +38,8 @@ USA
 #include "TGDSMemoryAllocator.h"
 #include "debugNocash.h"
 #include "tgds_ramdisk_dldi.h"
+#include "arm7bootldr.h"
+#include "arm7bootldr_twl.h"
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -173,6 +175,36 @@ bool ReloadNDSBinaryFromContext(char * filename) {
 	return false;
 }
 
+
+#ifdef ARM9
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void reloadARM7PlayerPayload(u32 arm7entryaddress, int arm7BootCodeSize){
+	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
+	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
+	
+	//NTR ARM7 payload
+	if(__dsimode == false){
+		coherent_user_range_by_size((u32)&arm7bootldr[0], arm7BootCodeSize);
+		setValueSafe(&fifomsg[0], (u32)&arm7bootldr[0]);
+	}
+	//TWL ARM7 payload
+	else{
+		coherent_user_range_by_size((u32)&arm7bootldr_twl[0], arm7BootCodeSize);
+		setValueSafe(&fifomsg[0], (u32)&arm7bootldr_twl[0]);
+	}
+	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
+	setValueSafe(&fifomsg[2], (u32)arm7entryaddress);
+	SendFIFOWords(FIFO_ARM7_RELOAD, 0xFF);
+}
+#endif
+
+
 //ToolchainGenericDS-LinkedModule User implementation: Called if TGDS-LinkedModule fails to reload ARM9.bin from DLDI.
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -270,7 +302,10 @@ int main(int argc, char **argv) {
 		printf("FS Init ok.");
 	}
 	else{
-		printf("FS Init error: %d", ret);
+		printf("FS Init error: %d :(", ret);
+		while(1==1){
+			swiDelay(1);
+		}
 	}
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
