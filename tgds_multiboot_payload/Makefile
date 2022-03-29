@@ -55,7 +55,7 @@ d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_
 #ARM9 specific definitions. -fno-common so we force initialized data to rodata
 MAPFILE = $(BINSTRIP_RULE_COMPRESSED_9).map
 AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_AS_COMPILER_FLAGS_9)		$(GLOBAL_AS_COMPILER_FLAGS)
-CC_ASFLAGS		=	-marm	-O0	-mthumb-interwork	-DNTRMODE	-DARM9	-Dappver='$(EXECUTABLE_VERSION)'	
+CC_ASFLAGS		=	-marm	-O0	-mthumb-interwork	-DARM9	-Dappver='$(EXECUTABLE_VERSION)'	
 CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	
 BUILD			= 	$(BUILD_ARM9)
 DIR_SRC			=	$(DIRS_ARM9_SRC)
@@ -63,7 +63,9 @@ DIR_SRC			=	$(DIRS_ARM9_SRC)
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
 LDFLAGS	=	-specs=nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE)
-LIBRARIES_NTR =	-ltgdsfilesystem9	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lhardware9	-lstdc++	-lcnano9	-lgcc
+LDFLAGS_DSI	=	-specs=nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE)
+LIBRARIES_NTR =	-ltgdsfilesystem9	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lhardware9		-lstdc++	-lcnano9	-lgcc
+LIBRARIES_TWL =	-ltgdsfilesystem9i	-lutils9i	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lhardware9i	-lstdc++	-lcnano9	-lgcc
 
 ################################################################################################
 
@@ -134,25 +136,31 @@ $(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).o:	$(TARGET_LIBRARY_LINKER_FILE_COMPRES
 #Linkage.
 $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 	-@echo 'Entering Linking phase'
-	$(CC) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_NTR)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
+	-$(CC) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_NTR)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
+	-$(CC) $^	$(LDFLAGS_DSI)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_TWL)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o ${@:.elf=_dsi.elf}
 	-@echo 'Leaving Linking phase. Output: $@'
 
 #xxxx-nonstripped.elf -> xxxx.elf STRIP operation
 $(ELF_ARM9): $(OBJPROG)
 	-@echo '$@ Unstripped. STRIP Start!'
+	-mv build/${@:.elf=-nonstripped_dsi.elf}	$(CURDIR)
 	$(OBJSTRIP)	-s -R .comment -R .gnu.version	$<
 	-mv	$<	$@
 	
 $(BINSTRIP_RULE_COMPRESSED_9): $(ELF_ARM9)
 	-@echo 'STRIP End: Remove ELF header and build baremetal Binary executable: $<	->	$@ !'
 	$(OBJCOPY) 	-S -O binary	$<	$@
+	$(OBJCOPY) 	-S -O binary	${<:.elf=-nonstripped_dsi.elf}	${@:.bin=_twl.bin}
 	-mv	$@ ../arm9/data
+	-mv	${@:.bin=_twl.bin} ../arm9/data
 	-rm	$<
+	-rm	${<:.elf=-nonstripped_dsi.elf}
+	
 ################################################################################################
 	
 clean:
 	-@echo 'cleanup $(BINSTRIP_RULE_COMPRESSED_9)'
-	-@rm -fr $(BINSTRIP_RULE_COMPRESSED_9)	$(MAPFILE)	$(BUILD_ARM9)	data/$(DIR_ARM9).bin	data/arm7bootldr.bin
+	-@rm -fr $(BINSTRIP_RULE_COMPRESSED_9)	$(MAPFILE)	$(BUILD_ARM9)	data/$(DIR_ARM9).bin	data/arm7bootldr.bin	data/arm7bootldr_twl.bin
 	
 debug:
 	-@echo 'debug $(objs_arm9)'

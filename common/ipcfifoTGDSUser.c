@@ -48,14 +48,6 @@ USA
 #include "nds_cp15_misc.h"
 #include "dldi.h"
 
-#ifdef NTRMODE
-#include "arm7bootldr.h"
-#endif
-
-#ifdef TWLMODE
-#include "arm7ibootldr.h"
-#endif
-
 #endif
 
 #ifdef ARM9
@@ -109,37 +101,6 @@ void freeSoundCustomDecoder(u32 srcFrmt){
 
 }
 
-#endif
-
-
-#ifdef ARM9
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void reloadARM7PlayerPayload(u32 arm7entryaddress, int arm7BootCodeSize){
-	#ifdef NTRMODE
-	coherent_user_range_by_size((u32)&arm7bootldr[0], arm7BootCodeSize);
-	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
-	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
-	setValueSafe(&fifomsg[0], (u32)&arm7bootldr[0]);
-	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
-	setValueSafe(&fifomsg[2], (u32)arm7entryaddress);
-	#endif
-	
-	#ifdef TWLMODE
-	coherent_user_range_by_size((u32)&arm7ibootldr[0], arm7BootCodeSize);
-	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
-	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
-	setValueSafe(&fifomsg[0], (u32)&arm7ibootldr[0]);
-	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
-	setValueSafe(&fifomsg[2], (u32)arm7entryaddress);
-	#endif
-	SendFIFOWords(FIFO_ARM7_RELOAD, 0xFF);
-}
 #endif
 
 //Libutils setup: TGDS project doesn't use any libutils extensions.

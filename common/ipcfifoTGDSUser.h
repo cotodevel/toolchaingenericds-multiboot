@@ -53,8 +53,6 @@ extern  struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific();
 extern void HandleFifoNotEmptyWeakRef(uint32 cmd1, uint32 cmd2);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1, uint32 cmd2);
 
-extern void reloadARM7PlayerPayload(u32 arm7entryaddress, int arm7BootCodeSize);
-
 #ifdef __cplusplus
 }
 #endif
