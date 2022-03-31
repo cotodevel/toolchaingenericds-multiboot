@@ -291,7 +291,7 @@ int main(int argc, char **argv) {
 					argvs[i] = (char*)&args[i][0];
 				}
 				
-				TGDSProjectRunLinkedModule(curChosenBrowseFile, argCount, argvs, TGDSPROJECTNAME);
+				TGDSProjectRunLinkedModule(curChosenBrowseFile, argCount, argvs, TGDSPROJECTNAME, 0, 0, 0, 0);
 			}
 			else{
 				char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
