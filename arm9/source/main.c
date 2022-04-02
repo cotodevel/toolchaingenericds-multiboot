@@ -250,6 +250,7 @@ int main(int argc, char **argv) {
 			
 			char argv0[MAX_TGDSFILENAME_LENGTH+1];
 			memset(argv0, 0, sizeof(argv0));
+			int argcCount = 0;
 			
 			while(1==1){
 				scanKeys();
@@ -262,7 +263,7 @@ int main(int argc, char **argv) {
 					while( ShowBrowser((char *)startPath, (char *)&argv0[0]) == true ){	//as long you keep using directories ShowBrowser will be true
 						
 					}
-					
+					argcCount++;
 					break;
 				}
 				else if(keysDown()&KEY_B){
@@ -282,10 +283,12 @@ int main(int argc, char **argv) {
 			
 			//TGDS-LinkedModule Boot
 			if(strncmp(ext,".bin", 4) == 0){
-				int argCount = 2;	
+				int argCount = 2 + argcCount;	
 				strcpy(&args[0][0], TGDSPROJECTNAME);	//Arg0: Parent TGDS Project name
 				strcpy(&args[1][0], curChosenBrowseFile);	//Arg1: self TGDS-LinkedModule filename
-				
+				if(argcCount > 0){
+					strcpy(&args[2][0], argv0);	//Arg1: self TGDS-LinkedModule filename
+				}
 				int i = 0;
 				for(i = 0; i < argCount; i++){
 					argvs[i] = (char*)&args[i][0];
