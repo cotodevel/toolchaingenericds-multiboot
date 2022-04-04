@@ -222,6 +222,18 @@ int main(int argc, char **argv) {
 		}
 	}
 	
+	//ARGV Implementation test
+	if (0 != argc ) {
+		int i;
+		for (i=0; i<argc; i++) {
+			if (argv[i]) {
+				printf("[%d] %s ", i, argv[i]);
+			}
+		}
+	} 
+	else {
+		printf("No arguments passed!");
+	}
 	while (1){		
 		scanKeys();
 		
