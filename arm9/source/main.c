@@ -131,12 +131,11 @@ int main(int argc, char **argv) {
 	printf("     ");
 	
 	int ret=FS_init();
-	if (ret == 0)
-	{
-		printf("FS Init ok.");
+	if (ret == 0){
+		
 	}
 	else{
-		printf("FS Init error: %d", ret);
+		
 	}
 	
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
@@ -144,14 +143,6 @@ int main(int argc, char **argv) {
 	//load TGDS Logo (NDS BMP Image)
 	//VRAM A Used by console
 	//VRAM C Keyboard and/or TGDS Logo
-	
-	//Show logo
-	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
-	
-	//Remove logo and restore Main Engine registers
-	//restoreFBModeMainEngine();
-	
-	menuShow();
 	
 	//TGDS-MB chainload boot? Boot it then
 	if(argc > 3){		
@@ -222,6 +213,55 @@ int main(int argc, char **argv) {
 		}
 	}
 	
+	//Force ARM7 reload once if TWL mode
+	if( (argc < 3) && (strncmp(argv[1],"0:/ToolchainGenericDS-multiboot.srl", 35) != 0) && (__dsimode == true)){
+		char startPath[MAX_TGDSFILENAME_LENGTH+1];
+		strcpy(startPath,"/");
+		strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-multiboot.srl");
+		//Send args
+		printf("[Booting %s]", curChosenBrowseFile);
+		printf("Want to send argument?");
+		printf("(A) Yes: (Start) Choose arg.");
+		printf("(B) No. ");
+		
+		char argv0[MAX_TGDSFILENAME_LENGTH+1];
+		memset(argv0, 0, sizeof(argv0));
+		int argcCount = 0;
+		argcCount++;
+		printf("[Booting... Please wait] >%d", TGDSPrintfColor_Red);
+		
+		//Boot .NDS file! (homebrew only)
+		char tmpName[256];
+		char ext[256];
+		strcpy(tmpName, curChosenBrowseFile);
+		separateExtension(tmpName, ext);
+		strlwr(ext);
+		
+		char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+		memset(thisArgv, 0, sizeof(thisArgv));
+		strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+		strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
+		strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
+		addARGV(3, (char*)&thisArgv);				
+		if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+			printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
+			printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
+			printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
+			printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+			while(1==1){
+				scanKeys();
+				if(keysDown()&KEY_A){
+					scanKeys();
+					while(keysDown() & KEY_A){
+						scanKeys();
+					}
+					break;
+				}
+			}
+			menuShow();
+		}
+	}
+	
 	//ARGV Implementation test
 	if (0 != argc ) {
 		int i;
@@ -234,6 +274,11 @@ int main(int argc, char **argv) {
 	else {
 		printf("No arguments passed!");
 	}
+	
+	//Show logo
+	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
+	menuShow();
+	
 	while (1){		
 		scanKeys();
 		
