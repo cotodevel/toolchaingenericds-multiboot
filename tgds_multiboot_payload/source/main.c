@@ -205,7 +205,6 @@ void reloadARM7PlayerPayload(u32 arm7entryaddress, int arm7BootCodeSize){
 #endif
 
 
-//ToolchainGenericDS-LinkedModule User implementation: Called if TGDS-LinkedModule fails to reload ARM9.bin from DLDI.
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -223,16 +222,6 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 char *argvs[8];
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("Os")))
-#endif
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-int TGDSProjectReturnFromLinkedModule() {
-	return -1;
-}
 
 //This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 #if (defined(__GNUC__) && !defined(__clang__))
