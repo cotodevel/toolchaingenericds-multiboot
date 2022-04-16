@@ -164,25 +164,24 @@ int main(int argc, char **argv) {
 			memset(thisBinary, 0, sizeof(thisBinary));
 			strcpy(thisBinary, thisBinary2);
 		}
-		
-		/*
-		printf("NDS ARG0: %s", argv[0]);
-		printf("NDS ARG1: %s", argv[1]);
-		printf("NDS ARG2: %s", argv[2]);
-		printf("NDS ARG3: %s", argv[3]);
-		printf("args received: %d", argc);
-		while(1==1){}
-		*/
-		
+		strcpy(curChosenBrowseFile, (char*)&thisBinary[0]); //Arg1:	NDS Binary reloaded (TGDS format because we load directly now)
 		char tempArgv[3][MAX_TGDSFILENAME_LENGTH];
 		memset(tempArgv, 0, sizeof(tempArgv));
-		strcpy(&tempArgv[0][0], (char*)argv[0]);	//Arg0:	original Binary caller (libnds format)
-		strcpy(&tempArgv[1][0], argv[2]);			//Arg1: target chainloaded NDS Binary from caller
-		strcpy(&tempArgv[2][0], argv[3]);			//Arg1: target chainloaded NDS Binary from caller's ARG0
-		
+		strcpy(&tempArgv[0][0], (char*)TGDSPROJECTNAME);	
+		strcpy(&tempArgv[1][0], (char*)curChosenBrowseFile);	
+		strcpy(&tempArgv[2][0], argv[3]);
 		addARGV(3, (char*)&tempArgv);	
 		
-		strcpy(curChosenBrowseFile, (char*)(u32)&thisBinary[0]); //Arg1:	NDS Binary reloaded (TGDS format because we load directly now)
+		//TGDS-Multiboot chainload:
+		printf("Target: %s", curChosenBrowseFile);
+		printf("Argv1: %s", argv[3]); //TGDS target binary ARGV0
+		if(FAT_FileExists(curChosenBrowseFile) == FT_NONE){
+			printf("ERROR: Target homebrew >%d", TGDSPrintfColor_Red);
+			printf("%s", curChosenBrowseFile);
+			printf("does NOT exist. Halting >%d", TGDSPrintfColor_Red);
+			while(1==1){}
+		}
+		
 		if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
 			printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 			printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
@@ -200,10 +199,11 @@ int main(int argc, char **argv) {
 			}
 			menuShow();
 		}
+		
 	}
 	
 	//Force ARM7 reload once if TWL mode
-	if( (argc < 3) && (strncmp(argv[1],"0:/ToolchainGenericDS-multiboot.srl", 35) != 0) && (__dsimode == true)){
+	else if( (argc < 3) && (strncmp(argv[1],"0:/ToolchainGenericDS-multiboot.srl", 35) != 0) && (__dsimode == true)){
 		char startPath[MAX_TGDSFILENAME_LENGTH+1];
 		strcpy(startPath,"/");
 		strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-multiboot.srl");
