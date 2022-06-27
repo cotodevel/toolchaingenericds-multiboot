@@ -38,6 +38,14 @@ USA
 #include "posixHandleTGDS.h"
 #include "TGDSMemoryAllocator.h"
 #include "dswnifi_lib.h"
+#include "wifi_arm9.h"
+
+//TCP
+#include <stdio.h>
+#include <stdlib.h>
+#include <netdb.h>
+#include <in.h>
+#include <string.h>
 
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 
@@ -83,6 +91,170 @@ void closeSoundUser(){
 
 char args[8][MAX_TGDSFILENAME_LENGTH];
 char *argvs[8];
+
+int handleRemoteBoot(int portToListen){
+	clrscr();
+	printf("----");
+	printf("----");
+	printf("----");
+	printf("----");
+	printf("handleRemoteBoot start.");
+
+	if(connectDSWIFIAP(DSWNIFI_ENTER_WIFIMODE) == true){
+		printf("Connect OK.");
+	}
+	else{
+		printf("Connect failed. Check AP settings.");
+	}
+
+	int sockfd, newsockfd, portno, clilen;
+	struct sockaddr_in serv_addr, cli_addr;
+	
+	/* First call to socket() function */
+	sockfd = socket(AF_INET, SOCK_STREAM, 0);
+	
+	if (sockfd < 0) {
+		printf("ERROR opening socket");
+		return -1;
+	}
+   
+	/* Initialize socket structure */
+	memset((char *) &serv_addr, 0, sizeof(serv_addr));
+	portno = portToListen;
+	
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_port = htons(portno);
+	
+	/* Now bind the host address using bind() call.*/
+	if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+		printf("ERROR on binding");
+		return -1;
+	}
+		
+	/* Now start listening for the clients, here process will
+		* go in sleep mode and will wait for the incoming connection
+	*/
+	char IP[16];
+	memset(IP, 0, sizeof(IP));
+	printf("RemoteBoot Active. IP:[%s] @ Port: %d", print_ip((uint32)Wifi_GetIP(), IP), portToListen);
+	listen(sockfd,5);
+	clilen = sizeof(cli_addr);
+	
+	/* Accept actual connection from the client */
+	newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
+		
+	if (newsockfd < 0) {
+		printf("ERROR on accept");
+		return -1;
+	}
+	
+	printf("Got connection from.");
+
+	char * RemoteBootTGDSPackage = "0:/remotepackage.tar.gz";
+	remove(RemoteBootTGDSPackage);
+    FILE * tgdspkgFH = fopen(RemoteBootTGDSPackage, "w+");
+    if(tgdspkgFH == NULL){
+        printf("error. Couldn't open: %s", RemoteBootTGDSPackage);
+		return -1;
+	}
+
+	/* If connection is established then start communicating */
+	char * server_reply = (char *)TGDSARM9Malloc(64*1024);
+	int received_len = 0;
+	int total_len = 0;
+	while( ( received_len = recv(newsockfd, server_reply, 64*1024, 0 ) ) != 0 ) { // if recv returns 0, the socket has been closed.
+		if(received_len>0) { // data was received!
+			total_len += received_len;
+			fwrite(server_reply, 1, received_len, tgdspkgFH);
+			
+			clrscr();
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("Received byte size = %d Total length = %d ", received_len, total_len);
+		}
+	}
+	TGDSARM9Free(server_reply);
+	shutdown(newsockfd,0); // good practice to shutdown the socket.
+	closesocket(newsockfd); // remove the socket.
+    fclose(tgdspkgFH);
+
+	clrscr();
+	printf("----");
+	printf("----");
+	printf("----");
+	printf("Received Package OK. TotalSize: %d ", total_len);
+	
+	switch_dswnifi_mode(dswifi_idlemode);
+	
+	//todo: move to tgds_multiboot_payload proj and add a new module:
+	//		bool TGDSMultibootRunTGDSPackage(char * TGDSPKGFilename) 
+	
+	//Open the incoming package
+	/*
+	int argCount = 2;
+	char fileBuf[256+1];
+	memset(fileBuf, 0, sizeof(fileBuf));
+	strcpy(fileBuf, RemoteBootTGDSPackage);
+	strcpy(&args[0][0], "-l");	//Arg0
+	strcpy(&args[1][0], fileBuf);	//Arg1
+	strcpy(&args[2][0], "d /");	//Arg2
+	
+	int i = 0;
+	for(i = 0; i < argCount; i++){	
+		argvs[i] = (char*)&args[i][0];
+	}
+	
+	extern int untgzmain(int argc,char **argv);
+	if(untgzmain(argCount, argvs) == 0){
+		//Descriptor is always at root SD path: 0:/descriptor.txt
+		set_config_file("0:/descriptor.txt");
+		char * baseTargetPath = get_config_string("Global", "baseTargetPath", "");
+		char * mainApp = get_config_string("Global", "mainApp", "");
+		int mainAppCRC32 = get_config_hex("Global", "mainAppCRC32", 0);
+		int TGDSSdkCrc32 = get_config_hex("Global", "TGDSSdkCrc32", 0);
+		printf("TGDSPKG Unpack OK:%s", fileBuf);
+		
+		//printf("[%s][%s]", baseTargetPath, mainApp);
+		//printf("TGDSSDK:CRC32:%x", TGDSSdkCrc32);
+		
+		//Boot .NDS file! (homebrew only)
+		char tmpName[256];
+		char ext[256];
+		strcpy(tmpName, mainApp);
+		separateExtension(tmpName, ext);
+		strlwr(ext);
+		if(
+			(strncmp(ext,".nds", 4) == 0)
+			||
+			(strncmp(ext,".srl", 4) == 0)
+			){
+			memset(fileBuf, 0, sizeof(fileBuf));
+			strcpy(fileBuf, "0:/");
+			strcat(fileBuf, baseTargetPath);
+			strcat(fileBuf, mainApp);
+			printf("Boot:[%s][CRC32:%x]", fileBuf, mainAppCRC32);
+			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+			memset(thisArgv, 0, sizeof(thisArgv));
+			strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+			strcpy(&thisArgv[1][0], fileBuf);	//Arg1:	NDS Binary reloaded
+			strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
+			addARGV(3, (char*)&thisArgv);
+			TGDSMultibootRunNDSPayload(fileBuf);
+		}
+		else{
+			printf("TGDS App not found:[%s][CRC32:%x]", mainApp, mainAppCRC32);
+		}	
+	}
+	else{
+		printf("Couldn't unpack TGDSPackage.:%s", fileBuf);
+	}
+	
+   	return total_len;
+	*/
+	return 0;
+}
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -269,7 +441,7 @@ int main(int argc, char **argv) {
 	//Show logo
 	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 	menuShow();
-	
+	bool remoteBootEnabled = false;
 	while (1){		
 		scanKeys();
 		
@@ -384,14 +556,17 @@ int main(int argc, char **argv) {
 		}
 		
 
-		if (keysDown() & KEY_SELECT){
-			
-			//todo: remoteboot
-
+		if ( (keysDown() & KEY_X) && (remoteBootEnabled == false)){
+			remoteBootEnabled = true;
 			scanKeys();
-			while(keysHeld() & KEY_SELECT){
+			while(keysHeld() & KEY_X){
 				scanKeys();
 			}
+		}
+
+		if(remoteBootEnabled == true){
+			handleRemoteBoot(80);
+			remoteBootEnabled = false;
 		}
 
 		handleARM9SVC();	/* Do not remove, handles TGDS services */

@@ -41,6 +41,11 @@ USA
 #include "arm7bootldr.h"
 #include "arm7bootldr_twl.h"
 
+//.tar.gz unpackager
+#include "conf.h"
+#include "xenofunzip.h"
+#include "cartHeader.h"
+
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif

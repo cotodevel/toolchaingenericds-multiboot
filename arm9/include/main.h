@@ -43,6 +43,7 @@ extern bool ReloadNDSBinaryFromContext(char * filename);
 
 extern char args[8][MAX_TGDSFILENAME_LENGTH];
 extern char *argvs[8];
+extern int handleRemoteBoot(int portToListen);
 
 #ifdef __cplusplus
 }
