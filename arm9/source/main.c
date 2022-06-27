@@ -37,6 +37,7 @@ USA
 #include "global_settings.h"
 #include "posixHandleTGDS.h"
 #include "TGDSMemoryAllocator.h"
+#include "dswnifi_lib.h"
 
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 
@@ -65,6 +66,7 @@ void menuShow(){
 	printf("Button (Start): File browser ");
 	printf("    Button (A) Load TGDS/devkitARM NDS Binary. ");
 	printf("                              ");
+	printf("(X): Remoteboot >%d");
 	printf("(Select): back to Loader. >%d", TGDSPrintfColor_Green);
 	printf("Available heap memory: %d", getMaxRam());
 	printf("Select: this menu");
@@ -114,6 +116,7 @@ int main(int argc, char **argv) {
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	flush_icache_all();
 	flush_dcache_all();	
+	switch_dswnifi_mode(dswifi_idlemode);
 	
 	printf("     ");
 	printf("     ");
@@ -380,6 +383,17 @@ int main(int argc, char **argv) {
 			}
 		}
 		
+
+		if (keysDown() & KEY_SELECT){
+			
+			//todo: remoteboot
+
+			scanKeys();
+			while(keysHeld() & KEY_SELECT){
+				scanKeys();
+			}
+		}
+
 		handleARM9SVC();	/* Do not remove, handles TGDS services */
 		IRQVBlankWait();
 	}
