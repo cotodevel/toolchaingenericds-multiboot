@@ -149,8 +149,14 @@ int handleRemoteBoot(int portToListen){
 		return -1;
 	}
 	
-	printf("Got connection from.");
-
+	printf("Got connection!");
+	
+	const char * message =  "GET / HTTP/1.1\r\nHost: 1.1.1.1 \r\n\r\n Connection: keep-alive\r\n\r\n Keep-Alive: 300\r\n";
+    if( send(newsockfd, message , strlen(message) , 0) < 0)
+    {
+        return -1;
+    }
+	
 	char * RemoteBootTGDSPackage = "0:/remotepackage.tar.gz";
 	remove(RemoteBootTGDSPackage);
     FILE * tgdspkgFH = fopen(RemoteBootTGDSPackage, "w+");
