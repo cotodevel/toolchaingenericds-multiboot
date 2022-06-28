@@ -187,72 +187,7 @@ int handleRemoteBoot(int portToListen){
 	printf("Received Package OK. TotalSize: %d ", total_len);
 	
 	switch_dswnifi_mode(dswifi_idlemode);
-	
-	//todo: move to tgds_multiboot_payload proj and add a new module:
-	//		bool TGDSMultibootRunTGDSPackage(char * TGDSPKGFilename) 
-	
-	//Open the incoming package
-	/*
-	int argCount = 2;
-	char fileBuf[256+1];
-	memset(fileBuf, 0, sizeof(fileBuf));
-	strcpy(fileBuf, RemoteBootTGDSPackage);
-	strcpy(&args[0][0], "-l");	//Arg0
-	strcpy(&args[1][0], fileBuf);	//Arg1
-	strcpy(&args[2][0], "d /");	//Arg2
-	
-	int i = 0;
-	for(i = 0; i < argCount; i++){	
-		argvs[i] = (char*)&args[i][0];
-	}
-	
-	extern int untgzmain(int argc,char **argv);
-	if(untgzmain(argCount, argvs) == 0){
-		//Descriptor is always at root SD path: 0:/descriptor.txt
-		set_config_file("0:/descriptor.txt");
-		char * baseTargetPath = get_config_string("Global", "baseTargetPath", "");
-		char * mainApp = get_config_string("Global", "mainApp", "");
-		int mainAppCRC32 = get_config_hex("Global", "mainAppCRC32", 0);
-		int TGDSSdkCrc32 = get_config_hex("Global", "TGDSSdkCrc32", 0);
-		printf("TGDSPKG Unpack OK:%s", fileBuf);
-		
-		//printf("[%s][%s]", baseTargetPath, mainApp);
-		//printf("TGDSSDK:CRC32:%x", TGDSSdkCrc32);
-		
-		//Boot .NDS file! (homebrew only)
-		char tmpName[256];
-		char ext[256];
-		strcpy(tmpName, mainApp);
-		separateExtension(tmpName, ext);
-		strlwr(ext);
-		if(
-			(strncmp(ext,".nds", 4) == 0)
-			||
-			(strncmp(ext,".srl", 4) == 0)
-			){
-			memset(fileBuf, 0, sizeof(fileBuf));
-			strcpy(fileBuf, "0:/");
-			strcat(fileBuf, baseTargetPath);
-			strcat(fileBuf, mainApp);
-			printf("Boot:[%s][CRC32:%x]", fileBuf, mainAppCRC32);
-			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-			memset(thisArgv, 0, sizeof(thisArgv));
-			strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
-			strcpy(&thisArgv[1][0], fileBuf);	//Arg1:	NDS Binary reloaded
-			strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
-			addARGV(3, (char*)&thisArgv);
-			TGDSMultibootRunNDSPayload(fileBuf);
-		}
-		else{
-			printf("TGDS App not found:[%s][CRC32:%x]", mainApp, mainAppCRC32);
-		}	
-	}
-	else{
-		printf("Couldn't unpack TGDSPackage.:%s", fileBuf);
-	}
-	
-   	return total_len;
-	*/
+	TGDSMultibootRunTGDSPackage(RemoteBootTGDSPackage);
 	return 0;
 }
 
@@ -501,13 +436,34 @@ int main(int argc, char **argv) {
 			separateExtension(tmpName, ext);
 			strlwr(ext);
 			
-			{
-				char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-				memset(thisArgv, 0, sizeof(thisArgv));
-				strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
-				strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
-				strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
-				addARGV(3, (char*)&thisArgv);				
+			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+			memset(thisArgv, 0, sizeof(thisArgv));
+			strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+			strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
+			strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
+			addARGV(3, (char*)&thisArgv);				
+			
+			
+			if(strncmp(ext,".gz", 3) == 0){
+				if(TGDSMultibootRunTGDSPackage(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+					printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
+					printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
+					printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
+					printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+					while(1==1){
+						scanKeys();
+						if(keysDown()&KEY_A){
+							scanKeys();
+							while(keysDown() & KEY_A){
+								scanKeys();
+							}
+							break;
+						}
+					}
+					menuShow();
+				}
+			}
+			else{
 				if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
 					printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 					printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);

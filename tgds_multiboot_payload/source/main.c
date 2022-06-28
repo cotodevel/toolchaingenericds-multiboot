@@ -79,7 +79,7 @@ void closeSoundUser(){
 
 char thisArgv[10][MAX_TGDSFILENAME_LENGTH];
 
-//generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
+
 __attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("Os")))
@@ -181,6 +181,75 @@ bool ReloadNDSBinaryFromContext(char * filename) {
 }
 
 
+__attribute__((section(".itcm")))
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("Os")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+bool ReloadNDSBinaryFromTGDSPackage(char * filename) {
+	//Open the incoming package
+	int argCount = 2;
+	char fileBuf[256+1];
+	memset(fileBuf, 0, sizeof(fileBuf));
+	strcpy(fileBuf, filename); //RemoteBootTGDSPackage name in FS (arg0)
+	strcpy(&args[0][0], "-l");	//Arg0
+	strcpy(&args[1][0], fileBuf);	//Arg1
+	strcpy(&args[2][0], "d /");	//Arg2
+	
+	int i = 0;
+	for(i = 0; i < argCount; i++){	
+		argvs[i] = (char*)&args[i][0];
+	}
+	
+	extern int untgzmain(int argc,char **argv);
+	if(untgzmain(argCount, argvs) == 0){
+		//Descriptor is always at root SD path: 0:/descriptor.txt
+		set_config_file("0:/descriptor.txt");
+		char * baseTargetPath = get_config_string("Global", "baseTargetPath", "");
+		char * mainApp = get_config_string("Global", "mainApp", "");
+		int mainAppCRC32 = get_config_hex("Global", "mainAppCRC32", 0);
+		int TGDSSdkCrc32 = get_config_hex("Global", "TGDSSdkCrc32", 0);
+		printf("TGDSPKG Unpack OK:%s", fileBuf);
+		
+		//printf("[%s][%s]", baseTargetPath, mainApp);
+		//printf("TGDSSDK:CRC32:%x", TGDSSdkCrc32);
+		
+		//Boot .NDS file! (homebrew only)
+		char tmpName[256];
+		char ext[256];
+		strcpy(tmpName, mainApp);
+		separateExtension(tmpName, ext);
+		strlwr(ext);
+		if(
+			(strncmp(ext,".nds", 4) == 0)
+			||
+			(strncmp(ext,".srl", 4) == 0)
+			){
+			memset(fileBuf, 0, sizeof(fileBuf));
+			strcpy(fileBuf, "0:/");
+			strcat(fileBuf, baseTargetPath);
+			strcat(fileBuf, mainApp);
+			printf("Boot:[%s][CRC32:%x]", fileBuf, mainAppCRC32);
+			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+			memset(thisArgv, 0, sizeof(thisArgv));
+			strcpy(&thisArgv[0][0], "tgds_multiboot_payload.bin");	//Arg0:	This Binary loaded
+			strcpy(&thisArgv[1][0], fileBuf);	//Arg1:	NDS Binary reloaded
+			strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
+			addARGV(3, (char*)&thisArgv);
+			ReloadNDSBinaryFromContext((char*)fileBuf);	//Boot NDS file
+		}
+		else{
+			printf("TGDS App not found:[%s][CRC32:%x]", mainApp, mainAppCRC32);
+		}	
+	}
+	else{
+		printf("Couldn't unpack TGDSPackage.:%s", fileBuf);
+	}
+	
+	return true;
+}
 #ifdef ARM9
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -287,8 +356,9 @@ int main(int argc, char **argv) {
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
-	printf("     ");
-	printf("     ");
+	printf(" ---- ");
+	printf(" ---- ");
+	printf(" ---- ");
 	
 	int ret=FS_init();
 	if (ret == 0)
@@ -303,6 +373,29 @@ int main(int argc, char **argv) {
 	}
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
-	ReloadNDSBinaryFromContext((char*)thisARGV);	//Boot NDS file
+	char tmpName[256];
+	char ext[256];
+	strcpy(tmpName, thisARGV);
+	separateExtension(tmpName, ext);
+	strlwr(ext);
+	if(
+		(strncmp(ext,".nds", 4) == 0)
+		||
+		(strncmp(ext,".srl", 4) == 0)
+		){
+		//If NTR/TWL Binary
+		ReloadNDSBinaryFromContext((char*)thisARGV);	//Boot NDS file
+	}
+	//Else if TGDS Package:
+	else if(strncmp(ext,".gz", 3) == 0){
+		ReloadNDSBinaryFromTGDSPackage((char*)thisARGV);
+	}
+	else{
+		printf("TGDS-MB-payload: wrong arguments. Turn off the console.");
+		while(1==1){
+		}
+	}
+	
+	
 	return 0;
 }

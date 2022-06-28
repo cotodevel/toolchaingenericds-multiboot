@@ -46,8 +46,8 @@ struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(u32 ARM7Malloc
 	customMemoryAllocator->ARM7MallocStartAddress = ARM7MallocStartAddress;
 	customMemoryAllocator->ARM7MallocSize = ARM7MallocSize;
 	
-	customMemoryAllocator->ARM9MallocStartaddress = (u32)sbrk(0);
-	customMemoryAllocator->memoryToAllocate = (1000*1024);	//Alloc, but if overflow, just discard the memory (right after program address), clean up, and re-use it.
+	customMemoryAllocator->ARM9MallocStartaddress = (u32)((int)0x02280000 + (400*1024));
+	customMemoryAllocator->memoryToAllocate = (768*1024);	//Alloc, but if overflow, just discard the memory (right after program address), clean up, and re-use it.
 	customMemoryAllocator->CustomTGDSMalloc9 = (TGDSARM9MallocHandler)&Xmalloc;
 	customMemoryAllocator->CustomTGDSCalloc9 = (TGDSARM9CallocHandler)&Xcalloc;
 	customMemoryAllocator->CustomTGDSFree9 = (TGDSARM9FreeHandler)&Xfree;
