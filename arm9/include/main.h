@@ -27,7 +27,9 @@ USA
 #include "limitsTGDS.h"
 #include "dldi.h"
 
-#define TGDSPROJECTNAME (char*)"ToolchainGenericDS-multiboot"
+#define TGDSPROJECTNAME ((char*)"ToolchainGenericDS-multiboot")
+#define TGDSMULTIBOOT_CFG_FILE ((char*)"0:/toolchaingenericds-multiboot-config.txt")
+#define RemoteBootTGDSPackage ((char*)"0:/remotepackage.tar.gz")
 
 #endif
 
@@ -43,7 +45,11 @@ extern bool ReloadNDSBinaryFromContext(char * filename);
 
 extern char args[8][MAX_TGDSFILENAME_LENGTH];
 extern char *argvs[8];
-extern int handleRemoteBoot(int portToListen);
+extern int handleRemoteBoot(char * ipToConnect, int portToConnect);
+extern char remoteBooterIPAddr[256];
+extern int remoteBooterPort;
+extern bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPath);
+extern void fcopy(FILE *f1, FILE *f2);
 
 #ifdef __cplusplus
 }

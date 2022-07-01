@@ -18,6 +18,7 @@ Project Specific description:
 TGDS homebrew loader. Loads NTR/TWL binaries from within a menu. 
 Simply DLDI patch ToolchainGenericDS-multiboot.nds, if the loader used to boot this app does not perform auto-DLDI patching.
 TGDS-MB TWL does not require any DLDI patch because it uses the internal SD instead.
+----Don't forget to copy toolchaingenericds-multiboot-config.txt to SD root path or TGDS-multiboot won't boot!!----
 
 ############################################### HOW TO USE TGDS-MULTIBOOT IN TGDS PROJECTS ############################################### 
 1) 1a) There's a standalone NDS Binary of TGDS-multiboot (ToolchainGenericDS-multiboot.nds/ToolchainGenericDS-multiboot.srl) for launching homebrew.

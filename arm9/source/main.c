@@ -39,6 +39,8 @@ USA
 #include "TGDSMemoryAllocator.h"
 #include "dswnifi_lib.h"
 #include "wifi_arm9.h"
+#include "utilsTGDS.h"
+#include "conf.h"
 
 //TCP
 #include <stdio.h>
@@ -74,7 +76,8 @@ void menuShow(){
 	printf("Button (Start): File browser ");
 	printf("    Button (A) Load TGDS/devkitARM NDS Binary. ");
 	printf("                              ");
-	printf("(X): Remoteboot >%d");
+	printf("(X): Remoteboot >%d", TGDSPrintfColor_Yellow);
+	printf("    (Server IP detected: %s [Port:%d]) >%d", remoteBooterIPAddr, remoteBooterPort, TGDSPrintfColor_Yellow);
 	printf("(Select): back to Loader. >%d", TGDSPrintfColor_Green);
 	printf("Available heap memory: %d", getMaxRam());
 	printf("Select: this menu");
@@ -92,107 +95,52 @@ void closeSoundUser(){
 char args[8][MAX_TGDSFILENAME_LENGTH];
 char *argvs[8];
 
-int handleRemoteBoot(int portToListen){
+char remoteBooterIPAddr[256];
+int remoteBooterPort = 0;
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+int handleRemoteBoot(char * URLPathRequestedByGetVerb, int portToConnect){
 	clrscr();
 	printf("----");
 	printf("----");
 	printf("----");
 	printf("----");
-	printf("handleRemoteBoot start.");
-
+	printf("handleRemoteBoot start [%s]", URLPathRequestedByGetVerb);
 	if(connectDSWIFIAP(DSWNIFI_ENTER_WIFIMODE) == true){
 		printf("Connect OK.");
 	}
 	else{
 		printf("Connect failed. Check AP settings.");
 	}
-
-	int sockfd, newsockfd, portno, clilen;
-	struct sockaddr_in serv_addr, cli_addr;
 	
-	/* First call to socket() function */
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	
-	if (sockfd < 0) {
-		printf("ERROR opening socket");
-		return -1;
+	//Downloadfile
+	char * fileDownloadDir = "0:/";
+	if(DownloadFileFromServer(URLPathRequestedByGetVerb, portToConnect, fileDownloadDir) == true){
+		printf("Package download OK:");
+		printf("%s", RemoteBootTGDSPackage);
 	}
-   
-	/* Initialize socket structure */
-	memset((char *) &serv_addr, 0, sizeof(serv_addr));
-	portno = portToListen;
-	
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = INADDR_ANY;
-	serv_addr.sin_port = htons(portno);
-	
-	/* Now bind the host address using bind() call.*/
-	if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
-		printf("ERROR on binding");
-		return -1;
-	}
-		
-	/* Now start listening for the clients, here process will
-		* go in sleep mode and will wait for the incoming connection
-	*/
-	char IP[16];
-	memset(IP, 0, sizeof(IP));
-	printf("RemoteBoot Active. IP:[%s] @ Port: %d", print_ip((uint32)Wifi_GetIP(), IP), portToListen);
-	listen(sockfd,5);
-	clilen = sizeof(cli_addr);
-	
-	/* Accept actual connection from the client */
-	newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
-		
-	if (newsockfd < 0) {
-		printf("ERROR on accept");
-		return -1;
+	else{
+		printf("Package download ERROR:");
+		printf("%s", RemoteBootTGDSPackage);
 	}
 	
-	printf("Got connection!");
-	
-	const char * message =  "GET / HTTP/1.1\r\nHost: 1.1.1.1 \r\n\r\n Connection: keep-alive\r\n\r\n Keep-Alive: 300\r\n";
-    if( send(newsockfd, message , strlen(message) , 0) < 0)
-    {
-        return -1;
-    }
-	
-	char * RemoteBootTGDSPackage = "0:/remotepackage.tar.gz";
-	remove(RemoteBootTGDSPackage);
-    FILE * tgdspkgFH = fopen(RemoteBootTGDSPackage, "w+");
-    if(tgdspkgFH == NULL){
-        printf("error. Couldn't open: %s", RemoteBootTGDSPackage);
-		return -1;
-	}
-
-	/* If connection is established then start communicating */
-	char * server_reply = (char *)TGDSARM9Malloc(64*1024);
-	int received_len = 0;
-	int total_len = 0;
-	while( ( received_len = recv(newsockfd, server_reply, 64*1024, 0 ) ) != 0 ) { // if recv returns 0, the socket has been closed.
-		if(received_len>0) { // data was received!
-			total_len += received_len;
-			fwrite(server_reply, 1, received_len, tgdspkgFH);
-			
-			clrscr();
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("Received byte size = %d Total length = %d ", received_len, total_len);
-		}
-	}
-	TGDSARM9Free(server_reply);
-	shutdown(newsockfd,0); // good practice to shutdown the socket.
-	closesocket(newsockfd); // remove the socket.
-    fclose(tgdspkgFH);
-
-	clrscr();
-	printf("----");
-	printf("----");
-	printf("----");
-	printf("Received Package OK. TotalSize: %d ", total_len);
 	
 	switch_dswnifi_mode(dswifi_idlemode);
+	char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+	memset(thisArgv, 0, sizeof(thisArgv));
+	char argv0[MAX_TGDSFILENAME_LENGTH+1];
+	memset(argv0, 0, sizeof(argv0));
+	strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+	strcpy(&thisArgv[1][0], RemoteBootTGDSPackage);	//Arg1:	NDS Binary reloaded
+	strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
+	addARGV(3, (char*)&thisArgv);
+	
 	TGDSMultibootRunTGDSPackage(RemoteBootTGDSPackage);
 	return 0;
 }
@@ -365,6 +313,41 @@ int main(int argc, char **argv) {
 			menuShow();
 		}
 	}
+	else if(FileExists(TGDSMULTIBOOT_CFG_FILE) == FT_NONE){
+		clrscr();
+		printf("----");
+		printf("----");
+		printf("----");
+		printf("ToolchainGenericDS-multiboot requires:");
+		printf("%s >%d", (char*)&TGDSMULTIBOOT_CFG_FILE[3], TGDSPrintfColor_Yellow);
+		printf("In SD root folder. Turn off the hardware now.");
+		while(1==1){
+			IRQWait(0, IRQ_VBLANK);
+		}
+	}
+	
+	//Descriptor is always at root SD path (TGDSMULTIBOOT_CFG_FILE)
+	set_config_file(TGDSMULTIBOOT_CFG_FILE);
+
+	//A proper Remotebooter IP must be written in said file.
+	char * baseTargetPath = get_config_string("Global", "tgdsutilsremotebooteripaddr", "");
+	strcpy(remoteBooterIPAddr, baseTargetPath);
+	remoteBooterPort = get_config_int("Global", "tgdsutilsremotebooterport", 0);
+	if((isValidIpAddress((char*)&remoteBooterIPAddr[0]) != true) || (remoteBooterPort == 0)){
+		clrscr();
+		printf("----");
+		printf("----");
+		printf("----");
+		printf("Remotebooter IP: ");
+		printf("%s >%d", (char*)&remoteBooterIPAddr[0], TGDSPrintfColor_Yellow);
+		printf("Or port: ");
+		printf("%d >%d", remoteBooterPort, TGDSPrintfColor_Yellow);
+		printf("written in %s ", (char*)&TGDSMULTIBOOT_CFG_FILE[3]);
+		printf("is missing or invalid. Turn off the hardware now.");
+		while(1==1){
+			IRQWait(0, IRQ_VBLANK);
+		}
+	}
 	
 	//ARGV Implementation test
 	if (0 != argc ) {
@@ -527,7 +510,9 @@ int main(int argc, char **argv) {
 		}
 
 		if(remoteBootEnabled == true){
-			handleRemoteBoot(80);
+			char URLPathRequested[256];
+			sprintf(URLPathRequested, "%s%s", remoteBooterIPAddr, (char*)&RemoteBootTGDSPackage[2]);
+			handleRemoteBoot((char*)&URLPathRequested[0], remoteBooterPort);
 			remoteBootEnabled = false;
 		}
 
@@ -537,3 +522,163 @@ int main(int argc, char **argv) {
 	return 0;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void fcopy(FILE *f1, FILE *f2){
+    char            buffer[BUFSIZ];
+    size_t          n;
+    while ((n = fread(buffer, sizeof(char), sizeof(buffer), f1)) > 0){
+        if (fwrite(buffer, sizeof(char), n, f2) != n){
+            printf("fcopy: write failed. Halt hardware.");
+			while(1==1){}
+		}
+    }
+}
+
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPath) {
+	
+	// C split to save mem
+	char cpyBuf[256] = {0};
+	strcpy(cpyBuf, downloadAddr);
+	char * outBuf = (char *)TGDSARM9Malloc(256*10);
+	
+	char * ServerDNSTemp = (char*)((char*)outBuf + (0*256));
+	char * strPathTemp = (char*)((char*)outBuf + (1*256));
+	char strPath[256];
+	int matchCount = str_split((char*)cpyBuf, (char*)"/", outBuf, 10, 256);
+	strcpy(&strPath[1], strPathTemp);
+	strPath[0] = '/';
+	
+	char ServerDNS[256];
+	strcpy(ServerDNS, ServerDNSTemp);
+	TGDSARM9Free(outBuf);
+	
+	//1 dir or more + filename = fullpath
+	if(matchCount > 1){
+	    int urlLen = strlen(downloadAddr);
+	    int startPos = 0;
+	    while(downloadAddr[startPos] != '/'){
+	        startPos++;
+	    }
+	    memset(strPath, 0, sizeof(strPath));
+	    strcpy(strPath, (char*)&downloadAddr[startPos]);
+	}
+	
+	//get filename from result
+	char strFilename[256];
+	int fnamePos = 0;
+	int topPathLen = strlen((char*)&strPath[1]);
+	while(strPath[topPathLen] != '/'){
+	    topPathLen--;
+	}
+	strcpy(strFilename, (char*)&strPath[topPathLen + 1]);
+	
+	// C end
+	
+    // Create a TCP socket
+    int my_socket = socket( AF_INET, SOCK_STREAM, 0 );
+    printf("Created Socket!");
+
+    // Tell the socket to connect to the IP address we found, on port 80 (HTTP)
+    struct sockaddr_in sain;
+	memset(&sain, 0, sizeof(struct sockaddr_in));
+    
+	sain.sin_family = AF_INET;
+    sain.sin_port = htons(ServerPort);
+    
+	if(
+		(ServerDNS[0] == 'w')
+		&&
+		(ServerDNS[1] == 'w')
+		&&
+		(ServerDNS[2] == 'w')
+		){
+		// Find the IP address of the server, with gethostbyname
+		struct hostent * myhost = gethostbyname(ServerDNS);
+		printf("Resolved DNS & Found IP Address! [Port:%d]", ServerPort);
+		sain.sin_addr.s_addr= *( (unsigned long *)(myhost->h_addr_list[0]) );
+	}
+	else{
+		sain.sin_addr.s_addr = inet_addr(ServerDNS);
+		printf("Direct IP Address: %s[Port:%d]", ServerDNS, ServerPort);
+	}
+	
+	connect( my_socket,(struct sockaddr *)&sain, sizeof(sain) );
+    printf("Connected to server!");
+	
+    //Send request
+	FILE *file = NULL;
+	char logConsole[256];
+	char * server_reply = (char *)TGDSARM9Malloc(64*1024);
+    int total_len = 0;
+	char message[256]; 
+	sprintf(message, "GET %s HTTP/1.1\r\nHost: %s \r\n\r\n Connection: keep-alive\r\n\r\n Keep-Alive: 300\r\n", strPath,  ServerDNS);
+    if( send(my_socket, message , strlen(message) , 0) < 0){
+        return false;
+    }
+    
+	
+	char * tempFile = "0:/temp.pkg";
+	
+	char fullFilePath[256];
+	sprintf(fullFilePath, "%s%s", outputPath, strFilename);
+	remove(fullFilePath);//remove actual file
+    remove(tempFile);//remove actual file
+    
+	file = fopen(tempFile, "w+");
+    if(file == NULL){
+        return false;
+	}
+	printf("Download start.");
+	int received_len = 0;
+	while( ( received_len = recv(my_socket, server_reply, 64*1024, 0 ) ) != 0 ) { // if recv returns 0, the socket has been closed.
+		if(received_len>0) { // data was received!
+			total_len += received_len;
+			fwrite(server_reply, 1, received_len, file);
+			fsync(fileno(file));
+				
+			clrscr();
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("Received byte size = %d Total length = %d ", received_len, total_len);
+		}
+	}
+	
+	TGDSARM9Free(server_reply);
+	shutdown(my_socket,0); // good practice to shutdown the socket.
+	closesocket(my_socket); // remove the socket.
+    fclose(file);
+	
+	FILE *fp1;
+    FILE *fp2;
+    if ((fp1 = fopen(tempFile, "r")) == NULL){
+		printf("fail: %s", tempFile);
+		while(1==1){}
+	}
+	fseek(fp1, 0x35, SEEK_SET);
+    if ((fp2 = fopen(fullFilePath, "w+")) == NULL){
+		printf("fail: %s", fullFilePath);
+		while(1==1){}
+	}
+	fcopy(fp1, fp2);
+	fsync(fileno(fp2));
+	fclose(fp1);
+	fclose(fp2);
+	
+	printf("Download OK @ SD path: %s", fullFilePath);
+	return true;
+}
