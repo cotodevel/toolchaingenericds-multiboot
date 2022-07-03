@@ -41,6 +41,7 @@ USA
 #include "wifi_arm9.h"
 #include "utilsTGDS.h"
 #include "conf.h"
+#include "zipDecomp.h"
 
 //TCP
 #include <stdio.h>
@@ -130,25 +131,100 @@ int handleRemoteBoot(char * URLPathRequestedByGetVerb, int portToConnect){
 		printf("%s", RemoteBootTGDSPackage);
 	}
 	
-	
 	switch_dswnifi_mode(dswifi_idlemode);
-	char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-	memset(thisArgv, 0, sizeof(thisArgv));
-	char argv0[MAX_TGDSFILENAME_LENGTH+1];
-	memset(argv0, 0, sizeof(argv0));
-	strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
-	strcpy(&thisArgv[1][0], RemoteBootTGDSPackage);	//Arg1:	NDS Binary reloaded
-	strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
-	addARGV(3, (char*)&thisArgv);
-	
-	TGDSMultibootRunTGDSPackage(RemoteBootTGDSPackage);
+	char logBuf[256];
+	clrscr();
+	printf("----");
+	printf("----");
+	printf("----");
+	printf("NOTE: If the app gets stuck here");
+	printf("you WILL need to reformat your SD card");
+	printf("due to SD fragmentation");
+	remove("0:/descriptor.txt");
+	if(handleDecompressor(RemoteBootTGDSPackage, (char*)&logBuf[0]) == 0){
+		//Descriptor is always at root SD path: 0:/descriptor.txt
+		set_config_file("0:/descriptor.txt");
+		char * baseTargetPath = get_config_string("Global", "baseTargetPath", "");
+		char * mainApp = get_config_string("Global", "mainApp", "");
+		int mainAppCRC32 = get_config_hex("Global", "mainAppCRC32", 0);
+		int TGDSSdkCrc32 = get_config_hex("Global", "TGDSSdkCrc32", 0);
+		printf("TGDSPKG Unpack OK:%s", RemoteBootTGDSPackage);
+		
+		//Boot .NDS file! (homebrew only)
+		char tmpName[256];
+		char ext[256];
+		strcpy(tmpName, mainApp);
+		separateExtension(tmpName, ext);
+		strlwr(ext);
+		if(
+			(strncmp(ext,".nds", 4) == 0)
+			||
+			(strncmp(ext,".srl", 4) == 0)
+			){
+			//Handle special cases
+			
+			//TWL TGDS-Package trying to run in NTR mode? Error
+			if((strncmp(ext,".srl", 4) == 0) && (__dsimode == false)){
+				clrscr();
+				printf("----");
+				printf("----");
+				printf("----");
+				printf("ToolchainGenericDS-multiboot tried to boot >%d", TGDSPrintfColor_Yellow);
+				printf("a TWL mode package.>%d", TGDSPrintfColor_Yellow);
+				printf("[MainApp]: %s >%d", mainApp, TGDSPrintfColor_Green);
+				printf("NTR mode-only packages supported. >%d", TGDSPrintfColor_Red);
+				printf("Turn off the hardware now.");
+				while(1==1){
+					IRQWait(0, IRQ_VBLANK);
+				}				
+			}
+			
+			char fileBuf[256];
+			memset(fileBuf, 0, sizeof(fileBuf));
+			strcpy(fileBuf, "0:/");
+			strcat(fileBuf, baseTargetPath);
+			strcat(fileBuf, mainApp);
+			printf("Boot:[%s][CRC32:%x]", fileBuf, mainAppCRC32);
+			
+			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+			memset(thisArgv, 0, sizeof(thisArgv));
+			strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+			strcpy(&thisArgv[1][0], fileBuf);	//Arg1:	NDS Binary reloaded
+			strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
+			addARGV(3, (char*)&thisArgv);				
+			
+			if(TGDSMultibootRunNDSPayload(fileBuf) == false){ //should never reach here, nor even return true. Should fail it returns false
+				printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
+				printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
+				printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
+				printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+				while(1==1){
+					scanKeys();
+					if(keysDown()&KEY_A){
+						scanKeys();
+						while(keysDown() & KEY_A){
+							scanKeys();
+						}
+						break;
+					}
+				}
+				menuShow();
+			}
+		}
+		else{
+			printf("TGDS App not found:[%s][CRC32:%x]", mainApp, mainAppCRC32);
+		}	
+	}
+	else{
+		printf("Couldn't unpack TGDSPackage.:%s", RemoteBootTGDSPackage);
+		return false;
+	}
 	return 0;
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
-
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
@@ -432,45 +508,24 @@ int main(int argc, char **argv) {
 			strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
 			addARGV(3, (char*)&thisArgv);				
 			
+			if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+				printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
+				printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
+				printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
+				printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+				while(1==1){
+					scanKeys();
+					if(keysDown()&KEY_A){
+						scanKeys();
+						while(keysDown() & KEY_A){
+							scanKeys();
+						}
+						break;
+					}
+				}
+				menuShow();
+			}
 			
-			if(strncmp(ext,".gz", 3) == 0){
-				if(TGDSMultibootRunTGDSPackage(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
-					printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
-					printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
-					printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
-					printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
-					while(1==1){
-						scanKeys();
-						if(keysDown()&KEY_A){
-							scanKeys();
-							while(keysDown() & KEY_A){
-								scanKeys();
-							}
-							break;
-						}
-					}
-					menuShow();
-				}
-			}
-			else{
-				if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
-					printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
-					printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
-					printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
-					printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
-					while(1==1){
-						scanKeys();
-						if(keysDown()&KEY_A){
-							scanKeys();
-							while(keysDown() & KEY_A){
-								scanKeys();
-							}
-							break;
-						}
-					}
-					menuShow();
-				}
-			}
 		}
 		
 		if (keysDown() & KEY_SELECT){

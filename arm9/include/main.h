@@ -29,7 +29,7 @@ USA
 
 #define TGDSPROJECTNAME ((char*)"ToolchainGenericDS-multiboot")
 #define TGDSMULTIBOOT_CFG_FILE ((char*)"0:/toolchaingenericds-multiboot-config.txt")
-#define RemoteBootTGDSPackage ((char*)"0:/remotepackage.tar.gz")
+#define RemoteBootTGDSPackage ((char*)"0:/remotepackage.zip")
 
 #endif
 

@@ -37,7 +37,6 @@ extern char args[8][MAX_TGDSFILENAME_LENGTH];
 extern char *argvs[8];
 extern u8 argvIntraTGDSMB[256];
 extern void reloadARM7PlayerPayload(u32 arm7entryaddress, int arm7BootCodeSize);
-extern bool ReloadNDSBinaryFromTGDSPackage(char * filename);
 
 #ifdef __cplusplus
 }
