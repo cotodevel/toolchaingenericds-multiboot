@@ -37,6 +37,18 @@ USA
 #include "global_settings.h"
 #include "posixHandleTGDS.h"
 #include "TGDSMemoryAllocator.h"
+#include "dswnifi_lib.h"
+#include "wifi_arm9.h"
+#include "utilsTGDS.h"
+#include "conf.h"
+#include "zipDecomp.h"
+
+//TCP
+#include <stdio.h>
+#include <stdlib.h>
+#include <netdb.h>
+#include <in.h>
+#include <string.h>
 
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 
@@ -65,6 +77,8 @@ void menuShow(){
 	printf("Button (Start): File browser ");
 	printf("    Button (A) Load TGDS/devkitARM NDS Binary. ");
 	printf("                              ");
+	printf("(X): Remoteboot >%d", TGDSPrintfColor_Yellow);
+	printf("    (Server IP detected: %s [Port:%d]) >%d", remoteBooterIPAddr, remoteBooterPort, TGDSPrintfColor_Yellow);
 	printf("(Select): back to Loader. >%d", TGDSPrintfColor_Green);
 	printf("Available heap memory: %d", getMaxRam());
 	printf("Select: this menu");
@@ -82,10 +96,135 @@ void closeSoundUser(){
 char args[8][MAX_TGDSFILENAME_LENGTH];
 char *argvs[8];
 
+char remoteBooterIPAddr[256];
+int remoteBooterPort = 0;
+
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
 
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+int handleRemoteBoot(char * URLPathRequestedByGetVerb, int portToConnect){
+	clrscr();
+	printf("----");
+	printf("----");
+	printf("----");
+	printf("----");
+	printf("handleRemoteBoot start [%s]", URLPathRequestedByGetVerb);
+	if(connectDSWIFIAP(DSWNIFI_ENTER_WIFIMODE) == true){
+		printf("Connect OK.");
+	}
+	else{
+		printf("Connect failed. Check AP settings.");
+	}
+	
+	//Downloadfile
+	char * fileDownloadDir = "0:/";
+	if(DownloadFileFromServer(URLPathRequestedByGetVerb, portToConnect, fileDownloadDir) == true){
+		printf("Package download OK:");
+		printf("%s", RemoteBootTGDSPackage);
+	}
+	else{
+		printf("Package download ERROR:");
+		printf("%s", RemoteBootTGDSPackage);
+	}
+	
+	switch_dswnifi_mode(dswifi_idlemode);
+	char logBuf[256];
+	clrscr();
+	printf("----");
+	printf("----");
+	printf("----");
+	printf("NOTE: If the app gets stuck here");
+	printf("you WILL need to reformat your SD card");
+	printf("due to SD fragmentation");
+	remove("0:/descriptor.txt");
+	if(handleDecompressor(RemoteBootTGDSPackage, (char*)&logBuf[0]) == 0){
+		//Descriptor is always at root SD path: 0:/descriptor.txt
+		set_config_file("0:/descriptor.txt");
+		char * baseTargetPath = get_config_string("Global", "baseTargetPath", "");
+		char * mainApp = get_config_string("Global", "mainApp", "");
+		int mainAppCRC32 = get_config_hex("Global", "mainAppCRC32", 0);
+		int TGDSSdkCrc32 = get_config_hex("Global", "TGDSSdkCrc32", 0);
+		printf("TGDSPKG Unpack OK:%s", RemoteBootTGDSPackage);
+		
+		//Boot .NDS file! (homebrew only)
+		char tmpName[256];
+		char ext[256];
+		strcpy(tmpName, mainApp);
+		separateExtension(tmpName, ext);
+		strlwr(ext);
+		if(
+			(strncmp(ext,".nds", 4) == 0)
+			||
+			(strncmp(ext,".srl", 4) == 0)
+			){
+			//Handle special cases
+			
+			//TWL TGDS-Package trying to run in NTR mode? Error
+			if((strncmp(ext,".srl", 4) == 0) && (__dsimode == false)){
+				clrscr();
+				printf("----");
+				printf("----");
+				printf("----");
+				printf("ToolchainGenericDS-multiboot tried to boot >%d", TGDSPrintfColor_Yellow);
+				printf("a TWL mode package.>%d", TGDSPrintfColor_Yellow);
+				printf("[MainApp]: %s >%d", mainApp, TGDSPrintfColor_Green);
+				printf("NTR mode-only packages supported. >%d", TGDSPrintfColor_Red);
+				printf("Turn off the hardware now.");
+				while(1==1){
+					IRQWait(0, IRQ_VBLANK);
+				}				
+			}
+			
+			char fileBuf[256];
+			memset(fileBuf, 0, sizeof(fileBuf));
+			strcpy(fileBuf, "0:/");
+			strcat(fileBuf, baseTargetPath);
+			strcat(fileBuf, mainApp);
+			printf("Boot:[%s][CRC32:%x]", fileBuf, mainAppCRC32);
+			
+			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+			memset(thisArgv, 0, sizeof(thisArgv));
+			strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+			strcpy(&thisArgv[1][0], fileBuf);	//Arg1:	NDS Binary reloaded
+			strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
+			addARGV(3, (char*)&thisArgv);				
+			
+			if(TGDSMultibootRunNDSPayload(fileBuf) == false){ //should never reach here, nor even return true. Should fail it returns false
+				printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
+				printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
+				printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
+				printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+				while(1==1){
+					scanKeys();
+					if(keysDown()&KEY_A){
+						scanKeys();
+						while(keysDown() & KEY_A){
+							scanKeys();
+						}
+						break;
+					}
+				}
+				menuShow();
+			}
+		}
+		else{
+			printf("TGDS App not found:[%s][CRC32:%x]", mainApp, mainAppCRC32);
+		}	
+	}
+	else{
+		printf("Couldn't unpack TGDSPackage.:%s", RemoteBootTGDSPackage);
+		return false;
+	}
+	return 0;
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
@@ -114,6 +253,7 @@ int main(int argc, char **argv) {
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	flush_icache_all();
 	flush_dcache_all();	
+	switch_dswnifi_mode(dswifi_idlemode);
 	
 	printf("     ");
 	printf("     ");
@@ -249,6 +389,41 @@ int main(int argc, char **argv) {
 			menuShow();
 		}
 	}
+	else if(FileExists(TGDSMULTIBOOT_CFG_FILE) == FT_NONE){
+		clrscr();
+		printf("----");
+		printf("----");
+		printf("----");
+		printf("ToolchainGenericDS-multiboot requires:");
+		printf("%s >%d", (char*)&TGDSMULTIBOOT_CFG_FILE[3], TGDSPrintfColor_Yellow);
+		printf("In SD root folder. Turn off the hardware now.");
+		while(1==1){
+			IRQWait(0, IRQ_VBLANK);
+		}
+	}
+	
+	//Descriptor is always at root SD path (TGDSMULTIBOOT_CFG_FILE)
+	set_config_file(TGDSMULTIBOOT_CFG_FILE);
+
+	//A proper Remotebooter IP must be written in said file.
+	char * baseTargetPath = get_config_string("Global", "tgdsutilsremotebooteripaddr", "");
+	strcpy(remoteBooterIPAddr, baseTargetPath);
+	remoteBooterPort = get_config_int("Global", "tgdsutilsremotebooterport", 0);
+	if((isValidIpAddress((char*)&remoteBooterIPAddr[0]) != true) || (remoteBooterPort == 0)){
+		clrscr();
+		printf("----");
+		printf("----");
+		printf("----");
+		printf("Remotebooter IP: ");
+		printf("%s >%d", (char*)&remoteBooterIPAddr[0], TGDSPrintfColor_Yellow);
+		printf("Or port: ");
+		printf("%d >%d", remoteBooterPort, TGDSPrintfColor_Yellow);
+		printf("written in %s ", (char*)&TGDSMULTIBOOT_CFG_FILE[3]);
+		printf("is missing or invalid. Turn off the hardware now.");
+		while(1==1){
+			IRQWait(0, IRQ_VBLANK);
+		}
+	}
 	
 	//ARGV Implementation test
 	if (0 != argc ) {
@@ -266,7 +441,7 @@ int main(int argc, char **argv) {
 	//Show logo
 	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 	menuShow();
-	
+	bool remoteBootEnabled = false;
 	while (1){		
 		scanKeys();
 		
@@ -326,31 +501,31 @@ int main(int argc, char **argv) {
 			separateExtension(tmpName, ext);
 			strlwr(ext);
 			
-			{
-				char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-				memset(thisArgv, 0, sizeof(thisArgv));
-				strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
-				strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
-				strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
-				addARGV(3, (char*)&thisArgv);				
-				if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
-					printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
-					printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
-					printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
-					printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
-					while(1==1){
+			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+			memset(thisArgv, 0, sizeof(thisArgv));
+			strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+			strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
+			strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
+			addARGV(3, (char*)&thisArgv);				
+			
+			if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+				printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
+				printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
+				printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
+				printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+				while(1==1){
+					scanKeys();
+					if(keysDown()&KEY_A){
 						scanKeys();
-						if(keysDown()&KEY_A){
+						while(keysDown() & KEY_A){
 							scanKeys();
-							while(keysDown() & KEY_A){
-								scanKeys();
-							}
-							break;
 						}
+						break;
 					}
-					menuShow();
 				}
+				menuShow();
 			}
+			
 		}
 		
 		if (keysDown() & KEY_SELECT){
@@ -380,9 +555,185 @@ int main(int argc, char **argv) {
 			}
 		}
 		
+
+		if ( (keysDown() & KEY_X) && (remoteBootEnabled == false)){
+			remoteBootEnabled = true;
+			scanKeys();
+			while(keysHeld() & KEY_X){
+				scanKeys();
+			}
+		}
+
+		if(remoteBootEnabled == true){
+			char URLPathRequested[256];
+			sprintf(URLPathRequested, "%s%s", remoteBooterIPAddr, (char*)&RemoteBootTGDSPackage[2]);
+			handleRemoteBoot((char*)&URLPathRequested[0], remoteBooterPort);
+			remoteBootEnabled = false;
+		}
+
 		handleARM9SVC();	/* Do not remove, handles TGDS services */
 		IRQVBlankWait();
 	}
 	return 0;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void fcopy(FILE *f1, FILE *f2){
+    char            buffer[BUFSIZ];
+    size_t          n;
+    while ((n = fread(buffer, sizeof(char), sizeof(buffer), f1)) > 0){
+        if (fwrite(buffer, sizeof(char), n, f2) != n){
+            printf("fcopy: write failed. Halt hardware.");
+			while(1==1){}
+		}
+    }
+}
+
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPath) {
+	
+	// C split to save mem
+	char cpyBuf[256] = {0};
+	strcpy(cpyBuf, downloadAddr);
+	char * outBuf = (char *)TGDSARM9Malloc(256*10);
+	
+	char * ServerDNSTemp = (char*)((char*)outBuf + (0*256));
+	char * strPathTemp = (char*)((char*)outBuf + (1*256));
+	char strPath[256];
+	int matchCount = str_split((char*)cpyBuf, (char*)"/", outBuf, 10, 256);
+	strcpy(&strPath[1], strPathTemp);
+	strPath[0] = '/';
+	
+	char ServerDNS[256];
+	strcpy(ServerDNS, ServerDNSTemp);
+	TGDSARM9Free(outBuf);
+	
+	//1 dir or more + filename = fullpath
+	if(matchCount > 1){
+	    int urlLen = strlen(downloadAddr);
+	    int startPos = 0;
+	    while(downloadAddr[startPos] != '/'){
+	        startPos++;
+	    }
+	    memset(strPath, 0, sizeof(strPath));
+	    strcpy(strPath, (char*)&downloadAddr[startPos]);
+	}
+	
+	//get filename from result
+	char strFilename[256];
+	int fnamePos = 0;
+	int topPathLen = strlen((char*)&strPath[1]);
+	while(strPath[topPathLen] != '/'){
+	    topPathLen--;
+	}
+	strcpy(strFilename, (char*)&strPath[topPathLen + 1]);
+	
+	// C end
+	
+    // Create a TCP socket
+    int my_socket = socket( AF_INET, SOCK_STREAM, 0 );
+    printf("Created Socket!");
+
+    // Tell the socket to connect to the IP address we found, on port 80 (HTTP)
+    struct sockaddr_in sain;
+	memset(&sain, 0, sizeof(struct sockaddr_in));
+    
+	sain.sin_family = AF_INET;
+    sain.sin_port = htons(ServerPort);
+    
+	if(
+		(ServerDNS[0] == 'w')
+		&&
+		(ServerDNS[1] == 'w')
+		&&
+		(ServerDNS[2] == 'w')
+		){
+		// Find the IP address of the server, with gethostbyname
+		struct hostent * myhost = gethostbyname(ServerDNS);
+		printf("Resolved DNS & Found IP Address! [Port:%d]", ServerPort);
+		sain.sin_addr.s_addr= *( (unsigned long *)(myhost->h_addr_list[0]) );
+	}
+	else{
+		sain.sin_addr.s_addr = inet_addr(ServerDNS);
+		printf("Direct IP Address: %s[Port:%d]", ServerDNS, ServerPort);
+	}
+	
+	connect( my_socket,(struct sockaddr *)&sain, sizeof(sain) );
+    printf("Connected to server!");
+	
+    //Send request
+	FILE *file = NULL;
+	char logConsole[256];
+	char * server_reply = (char *)TGDSARM9Malloc(64*1024);
+    int total_len = 0;
+	char message[256]; 
+	sprintf(message, "GET %s HTTP/1.1\r\nHost: %s \r\n\r\n Connection: keep-alive\r\n\r\n Keep-Alive: 300\r\n", strPath,  ServerDNS);
+    if( send(my_socket, message , strlen(message) , 0) < 0){
+        return false;
+    }
+    
+	
+	char * tempFile = "0:/temp.pkg";
+	
+	char fullFilePath[256];
+	sprintf(fullFilePath, "%s%s", outputPath, strFilename);
+	remove(fullFilePath);//remove actual file
+    remove(tempFile);//remove actual file
+    
+	file = fopen(tempFile, "w+");
+    if(file == NULL){
+        return false;
+	}
+	printf("Download start.");
+	int received_len = 0;
+	while( ( received_len = recv(my_socket, server_reply, 64*1024, 0 ) ) != 0 ) { // if recv returns 0, the socket has been closed.
+		if(received_len>0) { // data was received!
+			total_len += received_len;
+			fwrite(server_reply, 1, received_len, file);
+			fsync(fileno(file));
+				
+			clrscr();
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("Received byte size = %d Total length = %d ", received_len, total_len);
+		}
+	}
+	
+	TGDSARM9Free(server_reply);
+	shutdown(my_socket,0); // good practice to shutdown the socket.
+	closesocket(my_socket); // remove the socket.
+    fclose(file);
+	
+	FILE *fp1;
+    FILE *fp2;
+    if ((fp1 = fopen(tempFile, "r")) == NULL){
+		printf("fail: %s", tempFile);
+		while(1==1){}
+	}
+	fseek(fp1, 0x35, SEEK_SET);
+    if ((fp2 = fopen(fullFilePath, "w+")) == NULL){
+		printf("fail: %s", fullFilePath);
+		while(1==1){}
+	}
+	fcopy(fp1, fp2);
+	fsync(fileno(fp2));
+	fclose(fp1);
+	fclose(fp2);
+	
+	printf("Download OK @ SD path: %s", fullFilePath);
+	return true;
+}

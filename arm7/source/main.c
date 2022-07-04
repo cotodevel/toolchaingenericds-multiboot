@@ -21,6 +21,7 @@ USA
 #include "loader.h"
 #include "spifwTGDS.h"
 #include "posixHandleTGDS.h"
+#include "wifi_arm7.h"
 
 //---------------------------------------------------------------------------------
 int main(int argc, char **argv)  {
@@ -29,6 +30,8 @@ int main(int argc, char **argv)  {
 	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
 	while (!(*((vuint8*)0x04000240) & 0x2)){
 	}
+
+	installWifiFIFO();
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
 	
     while (1) {

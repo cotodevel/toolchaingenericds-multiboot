@@ -41,6 +41,11 @@ USA
 #include "arm7bootldr.h"
 #include "arm7bootldr_twl.h"
 
+//.tar.gz unpackager
+#include "conf.h"
+#include "xenofunzip.h"
+#include "cartHeader.h"
+
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -74,7 +79,7 @@ void closeSoundUser(){
 
 char thisArgv[10][MAX_TGDSFILENAME_LENGTH];
 
-//generates a table of sectors out of a given file. It has the ARM7 binary and ARM9 binary
+
 __attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("Os")))
@@ -174,7 +179,6 @@ bool ReloadNDSBinaryFromContext(char * filename) {
 	bootARM9Payload();
 	return false;
 }
-
 
 #ifdef ARM9
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -282,8 +286,9 @@ int main(int argc, char **argv) {
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
-	printf("     ");
-	printf("     ");
+	printf(" ---- ");
+	printf(" ---- ");
+	printf(" ---- ");
 	
 	int ret=FS_init();
 	if (ret == 0)
@@ -298,6 +303,25 @@ int main(int argc, char **argv) {
 	}
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
-	ReloadNDSBinaryFromContext((char*)thisARGV);	//Boot NDS file
+	char tmpName[256];
+	char ext[256];
+	strcpy(tmpName, thisARGV);
+	separateExtension(tmpName, ext);
+	strlwr(ext);
+	if(
+		(strncmp(ext,".nds", 4) == 0)
+		||
+		(strncmp(ext,".srl", 4) == 0)
+		){
+		//If NTR/TWL Binary
+		ReloadNDSBinaryFromContext((char*)thisARGV);	//Boot NDS file
+	}
+	else{
+		printf("TGDS-MB-payload: wrong arguments. Turn off the console.");
+		while(1==1){
+		}
+	}
+	
+	
 	return 0;
 }

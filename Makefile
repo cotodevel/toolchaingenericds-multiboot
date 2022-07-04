@@ -31,7 +31,8 @@ export TGDSPROJECTNAME = ToolchainGenericDS-multiboot
 export EXECUTABLE_FNAME = $(TGDSPROJECTNAME).nds
 export EXECUTABLE_VERSION_HEADER =	0.2
 export EXECUTABLE_VERSION =	"$(EXECUTABLE_VERSION_HEADER)"
-export TGDSPKG_TARGET_NAME = /
+export TGDSPKG_TARGET_PATH := '//'
+export TGDSREMOTEBOOTER_SERVER_IP_ADDR := '192.168.43.22'
 #The ndstool I use requires to have the elf section removed, so these rules create elf headerless- binaries.
 export DIR_ARM7 = arm7
 export BUILD_ARM7	=	build
@@ -134,11 +135,9 @@ $(EXECUTABLE_FNAME)	:	compile
 	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/arm9/$(BINSTRIP_RULE_9) -e9  0x02000000	-b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
 	-mv $(EXECUTABLE_FNAME)	release/arm7dldi-ntr
 	-mv $(CURDIR)/arm9/data/tgds_multiboot_payload.bin $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
-	-mv $(CURDIR)/arm9/data/tgds_multiboot_payload_twl.bin $(CURDIR)/release/arm7dldi-ntr
+	-mv $(CURDIR)/arm9/data/tgds_multiboot_payload_twl.bin $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
 	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7 arm7/arm7-nonstripped_dsi.elf -9 arm9/arm9-nonstripped_dsi.elf
-	-mv ${@:.nds=.srl}	release/arm7dldi-ntr
-	-mv release/arm7dldi-ntr/${@:.nds=.srl}	/E
-	-mv release/arm7dldi-ntr/tgds_multiboot_payload_twl.bin	/E
+	-mv ${@:.nds=.srl}	release/arm7dldi-twl
 	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------
@@ -161,7 +160,7 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
-	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl		$(CURDIR)/common/templateCode/	tgds_multiboot_payload/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	release/arm7dldi-ntr/$(EXECUTABLE_FNAME)	release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin	release/arm7dldi-ntr/tgds_multiboot_payload_twl.bin	release/arm7dldi-ntr/ToolchainGenericDS-multiboot.srl
+	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl		$(CURDIR)/common/templateCode/	tgds_multiboot_payload/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	release/arm7dldi-ntr/$(EXECUTABLE_FNAME)	release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin	release/arm7dldi-twl/tgds_multiboot_payload_twl.bin	release/arm7dldi-twl/ToolchainGenericDS-multiboot.srl
 
 rebase:
 	git reset --hard HEAD
@@ -187,4 +186,16 @@ switchMaster:
 #ToolchainGenericDS Package deploy format required by ToolchainGenericDS-OnlineApp.
 BuildTGDSPKG:
 	-@echo 'Build TGDS Package. '
-	-$(TGDSPKGBUILDER) $(TGDSPROJECTNAME) $(TGDSPROJECTNAME).srl	$(TGDSPKG_TARGET_NAME) $(LIBPATH) /release/arm7dldi-ntr/
+	-$(TGDSPKGBUILDER) $(TGDSPROJECTNAME) $(TGDSPROJECTNAME).srl	$(TGDSPKG_TARGET_PATH) $(LIBPATH) /release/arm7dldi-ntr/
+
+#---------------------------------------------------------------------------------
+
+remotebootTWL:
+	-mv $(TGDSPROJECTNAME).srl	$(CURDIR)/release/arm7dldi-twl
+	-$(TGDSREMOTEBOOTER) \release\arm7dldi-twl $(TGDSREMOTEBOOTER_SERVER_IP_ADDR) twl_mode $(TGDSPROJECTNAME) $(TGDSPKG_TARGET_PATH) $(LIBPATH) remotepackage
+	-rm -rf remotepackage.zip
+
+remotebootNTR:
+	-mv $(TGDSPROJECTNAME).nds	$(CURDIR)/release/arm7dldi-ntr
+	-$(TGDSREMOTEBOOTER) \release\arm7dldi-ntr $(TGDSREMOTEBOOTER_SERVER_IP_ADDR) ntr_mode $(TGDSPROJECTNAME) $(TGDSPKG_TARGET_PATH) $(LIBPATH) remotepackage
+	-rm -rf remotepackage.zip
