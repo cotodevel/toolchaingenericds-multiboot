@@ -79,7 +79,13 @@ void closeSoundUser(){
 
 char thisArgv[10][MAX_TGDSFILENAME_LENGTH];
 
-
+char * getPayloadName(){
+	if(__dsimode == false){
+		return (char*)"0:/tgds_multiboot_payload_ntr.bin";	//TGDS NTR SDK (ARM9 binaries) emits TGDSMultibootRunNDSPayload() which reloads into NTR TGDS-MB Reload payload
+	}		
+	return (char*)"0:/tgds_multiboot_payload_twl.bin";	//TGDS TWL SDK (ARM9i binaries) emits TGDSMultibootRunNDSPayload() which reloads into TWL TGDS-MB Reload payload
+}			
+			
 __attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("Os")))
@@ -282,6 +288,39 @@ int main(int argc, char **argv) {
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
 	
+	bool dsimodeARM7 = getNTRorTWLModeFromExternalProcessor();
+	if(dsimodeARM7 != __dsimode){
+		char * TGDSMBPAYLOAD = getPayloadName();
+		clrscr();
+		printf("----");
+		printf("----");
+		printf("----");
+		printf("%s: tried to boot >%d", TGDSMBPAYLOAD, TGDSPrintfColor_Yellow);
+		printf("with an incompatible ARM7 core .>%d", TGDSPrintfColor_Yellow);
+		
+		char arm7Mode[256];
+		char arm9Mode[256];
+		if(dsimodeARM7 == true){
+			strcpy(arm7Mode, "ARM7 Mode: [TWL]");
+		}
+		else {
+			strcpy(arm7Mode, "ARM7 Mode: [NTR]");
+		}
+		if(__dsimode == true){
+			strcpy(arm9Mode, "ARM9 Mode: [TWL]");
+		}
+		else {
+			strcpy(arm9Mode, "ARM9 Mode: [NTR]");
+		}
+		printf("(%s) (%s) >%d", arm7Mode, arm9Mode);
+		printf("Did you try to boot a TWL payload in NTR mode? .>%d", TGDSPrintfColor_Yellow);
+		printf("Turn off the hardware now.");
+		while(1==1){
+			IRQWait(0, IRQ_VBLANK);
+		}
+	}
+
+
 	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
 	sint32 fwlanguage = (sint32)getLanguage();
@@ -314,6 +353,24 @@ int main(int argc, char **argv) {
 		(strncmp(ext,".srl", 4) == 0)
 		){
 		//If NTR/TWL Binary
+		int isNTRTWLBinary = isNTROrTWLBinary(thisARGV);
+		//Trying to boot a TWL binary in NTR mode? 
+		if(!(isNTRTWLBinary == isNDSBinaryV1) && !(isNTRTWLBinary == isNDSBinaryV2) && !(isNTRTWLBinary == isTWLBinary)){
+			char * TGDSMBPAYLOAD = getPayloadName();
+			clrscr();
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("%s: tried to boot >%d", TGDSMBPAYLOAD, TGDSPrintfColor_Yellow);
+			printf("an invalid binary.>%d", TGDSPrintfColor_Yellow);
+			printf("[%s]:  >%d", thisARGV, TGDSPrintfColor_Green);
+			printf("Please supply proper binaries. >%d", TGDSPrintfColor_Red);
+			printf("Turn off the hardware now.");
+			while(1==1){
+				IRQWait(0, IRQ_VBLANK);
+			}		
+		}
+	
 		ReloadNDSBinaryFromContext((char*)thisARGV);	//Boot NDS file
 	}
 	else{
