@@ -41,7 +41,7 @@ extern "C" {
 extern int main(int argc, char **argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
 extern struct FileClassList * thisFileList;
-extern bool ReloadNDSBinaryFromContext(char * filename);
+extern int ReloadNDSBinaryFromContext(char * filename);
 
 extern char args[8][MAX_TGDSFILENAME_LENGTH];
 extern char *argvs[8];
