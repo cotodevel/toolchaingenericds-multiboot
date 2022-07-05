@@ -41,11 +41,6 @@ USA
 #include "arm7bootldr.h"
 #include "arm7bootldr_twl.h"
 
-//.tar.gz unpackager
-#include "conf.h"
-#include "xenofunzip.h"
-#include "cartHeader.h"
-
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -93,7 +88,7 @@ __attribute__((optimize("Os")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-bool ReloadNDSBinaryFromContext(char * filename) {
+int ReloadNDSBinaryFromContext(char * filename) {
 	printf("tgds_multiboot_payload:ReloadNDSBinaryFromContext()");
 	printf("fname:[%s]", filename);
 	FILE * fh = NULL;
@@ -183,7 +178,7 @@ bool ReloadNDSBinaryFromContext(char * filename) {
 	typedef void (*t_bootAddr)();
 	t_bootAddr bootARM9Payload = (t_bootAddr)arm9EntryAddress;
 	bootARM9Payload();
-	return false;
+	return -1;
 }
 
 #ifdef ARM9
@@ -342,43 +337,23 @@ int main(int argc, char **argv) {
 	}
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
-	char tmpName[256];
-	char ext[256];
-	strcpy(tmpName, thisARGV);
-	separateExtension(tmpName, ext);
-	strlwr(ext);
-	if(
-		(strncmp(ext,".nds", 4) == 0)
-		||
-		(strncmp(ext,".srl", 4) == 0)
-		){
-		//If NTR/TWL Binary
-		int isNTRTWLBinary = isNTROrTWLBinary(thisARGV);
-		//Trying to boot a TWL binary in NTR mode? 
-		if(!(isNTRTWLBinary == isNDSBinaryV1) && !(isNTRTWLBinary == isNDSBinaryV2) && !(isNTRTWLBinary == isTWLBinary)){
-			char * TGDSMBPAYLOAD = getPayloadName();
-			clrscr();
-			printf("----");
-			printf("----");
-			printf("----");
-			printf("%s: tried to boot >%d", TGDSMBPAYLOAD, TGDSPrintfColor_Yellow);
-			printf("an invalid binary.>%d", TGDSPrintfColor_Yellow);
-			printf("[%s]:  >%d", thisARGV, TGDSPrintfColor_Green);
-			printf("Please supply proper binaries. >%d", TGDSPrintfColor_Red);
-			printf("Turn off the hardware now.");
-			while(1==1){
-				IRQWait(0, IRQ_VBLANK);
-			}		
-		}
-	
-		ReloadNDSBinaryFromContext((char*)thisARGV);	//Boot NDS file
-	}
-	else{
-		printf("TGDS-MB-payload: wrong arguments. Turn off the console.");
+	//If NTR/TWL Binary
+	int isNTRTWLBinary = isNTROrTWLBinary(thisARGV);
+	//Trying to boot a TWL binary in NTR mode? 
+	if(!(isNTRTWLBinary == isNDSBinaryV1) && !(isNTRTWLBinary == isNDSBinaryV2) && !(isNTRTWLBinary == isTWLBinary)){
+		char * TGDSMBPAYLOAD = getPayloadName();
+		clrscr();
+		printf("----");
+		printf("----");
+		printf("----");
+		printf("%s: tried to boot >%d", TGDSMBPAYLOAD, TGDSPrintfColor_Yellow);
+		printf("an invalid binary.>%d", TGDSPrintfColor_Yellow);
+		printf("[%s]:  >%d", thisARGV, TGDSPrintfColor_Green);
+		printf("Please supply proper binaries. >%d", TGDSPrintfColor_Red);
+		printf("Turn off the hardware now.");
 		while(1==1){
-		}
+			IRQWait(0, IRQ_VBLANK);
+		}		
 	}
-	
-	
-	return 0;
+	return ReloadNDSBinaryFromContext((char*)thisARGV);	//Boot NDS file	
 }
