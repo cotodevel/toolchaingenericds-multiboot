@@ -122,7 +122,7 @@ static void save_config(CONFIG *cfg) {
 		 if (cfg->dirty) {
 			FS_lock();
 		    /* write changed data to disk */
-		    FILE *f = fopen(cfg->filename, "w");
+		    FILE *f = fopen(cfg->filename, "w+");
 	
 		    if (f) {
 		       pos = cfg->head;
