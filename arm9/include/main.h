@@ -39,7 +39,7 @@ extern "C" {
 #endif
 
 extern int main(int argc, char **argv);
-extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
+extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
 extern struct FileClassList * thisFileList;
 extern int ReloadNDSBinaryFromContext(char * filename);
 
@@ -50,6 +50,7 @@ extern char remoteBooterIPAddr[256];
 extern int remoteBooterPort;
 extern bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPath);
 extern void fcopy(FILE *f1, FILE *f2);
+extern char lastHomebrewBooted[MAX_TGDSFILENAME_LENGTH];
 
 #ifdef __cplusplus
 }

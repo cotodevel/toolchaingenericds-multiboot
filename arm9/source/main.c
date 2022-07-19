@@ -50,7 +50,8 @@ USA
 #include <in.h>
 #include <string.h>
 
-char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH+1];
+char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
+char lastHomebrewBooted[MAX_TGDSFILENAME_LENGTH];
 
 //Back to loader, based on Whitelisted DLDI names
 static char curLoaderNameFromDldiString[MAX_TGDSFILENAME_LENGTH+1];
@@ -72,16 +73,19 @@ static inline char * canGoBackToLoader(){
 void menuShow(){
 	clrscr();
 	printf("                              ");
-	printf("ToolchainGenericDS-multiboot (arm9.bin):");
+	printf("ToolchainGenericDS-multiboot:");
 	printf("                              ");
 	printf("Button (Start): File browser ");
 	printf("    Button (A) Load TGDS/devkitARM NDS Binary. ");
 	printf("                              ");
 	printf("(X): Remoteboot >%d", TGDSPrintfColor_Yellow);
 	printf("    (Server IP detected: %s [Port:%d]) >%d", remoteBooterIPAddr, remoteBooterPort, TGDSPrintfColor_Yellow);
+	printf("                              ");
+	printf("(Y): Boot last homebrew:  >%d", TGDSPrintfColor_Red);
+	printf("    [%s]) >%d", lastHomebrewBooted, TGDSPrintfColor_Red);
+	printf("                              ");
 	printf("(Select): back to Loader. >%d", TGDSPrintfColor_Green);
 	printf("Available heap memory: %d", getMaxRam());
-	printf("Select: this menu");
 }
 
 int internalCodecType = SRC_NONE;//Internal because WAV raw decompressed buffers are used if Uncompressed WAV or ADPCM
@@ -425,6 +429,21 @@ int main(int argc, char **argv) {
 		}
 	}
 	
+	//Read last homebrew 
+	char * lastHomebrewBootedReadFromCFG = get_config_string("Global", "tgdsmultitbootlasthomebrew", "");
+	if(lastHomebrewBootedReadFromCFG != NULL){
+		strcpy(lastHomebrewBooted, lastHomebrewBootedReadFromCFG);
+	}
+	else{
+		strcpy(lastHomebrewBooted, "0:/");
+		strcat(lastHomebrewBooted, TGDSPROJECTNAME);
+		if(__dsimode == false){
+			strcat(lastHomebrewBooted, ".nds");
+		}
+		else{
+			strcat(lastHomebrewBooted, ".srl");
+		}	
+	}
 	//ARGV Implementation test
 	if (0 != argc ) {
 		int i;
@@ -508,6 +527,11 @@ int main(int argc, char **argv) {
 			strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
 			addARGV(3, (char*)&thisArgv);				
 			
+			//Save last homebrew 
+			strcpy(lastHomebrewBooted, curChosenBrowseFile);
+			set_config_string("Global", "tgdsmultitbootlasthomebrew", lastHomebrewBooted); //doesn't work.
+			save_config_file();
+			
 			if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
 				printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 				printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
@@ -525,7 +549,6 @@ int main(int argc, char **argv) {
 				}
 				menuShow();
 			}
-			
 		}
 		
 		if (keysDown() & KEY_SELECT){
@@ -563,7 +586,37 @@ int main(int argc, char **argv) {
 				scanKeys();
 			}
 		}
-
+		
+		if (keysDown() & KEY_Y){
+			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+			memset(thisArgv, 0, sizeof(thisArgv));
+			strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+			strcpy(&thisArgv[1][0], lastHomebrewBooted);	//Arg1:	NDS Binary reloaded
+			strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
+			addARGV(3, (char*)&thisArgv);				
+			if(TGDSMultibootRunNDSPayload(lastHomebrewBooted) == false){ //should never reach here, nor even return true. Should fail it returns false
+				printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
+				printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
+				printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
+				printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+				while(1==1){
+					scanKeys();
+					if(keysDown()&KEY_A){
+						scanKeys();
+						while(keysDown() & KEY_A){
+							scanKeys();
+						}
+						break;
+					}
+				}
+				menuShow();
+			}
+			scanKeys();
+			while(keysHeld() & KEY_Y){
+				scanKeys();
+			}
+		}
+		
 		if(remoteBootEnabled == true){
 			char URLPathRequested[256];
 			sprintf(URLPathRequested, "%s%s", remoteBooterIPAddr, (char*)&RemoteBootTGDSPackage[2]);
