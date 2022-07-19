@@ -431,7 +431,7 @@ int main(int argc, char **argv) {
 	
 	//Read last homebrew 
 	char * lastHomebrewBootedReadFromCFG = get_config_string("Global", "tgdsmultitbootlasthomebrew", "");
-	if(lastHomebrewBootedReadFromCFG != NULL){
+	if( (strlen(lastHomebrewBootedReadFromCFG) > 7) && (isNTROrTWLBinary(lastHomebrewBootedReadFromCFG) != notTWLOrNTRBinary) ){  //0:/x.ext
 		strcpy(lastHomebrewBooted, lastHomebrewBootedReadFromCFG);
 	}
 	else{
@@ -529,7 +529,7 @@ int main(int argc, char **argv) {
 			
 			//Save last homebrew 
 			strcpy(lastHomebrewBooted, curChosenBrowseFile);
-			set_config_string("Global", "tgdsmultitbootlasthomebrew", lastHomebrewBooted); //doesn't work.
+			set_config_string("Global", "tgdsmultitbootlasthomebrew", lastHomebrewBooted);
 			save_config_file();
 			
 			if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
