@@ -25,6 +25,8 @@ USA
 #include "dsregs.h"
 #include "posixHandleTGDS.h"
 
+#define TGDSPROJECTNAME ((char*)"tgds_multiboot_payload")
+
 #endif
 
 

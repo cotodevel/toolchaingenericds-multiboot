@@ -29,6 +29,7 @@ USA
 #include "dldi.h"
 #include "loader.h"
 #include "dmaTGDS.h"
+#include "utilsTGDS.h"
 #include "nds_cp15_misc.h"
 #include "fileBrowse.h"
 #include <stdio.h>
@@ -73,7 +74,6 @@ void closeSoundUser(){
 }
 
 char thisArgv[10][MAX_TGDSFILENAME_LENGTH];
-
 char * getPayloadName(){
 	if(__dsimode == false){
 		return (char*)"0:/tgds_multiboot_payload_ntr.bin";	//TGDS NTR SDK (ARM9 binaries) emits TGDSMultibootRunNDSPayload() which reloads into NTR TGDS-MB Reload payload
@@ -89,19 +89,25 @@ __attribute__((optimize("Os")))
 __attribute__ ((optnone))
 #endif
 int ReloadNDSBinaryFromContext(char * filename) {
-	printf("tgds_multiboot_payload:ReloadNDSBinaryFromContext()");
-	printf("fname:[%s]", filename);
+	if(getTGDSDebuggingState() == true){
+		printf("tgds_multiboot_payload:ReloadNDSBinaryFromContext()");
+		printf("fname:[%s]", filename);
+	}
 	FILE * fh = NULL;
 	fh = fopen(filename, "r+");
 	int headerSize = sizeof(struct sDSCARTHEADER);
 	u8 * NDSHeader = (u8 *)TGDSARM9Malloc(headerSize*sizeof(u8));
 	if (fread(NDSHeader, 1, headerSize, fh) != headerSize){
-		printf("header read error");
+		if(getTGDSDebuggingState() == true){
+			printf("header read error");
+		}
 		TGDSARM9Free(NDSHeader);
 		fclose(fh);
 	}
 	else{
-		printf("header parsed correctly.");
+		if(getTGDSDebuggingState() == true){
+			printf("header parsed correctly.");
+		}
 	}
 	struct sDSCARTHEADER * NDSHdr = (struct sDSCARTHEADER *)NDSHeader;
 	//- ARM9 passes the filename to ARM7
@@ -119,7 +125,9 @@ int ReloadNDSBinaryFromContext(char * filename) {
 		fseek(fh, (int)arm7BootCodeOffsetInFile, SEEK_SET);
 		int readSize = fread((void *)arm7EntryAddress, 1, arm7BootCodeSize, fh);
 		coherent_user_range_by_size((uint32)arm7EntryAddress, arm7BootCodeSize);
-		printf("ARM7 (EWRAM payload) written! %d bytes", readSize);
+		if(getTGDSDebuggingState() == true){
+			printf("ARM7 (EWRAM payload) written! %d bytes", readSize);
+		}
 	}
 	//ARM7 Payload within 0x03xxxxxx range
 	else{
@@ -130,7 +138,9 @@ int ReloadNDSBinaryFromContext(char * filename) {
 		fseek(fh, (int)arm7BootCodeOffsetInFile, SEEK_SET);
 		int readSize = fread((void *)ARM7_PAYLOAD, 1, arm7BootCodeSize, fh);
 		coherent_user_range_by_size((uint32)ARM7_PAYLOAD, arm7BootCodeSize);
-		printf("ARM7 (IWRAM payload) written! %d bytes", readSize);
+		if(getTGDSDebuggingState() == true){
+			printf("ARM7 (IWRAM payload) written! %d bytes", readSize);
+		}
 	}
 	
 	//ARM9
@@ -142,7 +152,9 @@ int ReloadNDSBinaryFromContext(char * filename) {
 	fseek(fh, (int)arm9BootCodeOffsetInFile, SEEK_SET);
 	int readSize9 = fread((void *)arm9EntryAddress, 1, arm9BootCodeSize, fh);
 	coherent_user_range_by_size((uint32)arm9EntryAddress, arm9BootCodeSize);
-	printf("ARM9 written! %d bytes", readSize9);
+	if(getTGDSDebuggingState() == true){
+		printf("ARM9 written! %d bytes", readSize9);
+	}
 	fclose(fh);
 	
 	REG_IME = 0;
@@ -157,18 +169,23 @@ int ReloadNDSBinaryFromContext(char * filename) {
 	while (getValueSafe(&fifomsg[0]) == (u32)arm7EntryAddress){
 		swiDelay(1);
 	}
-	
-	printf("ARM7: %x - ARM9: %x", arm7EntryAddress, arm9EntryAddress);
+	if(getTGDSDebuggingState() == true){
+		printf("ARM7: %x - ARM9: %x", arm7EntryAddress, arm9EntryAddress);
+	}
 	//DLDI patch it. If TGDS DLDI RAMDISK: Use standalone version, otherwise direct DLDI patch
 	coherent_user_range_by_size((uint32)arm9EntryAddress, arm9BootCodeSize);
 	if(strncmp((char*)&dldiGet()->friendlyName[0], "TGDS RAMDISK", 12) == 0){
-		printf("GOT TGDS DLDI: Skipping patch");
+		if(getTGDSDebuggingState() == true){
+			printf("GOT TGDS DLDI: Skipping patch");
+		}
 	}
 	else{
 		u32 dldiSrc = (u32)&_io_dldi_stub;
 		bool stat = dldiPatchLoader((data_t *)arm9EntryAddress, (u32)arm9BootCodeSize, dldiSrc);
 		if(stat == true){
-			printf("DLDI patch success!");
+			if(getTGDSDebuggingState() == true){
+				printf("DLDI patch success!");
+			}
 		}
 	}
 	
@@ -325,12 +342,8 @@ int main(int argc, char **argv) {
 	printf(" ---- ");
 	
 	int ret=FS_init();
-	if (ret == 0)
-	{
-		printf("FS Init ok.");
-	}
-	else{
-		printf("FS Init error: %d :(", ret);
+	if (ret != 0){
+		printf("%s: FS Init error: %d >%d", TGDSPROJECTNAME, ret, TGDSPrintfColor_Red);
 		while(1==1){
 			swiDelay(1);
 		}
