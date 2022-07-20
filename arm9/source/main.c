@@ -263,11 +263,11 @@ int main(int argc, char **argv) {
 	printf("     ");
 	
 	int ret=FS_init();
-	if (ret == 0){
-		
-	}
-	else{
-		
+	if (ret != 0){
+		printf("%s: FS Init error: %d >%d", TGDSPROJECTNAME, ret, TGDSPrintfColor_Red);
+		while(1==1){
+			swiDelay(1);
+		}
 	}
 	
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
@@ -350,17 +350,18 @@ int main(int argc, char **argv) {
 		char startPath[MAX_TGDSFILENAME_LENGTH+1];
 		strcpy(startPath,"/");
 		strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-multiboot.srl");
-		//Send args
-		printf("[Booting %s]", curChosenBrowseFile);
-		printf("Want to send argument?");
-		printf("(A) Yes: (Start) Choose arg.");
-		printf("(B) No. ");
 		
+		//Send args
+		if(getTGDSDebuggingState() == true){
+			printf("[Booting %s]", curChosenBrowseFile);
+			printf("Want to send argument?");
+			printf("(A) Yes: (Start) Choose arg.");
+			printf("(B) No. ");
+		}
 		char argv0[MAX_TGDSFILENAME_LENGTH+1];
 		memset(argv0, 0, sizeof(argv0));
 		int argcCount = 0;
 		argcCount++;
-		printf("[Booting... Please wait] >%d", TGDSPrintfColor_Red);
 		
 		//Boot .NDS file! (homebrew only)
 		char tmpName[256];
@@ -445,18 +446,19 @@ int main(int argc, char **argv) {
 		}	
 	}
 	//ARGV Implementation test
-	if (0 != argc ) {
-		int i;
-		for (i=0; i<argc; i++) {
-			if (argv[i]) {
-				printf("[%d] %s ", i, argv[i]);
+	if(getTGDSDebuggingState() == true){
+		if (0 != argc ) {
+			int i;
+			for (i=0; i<argc; i++) {
+				if (argv[i]) {
+					printf("[%d] %s ", i, argv[i]);
+				}
 			}
+		} 
+		else {
+			printf("No arguments passed!");
 		}
-	} 
-	else {
-		printf("No arguments passed!");
 	}
-	
 	//Show logo
 	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 	menuShow();
