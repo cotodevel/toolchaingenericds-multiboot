@@ -138,6 +138,67 @@ $(EXECUTABLE_FNAME)	:	compile
 	-mv $(CURDIR)/arm9/data/tgds_multiboot_payload_twl.bin $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
 	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7 arm7/arm7-nonstripped_dsi.elf -9 arm9/arm9-nonstripped_dsi.elf
 	-mv ${@:.nds=.srl}	release/arm7dldi-twl
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../armv4core/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../armv4core/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/Env_Mapping/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/Env_Mapping/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/TexturedBlenderModelNDSRender/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/TexturedBlenderModelNDSRender/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../gbaARMHook/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../gbaARMHook/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS/lib/Woopsi/woopsiExamples/demoWoopsi/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS/lib/Woopsi/woopsiExamples/demoWoopsi/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-argvtest/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-argvtest/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-filedownload/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-filedownload/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-foobilliard/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-foobilliard/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-FTPServer/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-FTPServer/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-multimediaplayer/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-multimediaplayer/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-OnlineApp/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-OnlineApp/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-template/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-template/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-UnitTest/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-UnitTest/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@echo '-'
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../armv4core/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../armv4core/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/Env_Mapping/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/Env_Mapping/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/TexturedBlenderModelNDSRender/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/TexturedBlenderModelNDSRender/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../gbaARMHook/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../gbaARMHook/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS/lib/Woopsi/woopsiExamples/demoWoopsi/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS/lib/Woopsi/woopsiExamples/demoWoopsi/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-argvtest/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-argvtest/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-filedownload/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-filedownload/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-foobilliard/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-foobilliard/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-FTPServer/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-FTPServer/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-multimediaplayer/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-multimediaplayer/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-OnlineApp/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-OnlineApp/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-template/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-template/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-UnitTest/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-UnitTest/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
 	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------
@@ -160,6 +221,46 @@ ifeq ($(SOURCE_MAKEFILE9),default)
 endif
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM7)/Makefile
 	-@rm -rf $(CURDIR)/$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/Makefile
+	-@rm -rf $(CURDIR)/../armv4core/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../armv4core/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/Env_Mapping/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/Env_Mapping/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/TexturedBlenderModelNDSRender/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/TexturedBlenderModelNDSRender/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../gbaARMHook/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../gbaARMHook/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS/lib/Woopsi/woopsiExamples/demoWoopsi/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS/lib/Woopsi/woopsiExamples/demoWoopsi/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-argvtest/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-argvtest/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-filedownload/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-filedownload/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-foobilliard/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-foobilliard/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-FTPServer/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-FTPServer/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-multimediaplayer/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-multimediaplayer/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-OnlineApp/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-OnlineApp/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-template/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-template/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-UnitTest/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-UnitTest/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-@echo '-'
+	-@rm -rf $(CURDIR)/../armv4core/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../armv4core/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/Env_Mapping/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/Env_Mapping/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/TexturedBlenderModelNDSRender/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../cgmodels/targetClientRenderers/NintendoDS/TexturedBlenderModelNDSRender/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../gbaARMHook/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../gbaARMHook/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS/lib/Woopsi/woopsiExamples/demoWoopsi/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS/lib/Woopsi/woopsiExamples/demoWoopsi/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-argvtest/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-argvtest/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-filedownload/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-filedownload/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-foobilliard/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-foobilliard/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-FTPServer/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-FTPServer/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-multimediaplayer/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-multimediaplayer/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-OnlineApp/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-OnlineApp/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-template/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-template/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-UnitTest/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-UnitTest/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-@rm -rf $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	
+
+	
+
+
+
+
+
+
 	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl		$(CURDIR)/common/templateCode/	tgds_multiboot_payload/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	release/arm7dldi-ntr/$(EXECUTABLE_FNAME)	release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin	release/arm7dldi-twl/tgds_multiboot_payload_twl.bin	release/arm7dldi-twl/ToolchainGenericDS-multiboot.srl
 
 rebase:
