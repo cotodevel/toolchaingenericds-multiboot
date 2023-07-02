@@ -27,7 +27,6 @@ USA
 #include "limitsTGDS.h"
 #include "dldi.h"
 
-#define TGDSPROJECTNAME ((char*)"ToolchainGenericDS-multiboot")
 #define TGDSMULTIBOOT_CFG_FILE ((char*)"0:/toolchaingenericds-multiboot-config.txt")
 #define RemoteBootTGDSPackage ((char*)"0:/remotepackage.zip")
 
