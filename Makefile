@@ -136,7 +136,11 @@ $(EXECUTABLE_FNAME)	:	compile
 	-mv $(EXECUTABLE_FNAME)	release/arm7dldi-ntr
 	-mv $(CURDIR)/arm9/data/tgds_multiboot_payload.bin $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
 	-mv $(CURDIR)/arm9/data/tgds_multiboot_payload_twl.bin $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
-	$(NDSTOOL)	-c 	${@:.nds=.srl} -g "TGDS" "NN" "NDS.TinyFB" -b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) TWL Binary;" -7 arm7/arm7-nonstripped_dsi.elf -9 arm9/arm9-nonstripped_dsi.elf
+	$(NDSTOOL)	-c 	${@:.nds=.srl} -7 arm7/arm7-nonstripped_dsi.elf	-9 $(CURDIR)/arm9/arm9_twl.bin -e9  0x02000800	\
+	-g "TGDS" "NN" "NDS.TinyFB"	\
+	-z 80040000 -u 00030004 -a 00000138 \
+	-b icon.bmp "$(TGDSPROJECTNAME);$(TGDSPROJECTNAME) TWL Binary;" \
+	-h "twlheader.bin"
 	-mv ${@:.nds=.srl}	release/arm7dldi-twl
 	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../armv4core/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
 	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../armv4core/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
