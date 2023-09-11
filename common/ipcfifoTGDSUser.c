@@ -108,6 +108,8 @@ void freeSoundCustomDecoder(u32 srcFrmt){
 #endif
 
 //Libutils setup: TGDS project doesn't use any libutils extensions.
+
+//Note: IGNORELIBS flag exists because default ARM7 TGDS-multiboot payload has remoteboot, and requires DSWIFI
 void setupLibUtils(){
 	//libutils:
 	

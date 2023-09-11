@@ -24,7 +24,7 @@ MEMORY
 	DTCM : ORIGIN = 0x0b000000, LENGTH = 16K
 	ITCM : ORIGIN = 0x01FF8000, LENGTH = 32K
 	GBAROM : ORIGIN = 0x08000000, LENGTH = 32M
-	EWRAM : ORIGIN = 0x02000000, LENGTH = 4M
+	EWRAM : ORIGIN = 0x02000800, LENGTH = 4M
 	ARM9SHAREDWRAM : ORIGIN = 0x03000000, LENGTH = 32K
 }
 
@@ -64,13 +64,13 @@ SECTIONS
 	.init      :	SUBALIGN(4)
 	{
 		KEEP(*(.init))
-	} > EWRAM = 0xFF
+	} > EWRAM = 0x00
 	
 	.dldiSection      :	SUBALIGN(4)
 	{
 		KEEP(*(.initDldiSection))
 		KEEP(*(.dldiSection))
-	} > EWRAM = 0xFF
+	} > EWRAM = 0x00
 	
 	.text      :	SUBALIGN(4)
 	{

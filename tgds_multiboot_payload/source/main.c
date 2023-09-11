@@ -143,9 +143,15 @@ int ReloadNDSBinaryFromContext(char * filename) {
 		}
 	}
 	
+	//TWL extended Header: secure section
+	int dsiARM9headerOffset = 0;
+	if(__dsimode == true){
+		dsiARM9headerOffset = 0x800;
+	}
+	
 	//ARM9
 	int arm9BootCodeSize = NDSHdr->arm9size;
-	u32 arm9BootCodeOffsetInFile = NDSHdr->arm9romoffset;
+	u32 arm9BootCodeOffsetInFile = NDSHdr->arm9romoffset + dsiARM9headerOffset;
 	u32 arm9EntryAddress = NDSHdr->arm9entryaddress;	
 	memset((void *)arm9EntryAddress, 0x0, arm9BootCodeSize);
 	coherent_user_range_by_size((uint32)arm9EntryAddress, arm9BootCodeSize);
