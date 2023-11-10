@@ -702,7 +702,7 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
     int my_socket = socket( AF_INET, SOCK_STREAM, 0 );
     printf("Created Socket!");
 
-    // Tell the socket to connect to the IP address we found, on port 80 (HTTP)
+    // Tell the socket to connect to the IP address we found, on specific port (HTTP)
     struct sockaddr_in sain;
 	memset(&sain, 0, sizeof(struct sockaddr_in));
     
@@ -726,13 +726,13 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
 		printf("Direct IP Address: %s[Port:%d]", ServerDNS, ServerPort);
 	}
 	
-	connect( my_socket,(struct sockaddr *)&sain, sizeof(sain) );
+	connect( my_socket,(struct sockaddr *)&sain, sizeof(struct sockaddr_in) );
     printf("Connected to server!");
 	
     //Send request
 	FILE *file = NULL;
 	char logConsole[256];
-	char * server_reply = (char *)TGDSARM9Malloc(64*1024);
+	char * server_reply = (char *)TGDSARM9Malloc(32*1024);
     int total_len = 0;
 	char message[256]; 
 	sprintf(message, "GET %s HTTP/1.1\r\nHost: %s \r\n\r\n Connection: keep-alive\r\n\r\n Keep-Alive: 300\r\n", strPath,  ServerDNS);
@@ -754,7 +754,7 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
 	}
 	printf("Download start.");
 	int received_len = 0;
-	while( ( received_len = recv(my_socket, server_reply, 64*1024, 0 ) ) != 0 ) { // if recv returns 0, the socket has been closed.
+	while( ( received_len = recv(my_socket, server_reply, 32*1024, 0 ) ) != 0 ) { // if recv returns 0, the socket has been closed.
 		if(received_len>0) { // data was received!
 			total_len += received_len;
 			fwrite(server_reply, 1, received_len, file);
@@ -766,6 +766,7 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
 			printf("----");
 			printf("Received byte size = %d Total length = %d ", received_len, total_len);
 		}
+		swiDelay(1);
 	}
 	
 	TGDSARM9Free(server_reply);
