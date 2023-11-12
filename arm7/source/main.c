@@ -27,10 +27,6 @@ USA
 int main(int argc, char **argv)  {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
-	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
-	while (!(*((vuint8*)0x04000240) & 0x2)){
-	}
-
 	installWifiFIFO();
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
 	
