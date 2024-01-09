@@ -38,7 +38,7 @@ export EXECUTABLE_FNAME = $(TGDSPROJECTNAME).nds
 export EXECUTABLE_VERSION_HEADER =	0.2
 export EXECUTABLE_VERSION =	"$(EXECUTABLE_VERSION_HEADER)"
 export TGDSPKG_TARGET_PATH := '//'
-export TGDSREMOTEBOOTER_SERVER_IP_ADDR := '192.168.1.83'
+export TGDSREMOTEBOOTER_SERVER_IP_ADDR := '192.168.43.185'
 export TGDSREMOTEBOOTER_SERVER_PORT := 1040
 #The ndstool I use requires to have the elf section removed, so these rules create elf headerless- binaries.
 export DIR_ARM7 = arm7
@@ -65,8 +65,8 @@ export TARGET_LIBRARY_CRT0_FILE_7 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_9 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9 = nds_arm_ld_crt0
 
-export TARGET_LIBRARY_LINKER_FILE_7 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_7).S
-export TARGET_LIBRARY_LINKER_FILE_9 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_9).S
+export TARGET_LIBRARY_LINKER_FILE_7 = ../$(TARGET_LIBRARY_CRT0_FILE_7).S
+export TARGET_LIBRARY_LINKER_FILE_9 = ../$(TARGET_LIBRARY_CRT0_FILE_9).S
 export TARGET_LIBRARY_LINKER_FILE_COMPRESSED_9 = ../$(DECOMPRESSOR_BOOTCODE_9)/$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).S
 
 export TARGET_LIBRARY_TGDS_NTR_7 = toolchaingen7
@@ -143,7 +143,7 @@ $(EXECUTABLE_FNAME)	:	compile
 	-mv $(EXECUTABLE_FNAME)	release/arm7dldi-ntr
 	-mv $(CURDIR)/arm9/data/tgds_multiboot_payload.bin $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
 	-mv $(CURDIR)/arm9/data/tgds_multiboot_payload_twl.bin $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
-	$(NDSTOOL)	-c 	${@:.nds=.srl} -7 arm7/arm7-nonstripped_dsi.elf	-9 $(CURDIR)/arm9/arm9_twl.bin -e9  0x02000800	\
+	$(NDSTOOL)	-c 	${@:.nds=.srl} -7 $(CURDIR)/arm7/arm7_twl.bin -e7  0x02380000	-9 $(CURDIR)/arm9/arm9_twl.bin -e9  0x02000800	\
 	-g "TGDS" "NN" "NDS.TinyFB"	\
 	-z 80040000 -u 00030004 -a 00000138 \
 	-b icon.bmp "$(TGDSPROJECTNAME);$(TGDSPROJECTNAME) TWL Binary;" \
