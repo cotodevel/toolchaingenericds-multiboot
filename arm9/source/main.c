@@ -534,6 +534,29 @@ int main(int argc, char **argv) {
 			set_config_string("Global", "tgdsmultitbootlasthomebrew", lastHomebrewBooted);
 			save_config_file();
 			
+			/*
+			int isNTRTWLBinary = isNTROrTWLBinary(curChosenBrowseFile);
+			if(isNTRTWLBinary == isTWLBinary){
+				printf("i'm TWL binary");
+			}
+			else if(isNTRTWLBinary == isNDSBinaryV1){
+				printf("i'm isNDSBinaryV1");
+			}
+			else if(isNTRTWLBinary == isNDSBinaryV2){
+				printf("i'm isNDSBinaryV2");
+			}
+			else if(isNTRTWLBinary == isNDSBinaryV3){
+				printf("i'm isNDSBinaryV3");
+			}
+			else if(isNTRTWLBinary == isNDSBinaryV1Slot2){
+				printf("i'm isNDSBinaryV1Slot2");
+			}
+			else{
+				printf("Not TWL/NTR Binary.");
+			}
+			while (1==1){}
+			*/
+
 			if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
 				printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 				printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
