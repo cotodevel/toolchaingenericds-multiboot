@@ -359,7 +359,7 @@ int main(int argc, char **argv) {
 	//If NTR/TWL Binary
 	int isNTRTWLBinary = isNTROrTWLBinary(thisARGV);
 	//Trying to boot a TWL binary in NTR mode? 
-	if(!(isNTRTWLBinary == isNDSBinaryV1) && !(isNTRTWLBinary == isNDSBinaryV2) && !(isNTRTWLBinary == isTWLBinary)){
+	if(!(isNTRTWLBinary == isNDSBinaryV1) && !(isNTRTWLBinary == isNDSBinaryV2) && !(isNTRTWLBinary == isNDSBinaryV3) && !(isNTRTWLBinary == isTWLBinary)){
 		char * TGDSMBPAYLOAD = getPayloadName();
 		clrscr();
 		printf("----");
