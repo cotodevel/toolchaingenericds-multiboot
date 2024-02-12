@@ -18,8 +18,8 @@
 
 #TGDS1.6 compatible Makefile
 
-#ToolchainGenericDS specific: 
-export SOURCE_MAKEFILE7 = default
+#ToolchainGenericDS specific: Use Makefiles from either TGDS, or custom
+export SOURCE_MAKEFILE7 = custom
 export SOURCE_MAKEFILE9 = custom
 
 #Shared
@@ -65,6 +65,7 @@ export TARGET_LIBRARY_CRT0_FILE_7 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_9 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9 = nds_arm_ld_crt0
 
+export TARGET_LIBRARY_LINKER_FILE_7i = $(TARGET_LIBRARY_CRT0_FILE_7).S
 export TARGET_LIBRARY_LINKER_FILE_7 = ../$(TARGET_LIBRARY_CRT0_FILE_7).S
 export TARGET_LIBRARY_LINKER_FILE_9 = ../$(TARGET_LIBRARY_CRT0_FILE_9).S
 export TARGET_LIBRARY_LINKER_FILE_COMPRESSED_9 = ../$(DECOMPRESSOR_BOOTCODE_9)/$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).S
@@ -143,7 +144,7 @@ $(EXECUTABLE_FNAME)	:	compile
 	-mv $(EXECUTABLE_FNAME)	release/arm7dldi-ntr
 	-mv $(CURDIR)/arm9/data/tgds_multiboot_payload.bin $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
 	-mv $(CURDIR)/arm9/data/tgds_multiboot_payload_twl.bin $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
-	$(NDSTOOL)	-c 	${@:.nds=.srl} -7 $(CURDIR)/arm7/arm7_twl.bin -e7  0x02380000	-9 $(CURDIR)/arm9/arm9_twl.bin -e9  0x02000800	\
+	$(NDSTOOL)	-c 	${@:.nds=.srl} -7  $(CURDIR)/arm7/arm7_twl.bin	-e7  0x02380000	-9 $(CURDIR)/arm9/arm9_twl.bin -e9  0x02000800	\
 	-g "TGDS" "NN" "NDS.TinyFB"	\
 	-z 80040000 -u 00030004 -a 00000138 \
 	-b icon.bmp "$(TGDSPROJECTNAME);$(TGDSPROJECTNAME) TWL Binary;" \

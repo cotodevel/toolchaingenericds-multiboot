@@ -81,9 +81,8 @@ char * getPayloadName(){
 	return (char*)"0:/tgds_multiboot_payload_twl.bin";	//TGDS TWL SDK (ARM9i binaries) emits TGDSMultibootRunNDSPayload() which reloads into TWL TGDS-MB Reload payload
 }			
 			
-__attribute__((section(".itcm")))
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("Os")))
+__attribute__((optimize("O0")))
 #endif
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
@@ -93,8 +92,9 @@ int ReloadNDSBinaryFromContext(char * filename) {
 		printf("tgds_multiboot_payload:ReloadNDSBinaryFromContext()");
 		printf("fname:[%s]", filename);
 	}
+	int isNTRTWLBinary = isNTROrTWLBinary(filename);
 	FILE * fh = NULL;
-	fh = fopen(filename, "r+");
+	fh = fopen(filename, "r");
 	int headerSize = sizeof(struct sDSCARTHEADER);
 	u8 * NDSHeader = (u8 *)TGDSARM9Malloc(headerSize*sizeof(u8));
 	if (fread(NDSHeader, 1, headerSize, fh) != headerSize){
@@ -118,34 +118,25 @@ int ReloadNDSBinaryFromContext(char * filename) {
 	int arm7BootCodeSize = NDSHdr->arm7size;
 	u32 arm7BootCodeOffsetInFile = NDSHdr->arm7romoffset;
 	u32 arm7EntryAddress = NDSHdr->arm7entryaddress;	
-	//is ARM7 Payload within 0x02xxxxxx range?
-	if((arm7EntryAddress >= 0x02000000) && (arm7EntryAddress != 0x037f8000) && (arm7EntryAddress != 0x03800000) ){
-		memset((void *)arm7EntryAddress, 0x0, arm7BootCodeSize);
-		coherent_user_range_by_size((uint32)arm7EntryAddress, arm7BootCodeSize);
-		fseek(fh, (int)arm7BootCodeOffsetInFile, SEEK_SET);
-		int readSize = fread((void *)arm7EntryAddress, 1, arm7BootCodeSize, fh);
-		coherent_user_range_by_size((uint32)arm7EntryAddress, arm7BootCodeSize);
-		if(getTGDSDebuggingState() == true){
-			printf("ARM7 (EWRAM payload) written! %d bytes", readSize);
-		}
-	}
-	//ARM7 Payload within 0x03xxxxxx range
-	else{
-		WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
-		asm("mcr	p15, 0, r0, c7, c10, 4");
-		memset((void *)ARM7_PAYLOAD, 0x0, arm7BootCodeSize);
-		coherent_user_range_by_size((uint32)ARM7_PAYLOAD, arm7BootCodeSize);
-		fseek(fh, (int)arm7BootCodeOffsetInFile, SEEK_SET);
-		int readSize = fread((void *)ARM7_PAYLOAD, 1, arm7BootCodeSize, fh);
-		coherent_user_range_by_size((uint32)ARM7_PAYLOAD, arm7BootCodeSize);
-		if(getTGDSDebuggingState() == true){
-			printf("ARM7 (IWRAM payload) written! %d bytes", readSize);
-		}
+	
+	WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
+	asm("mcr	p15, 0, r0, c7, c10, 4");
+	memset((void *)ARM7_PAYLOAD, 0x0, arm7BootCodeSize);
+	coherent_user_range_by_size((uint32)ARM7_PAYLOAD, arm7BootCodeSize);
+	fseek(fh, (int)arm7BootCodeOffsetInFile, SEEK_SET);
+	int readSize7 = fread((void *)ARM7_PAYLOAD, 1, arm7BootCodeSize, fh);
+	coherent_user_range_by_size((uint32)ARM7_PAYLOAD, arm7BootCodeSize);
+	if(getTGDSDebuggingState() == true){
+		printf("ARM7 (IWRAM payload) written! %d bytes", readSize7);
 	}
 	
-	//TWL extended Header: secure section
+	//TWL extended Header: secure section (TWL9 only)
 	int dsiARM9headerOffset = 0;
-	if(__dsimode == true){
+	if(
+		(__dsimode == true) 
+		&&
+		(isNTRTWLBinary == isTWLBinary)
+	){
 		dsiARM9headerOffset = 0x800;
 	}
 	
@@ -167,6 +158,17 @@ int ReloadNDSBinaryFromContext(char * filename) {
 	REG_IE = 0;
 	REG_IF = 0;
 	
+
+	if (*((vu32*)(arm9EntryAddress + 0xEC)) == 0xEAFFFFFE) // b #0; //loop
+        *((vu32*)(arm9EntryAddress + 0xEC)) = 0xE3A00000; // mov r0, #0
+
+	char tempDebug[256];
+	sprintf(tempDebug, "[arm7EntryAddress:%x]\n[arm7BootCodeOffsetInFile:%x]\n[arm7BootCodeSize:%x]\n[readSize7:%x]\n", arm7EntryAddress, arm7BootCodeOffsetInFile, arm7BootCodeSize, readSize7);
+	nocashMessage(tempDebug);
+
+	sprintf(tempDebug, "[arm9EntryAddress:%x]\n[arm9BootCodeOffsetInFile:%x]\n[arm9BootCodeSize:%x]\n[readSize9:%x]\n", arm9EntryAddress, arm9BootCodeOffsetInFile, arm9BootCodeSize, readSize9);
+	nocashMessage(tempDebug);
+
 	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
 	setValueSafe(&fifomsg[0], (u32)arm7EntryAddress);
@@ -179,7 +181,6 @@ int ReloadNDSBinaryFromContext(char * filename) {
 		printf("ARM7: %x - ARM9: %x", arm7EntryAddress, arm9EntryAddress);
 	}
 	//DLDI patch it. If TGDS DLDI RAMDISK: Use standalone version, otherwise direct DLDI patch
-	coherent_user_range_by_size((uint32)arm9EntryAddress, arm9BootCodeSize);
 	if(strncmp((char*)&dldiGet()->friendlyName[0], "TGDS RAMDISK", 12) == 0){
 		if(getTGDSDebuggingState() == true){
 			printf("GOT TGDS DLDI: Skipping patch");
@@ -212,7 +213,7 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-void reloadARM7PlayerPayload(u32 arm7entryaddress, int arm7BootCodeSize){
+void reloadARM7Payload(u32 arm7entryaddress, int arm7BootCodeSize){
 	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
 	
@@ -262,7 +263,7 @@ __attribute__ ((optnone))
 int main(int argc, char **argv) {
 	//Reload ARM7 payload
 	reloadStatus = (u32)0xFFFFFFFF;
-	reloadARM7PlayerPayload((u32)0x023D0000, 64*1024); //last 32K as sound buffer
+	reloadARM7Payload((u32)0x023D0000, 64*1024);
 	while(reloadStatus == (u32)0xFFFFFFFF){
 		swiDelay(1);	
 	}
