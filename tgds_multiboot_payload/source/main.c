@@ -233,25 +233,6 @@ void reloadARM7Payload(u32 arm7entryaddress, int arm7BootCodeSize){
 }
 #endif
 
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-char args[8][MAX_TGDSFILENAME_LENGTH];
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-char *argvs[8];
-
 //This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
@@ -268,18 +249,10 @@ int main(int argc, char **argv) {
 		swiDelay(1);	
 	}
 	
-	//Copy ARGVS
-	int i = 0;
-	for(i = 0; i < argc; i++){
-		strcpy((char*)&args[i][0], argv[i]);
-		argvs[i] = (char*)&args[i][0];
-	}
-	addARGV(argc, (char*)&args);
-	
 	//Libnds compatibility: If (recv) mainARGV fat:/ change to 0:/
 	char thisARGV[MAX_TGDSFILENAME_LENGTH];
 	memset(thisARGV, 0, sizeof(thisARGV));
-	strcpy(thisARGV, argvs[1]);
+	strcpy(thisARGV, argv[1]);
 	
 	if(
 		(thisARGV[0] == 'f')
