@@ -89,8 +89,8 @@ __attribute__ ((optnone))
 #endif
 int ReloadNDSBinaryFromContext(char * filename) {
 	if(getTGDSDebuggingState() == true){
-		printf("tgds_multiboot_payload:ReloadNDSBinaryFromContext()");
-		printf("fname:[%s]", filename);
+		GUI_printf("tgds_multiboot_payload:ReloadNDSBinaryFromContext()");
+		GUI_printf("fname:[%s]", filename);
 	}
 	int isNTRTWLBinary = isNTROrTWLBinary(filename);
 	FILE * fh = NULL;
@@ -99,14 +99,14 @@ int ReloadNDSBinaryFromContext(char * filename) {
 	u8 * NDSHeader = (u8 *)TGDSARM9Malloc(headerSize*sizeof(u8));
 	if (fread(NDSHeader, 1, headerSize, fh) != headerSize){
 		if(getTGDSDebuggingState() == true){
-			printf("header read error");
+			GUI_printf("header read error");
 		}
 		TGDSARM9Free(NDSHeader);
 		fclose(fh);
 	}
 	else{
 		if(getTGDSDebuggingState() == true){
-			printf("header parsed correctly.");
+			GUI_printf("header parsed correctly.");
 		}
 	}
 	struct sDSCARTHEADER * NDSHdr = (struct sDSCARTHEADER *)NDSHeader;
@@ -127,7 +127,7 @@ int ReloadNDSBinaryFromContext(char * filename) {
 	int readSize7 = fread((void *)ARM7_PAYLOAD, 1, arm7BootCodeSize, fh);
 	coherent_user_range_by_size((uint32)ARM7_PAYLOAD, arm7BootCodeSize);
 	if(getTGDSDebuggingState() == true){
-		printf("ARM7 (IWRAM payload) written! %d bytes", readSize7);
+		GUI_printf("ARM7 (IWRAM payload) written! %d bytes", readSize7);
 	}
 	
 	//TWL extended Header: secure section (TWL9 only)
@@ -150,7 +150,7 @@ int ReloadNDSBinaryFromContext(char * filename) {
 	int readSize9 = fread((void *)arm9EntryAddress, 1, arm9BootCodeSize, fh);
 	coherent_user_range_by_size((uint32)arm9EntryAddress, arm9BootCodeSize);
 	if(getTGDSDebuggingState() == true){
-		printf("ARM9 written! %d bytes", readSize9);
+		GUI_printf("ARM9 written! %d bytes", readSize9);
 	}
 	fclose(fh);
 	
@@ -178,12 +178,12 @@ int ReloadNDSBinaryFromContext(char * filename) {
 		swiDelay(1);
 	}
 	if(getTGDSDebuggingState() == true){
-		printf("ARM7: %x - ARM9: %x", arm7EntryAddress, arm9EntryAddress);
+		GUI_printf("ARM7: %x - ARM9: %x", arm7EntryAddress, arm9EntryAddress);
 	}
 	//DLDI patch it. If TGDS DLDI RAMDISK: Use standalone version, otherwise direct DLDI patch
 	if(strncmp((char*)&dldiGet()->friendlyName[0], "TGDS RAMDISK", 12) == 0){
 		if(getTGDSDebuggingState() == true){
-			printf("GOT TGDS DLDI: Skipping patch");
+			GUI_printf("GOT TGDS DLDI: Skipping patch");
 		}
 	}
 	else{
@@ -191,7 +191,7 @@ int ReloadNDSBinaryFromContext(char * filename) {
 		bool stat = dldiPatchLoader((data_t *)arm9EntryAddress, (u32)arm9BootCodeSize, dldiSrc);
 		if(stat == true){
 			if(getTGDSDebuggingState() == true){
-				printf("DLDI patch success!");
+				GUI_printf("DLDI patch success!");
 			}
 		}
 	}
@@ -214,9 +214,9 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 void reloadARM7Payload(u32 arm7entryaddress, int arm7BootCodeSize){
+	reloadStatus = (u32)0xFFFFFFFF;
 	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
-	
 	//NTR ARM7 payload
 	if(__dsimode == false){
 		coherent_user_range_by_size((u32)&arm7bootldr[0], arm7BootCodeSize);
@@ -227,9 +227,14 @@ void reloadARM7Payload(u32 arm7entryaddress, int arm7BootCodeSize){
 		coherent_user_range_by_size((u32)&arm7bootldr_twl[0], arm7BootCodeSize);
 		setValueSafe(&fifomsg[0], (u32)&arm7bootldr_twl[0]);
 	}
+	//give VRAM_D to ARM7 @0x06000000
+	*(u8*)0x04000243 = (VRAM_D_0x06000000_ARM7 | VRAM_ENABLE);
 	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
 	setValueSafe(&fifomsg[2], (u32)arm7entryaddress);
 	SendFIFOWords(FIFO_ARM7_RELOAD, 0xFF);
+	while(reloadStatus == (u32)0xFFFFFFFF){
+		swiDelay(1);	
+	}
 }
 #endif
 
@@ -243,11 +248,7 @@ __attribute__ ((optnone))
 #endif
 int main(int argc, char **argv) {
 	//Reload ARM7 payload
-	reloadStatus = (u32)0xFFFFFFFF;
 	reloadARM7Payload((u32)0x023D0000, 64*1024);
-	while(reloadStatus == (u32)0xFFFFFFFF){
-		swiDelay(1);	
-	}
 	
 	//Libnds compatibility: If (recv) mainARGV fat:/ change to 0:/
 	char thisARGV[MAX_TGDSFILENAME_LENGTH];
@@ -280,50 +281,23 @@ int main(int argc, char **argv) {
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
 	
-	bool dsimodeARM7 = getNTRorTWLModeFromExternalProcessor();
-	if(dsimodeARM7 != __dsimode){
-		char * TGDSMBPAYLOAD = getPayloadName();
-		clrscr();
-		printf("----");
-		printf("----");
-		printf("----");
-		printf("%s: tried to boot >%d", TGDSMBPAYLOAD, TGDSPrintfColor_Yellow);
-		printf("with an incompatible ARM7 core .>%d", TGDSPrintfColor_Yellow);
-		
-		char arm7Mode[256];
-		char arm9Mode[256];
-		if(dsimodeARM7 == true){
-			strcpy(arm7Mode, "ARM7 Mode: [TWL]");
-		}
-		else {
-			strcpy(arm7Mode, "ARM7 Mode: [NTR]");
-		}
-		if(__dsimode == true){
-			strcpy(arm9Mode, "ARM9 Mode: [TWL]");
-		}
-		else {
-			strcpy(arm9Mode, "ARM9 Mode: [NTR]");
-		}
-		printf("(%s) (%s) >%d", arm7Mode, arm9Mode);
-		printf("Did you try to boot a TWL payload in NTR mode? .>%d", TGDSPrintfColor_Yellow);
-		printf("Turn off the hardware now.");
-		while(1==1){
-			IRQWait(0, IRQ_VBLANK);
-		}
-	}
-
-
 	bool isCustomTGDSMalloc = true;
-	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
+	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
-	printf(" ---- ");
-	printf(" ---- ");
-	printf(" ---- ");
+	GUI_printf(" ---- ");
+	GUI_printf(" ---- ");
+	GUI_printf(" ---- ");
 	
+	if(__dsimode == true){
+		GUI_printf(" tgds_multiboot_payload.bin [TWL mode]");
+	}
+	else{
+		GUI_printf(" tgds_multiboot_payload.bin [NTR mode]");
+	}
 	int ret=FS_init();
 	if (ret != 0){
-		printf("%s: FS Init error: %d >%d", TGDSPROJECTNAME, ret, TGDSPrintfColor_Red);
+		GUI_printf("%s: FS Init error: %d >%d", TGDSPROJECTNAME, ret, TGDSPrintfColor_Red);
 		while(1==1){
 			swiDelay(1);
 		}
@@ -336,17 +310,21 @@ int main(int argc, char **argv) {
 	if(!(isNTRTWLBinary == isNDSBinaryV1) && !(isNTRTWLBinary == isNDSBinaryV2) && !(isNTRTWLBinary == isNDSBinaryV3) && !(isNTRTWLBinary == isTWLBinary)){
 		char * TGDSMBPAYLOAD = getPayloadName();
 		clrscr();
-		printf("----");
-		printf("----");
-		printf("----");
-		printf("%s: tried to boot >%d", TGDSMBPAYLOAD, TGDSPrintfColor_Yellow);
-		printf("an invalid binary.>%d", TGDSPrintfColor_Yellow);
-		printf("[%s]:  >%d", thisARGV, TGDSPrintfColor_Green);
-		printf("Please supply proper binaries. >%d", TGDSPrintfColor_Red);
-		printf("Turn off the hardware now.");
+		GUI_printf("----");
+		GUI_printf("----");
+		GUI_printf("----");
+		GUI_printf("%s: tried to boot >%d", TGDSMBPAYLOAD, TGDSPrintfColor_Yellow);
+		GUI_printf("an invalid binary.>%d", TGDSPrintfColor_Yellow);
+		GUI_printf("[%s]:  >%d", thisARGV, TGDSPrintfColor_Green);
+		GUI_printf("Please supply proper binaries. >%d", TGDSPrintfColor_Red);
+		GUI_printf("Turn off the hardware now.");
 		while(1==1){
 			IRQWait(0, IRQ_VBLANK);
 		}		
+	}
+	else{
+		GUI_printf(thisARGV);
+		GUI_printf(" Loading... ");
 	}
 	return ReloadNDSBinaryFromContext((char*)thisARGV);	//Boot NDS file	
 }

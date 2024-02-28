@@ -24,25 +24,29 @@ USA
 #include "pff.h"
 #include "ipcfifoTGDSUser.h"
 #include "loader.h"
+#include "dldi.h"
 
 FATFS Fatfs;					// Petit-FatFs work area 
 char fname[256];
 
-//TGDS-MB Bootcode v2: todo: must run from VRAM
+//TGDS-MB Bootcode v2
+#if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int main(int argc, char **argv) {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
-	
-	//wait for VRAM D to be assigned from ARM9->ARM7 (ARM7 has load/store on byte/half/words on VRAM)
-	while (!(*((vuint8*)0x04000240) & 0x2)){}
-	
+	while(!(*(u8*)0x04000240 & 2) ){} //wait for VRAM_D block
+	ARM7InitDLDI(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, TGDSDLDI_ARM7_ADDRESS);
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
+	
 	SendFIFOWords(FIFO_ARM7_RELOAD_OK, 0xFF);
     while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
 		IRQWait(0, IRQ_VBLANK | IRQ_VCOUNT | IRQ_IPCSYNC | IRQ_RECVFIFO_NOT_EMPTY | IRQ_SCREENLID);
 	}
-   
 	return 0;
 }

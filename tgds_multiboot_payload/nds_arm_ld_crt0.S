@@ -44,6 +44,12 @@ _start:
 	mov r1,#0
 	str r1,[r0]
 	
+	.extern _io_dldi_stub
+	@ARM7 required values from ARM9 at runtime
+	ldr r0,=_io_dldi_stub
+	ldr r1,=0x02000000
+	str r0,[r1]
+	
 	mov	r0, #0xdf		@ sys
 	msr	cpsr, r0
 	ldr 	sp, =(0x027FF000 + 0x1000)
@@ -92,9 +98,43 @@ _start:
 	bl                  copy
 	
 @so far OK
-	blx ARM7ReadFWVersionFromFlashByFIFOIRQ	@r0 = DS Hardware model: @ARM7 and ARM9 already has irqs running up to this point, so just reinit hardware
-	bl IRQInit
 	
+	/* Wait until ARM7 reads firmware and we initialize ARM9 from this flag */
+	waitForFirmwareARM7Setup:
+		ldr r0,=(0x02300000)	@(uint8)Firmware Type: 
+		blx getValueSafe
+		and r0,r0,#0xFF
+		cmp r0, #0xFF		@DS Phat
+		beq FirmwareARM7OK
+		cmp r0, #0x20		@DS Lite
+		beq FirmwareARM7OK
+		cmp r0, #0x35		@DS Lite rare fw #1
+		beq FirmwareARM7OK
+		cmp r0, #0x57		@DSi (USA #1)
+		beq FirmwareARM7OK
+		cmp r0, #0x38		@DSi (EUR #1)
+		beq FirmwareARM7OK
+		cmp r0, #0x43		@iQueDS
+		beq FirmwareARM7OK
+		cmp r0, #0x63		@iQueDS Lite
+		beq FirmwareARM7OK
+		
+		.extern TGDSInitLoopCount
+		ldr r2,=TGDSInitLoopCount
+		ldr r3, [r2]
+		add r3,r3,#1
+		cmp r3,#(8192 << 6) @524288
+		
+		moveq r1,r0	@u32 fwNo
+		moveq r0,#0x0	@stage
+		beq handleDSInitError 
+		
+		str r3, [r2]
+		
+		b waitForFirmwareARM7Setup
+	FirmwareARM7OK:
+	
+	bl IRQInit	@ARM7 and ARM9 already has irqs running up to this point, so just reinit hardware
 	ldr	lr, =exception_sysexit
 	
 @so far OK

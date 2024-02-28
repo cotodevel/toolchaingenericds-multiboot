@@ -118,10 +118,10 @@ vramSetup * TGDSMULTIBOOT_2DVRAM_SETUP(){
 	vramSetupInst->vramBankSetupInst[VRAM_B_INDEX].vrambankCR = VRAM_B_LCDC_MODE;	//@LCDC_VRAM_A 0x06820000
 	vramSetupInst->vramBankSetupInst[VRAM_B_INDEX].enabled = true;
 	
-	vramSetupInst->vramBankSetupInst[VRAM_C_INDEX].vrambankCR = VRAM_C_0x06000000_ARM7;	//ARM7 128K @ 0x06000000 (Sound streaming TGDS)
+	vramSetupInst->vramBankSetupInst[VRAM_C_INDEX].vrambankCR = VRAM_C_0x06200000_ENGINE_B_BG;	//ARM9 Console output
 	vramSetupInst->vramBankSetupInst[VRAM_C_INDEX].enabled = true;
 	
-	vramSetupInst->vramBankSetupInst[VRAM_D_INDEX].vrambankCR = VRAM_D_0x06020000_ARM7;	//ARM7 128K @ 0x06020000 (TGDS-mb ARM7 bootcode)
+	vramSetupInst->vramBankSetupInst[VRAM_D_INDEX].vrambankCR = VRAM_D_0x06000000_ARM7;	//ARM7 128K @ 0x06000000 
 	vramSetupInst->vramBankSetupInst[VRAM_D_INDEX].enabled = true;
 	
 	//VRAM E,F,G,H,I: Unused and reserved

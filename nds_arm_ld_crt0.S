@@ -82,6 +82,12 @@ _start:
 	str r1,[r0]
 	
 	#ifdef ARM9
+	.extern _io_dldi_stub
+	@ARM7 required values from ARM9 at runtime
+	ldr r0,=_io_dldi_stub
+	ldr r1,=0x02000000
+	str r0,[r1]
+	
 	mov	r0, #0x1f		@ sys
 	msr	cpsr, r0
 	ldr 	sp, =(0x027FF000)
