@@ -286,7 +286,7 @@ int main(int argc, char **argv) {
 		//Libnds compatibility: If (recv) mainARGV fat:/ change to 0:/
 		char thisBinary[MAX_TGDSFILENAME_LENGTH];
 		memset(thisBinary, 0, sizeof(thisBinary));
-		strcpy(thisBinary, argv[2]);
+		strcpy(thisBinary, argv[4]);
 		if(
 			(thisBinary[0] == 'f')
 			&&
@@ -316,8 +316,10 @@ int main(int argc, char **argv) {
 		addARGV(3, (char*)&tempArgv);	
 		
 		//TGDS-Multiboot chainload:
+		printf("TGDS-Multiboot chainload:");
 		printf("Target: %s", curChosenBrowseFile);
 		printf("Argv1: %s", argv[3]); //TGDS target binary ARGV0
+		printf("Argv2: %s", argv[4]); //TGDS target binary
 		if(FAT_FileExists(curChosenBrowseFile) == FT_NONE){
 			printf("ERROR: Target homebrew >%d", TGDSPrintfColor_Red);
 			printf("%s", curChosenBrowseFile);
