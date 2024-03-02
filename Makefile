@@ -180,6 +180,8 @@ $(EXECUTABLE_FNAME)	:	compile
 	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
 	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
 	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../snemulds/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../snemulds/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
 	-@echo '-'
 	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../armv4core/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
 	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../armv4core/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
@@ -211,6 +213,8 @@ $(EXECUTABLE_FNAME)	:	compile
 	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
 	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
 	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../snemulds/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../snemulds/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
 	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------

@@ -73,7 +73,6 @@ void closeSoundUser(){
 	//Stubbed. Gets called when closing an audiostream of a custom audio decoder
 }
 
-char thisArgv[10][MAX_TGDSFILENAME_LENGTH];
 char * getPayloadName(){
 	if(__dsimode == false){
 		return (char*)"0:/tgds_multiboot_payload_ntr.bin";	//TGDS NTR SDK (ARM9 binaries) emits TGDSMultibootRunNDSPayload() which reloads into NTR TGDS-MB Reload payload
@@ -158,10 +157,10 @@ int ReloadNDSBinaryFromContext(char * filename) {
 	REG_IE = 0;
 	REG_IF = 0;
 	
-
-	if (*((vu32*)(arm9EntryAddress + 0xEC)) == 0xEAFFFFFE) // b #0; //loop
+	if (*((vu32*)(arm9EntryAddress + 0xEC)) == 0xEAFFFFFE){ // b #0; //loop
         *((vu32*)(arm9EntryAddress + 0xEC)) = 0xE3A00000; // mov r0, #0
-
+	}
+	
 	char tempDebug[256];
 	sprintf(tempDebug, "[arm7EntryAddress:%x]\n[arm7BootCodeOffsetInFile:%x]\n[arm7BootCodeSize:%x]\n[readSize7:%x]\n", arm7EntryAddress, arm7BootCodeOffsetInFile, arm7BootCodeSize, readSize7);
 	nocashMessage(tempDebug);
@@ -251,29 +250,29 @@ int main(int argc, char **argv) {
 	reloadARM7Payload((u32)0x023D0000, 64*1024);
 	
 	//Libnds compatibility: If (recv) mainARGV fat:/ change to 0:/
-	char thisARGV[MAX_TGDSFILENAME_LENGTH];
-	memset(thisARGV, 0, sizeof(thisARGV));
-	strcpy(thisARGV, argv[1]);
+	char tempARGV[MAX_TGDSFILENAME_LENGTH];
+	memset(tempARGV, 0, sizeof(tempARGV));
+	strcpy(tempARGV, argv[1]);
 	
 	if(
-		(thisARGV[0] == 'f')
+		(tempARGV[0] == 'f')
 		&&
-		(thisARGV[1] == 'a')
+		(tempARGV[1] == 'a')
 		&&
-		(thisARGV[2] == 't')
+		(tempARGV[2] == 't')
 		&&
-		(thisARGV[3] == ':')
+		(tempARGV[3] == ':')
 		&&
-		(thisARGV[4] == '/')
+		(tempARGV[4] == '/')
 		){
-		char thisARGV2[MAX_TGDSFILENAME_LENGTH];
-		memset(thisARGV2, 0, sizeof(thisARGV2));
-		strcpy(thisARGV2, "0:/");
-		strcat(thisARGV2, &thisARGV[5]);
+		char tempARGV2[MAX_TGDSFILENAME_LENGTH];
+		memset(tempARGV2, 0, sizeof(tempARGV2));
+		strcpy(tempARGV2, "0:/");
+		strcat(tempARGV2, &tempARGV[5]);
 		
 		//copy back
-		memset(thisARGV, 0, sizeof(thisARGV));
-		strcpy(thisARGV, thisARGV2);
+		memset(tempARGV, 0, sizeof(tempARGV));
+		strcpy(tempARGV, tempARGV2);
 	}
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
@@ -305,7 +304,7 @@ int main(int argc, char **argv) {
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
 	//If NTR/TWL Binary
-	int isNTRTWLBinary = isNTROrTWLBinary(thisARGV);
+	int isNTRTWLBinary = isNTROrTWLBinary(tempARGV);
 	//Trying to boot a TWL binary in NTR mode? 
 	if(!(isNTRTWLBinary == isNDSBinaryV1) && !(isNTRTWLBinary == isNDSBinaryV2) && !(isNTRTWLBinary == isNDSBinaryV3) && !(isNTRTWLBinary == isTWLBinary)){
 		char * TGDSMBPAYLOAD = getPayloadName();
@@ -315,7 +314,7 @@ int main(int argc, char **argv) {
 		GUI_printf("----");
 		GUI_printf("%s: tried to boot >%d", TGDSMBPAYLOAD, TGDSPrintfColor_Yellow);
 		GUI_printf("an invalid binary.>%d", TGDSPrintfColor_Yellow);
-		GUI_printf("[%s]:  >%d", thisARGV, TGDSPrintfColor_Green);
+		GUI_printf("[%s]:  >%d", tempARGV, TGDSPrintfColor_Green);
 		GUI_printf("Please supply proper binaries. >%d", TGDSPrintfColor_Red);
 		GUI_printf("Turn off the hardware now.");
 		while(1==1){
@@ -323,8 +322,8 @@ int main(int argc, char **argv) {
 		}		
 	}
 	else{
-		GUI_printf(thisARGV);
+		GUI_printf(tempARGV);
 		GUI_printf(" Loading... ");
 	}
-	return ReloadNDSBinaryFromContext((char*)thisARGV);	//Boot NDS file	
+	return ReloadNDSBinaryFromContext((char*)tempARGV);	//Boot NDS file	
 }
