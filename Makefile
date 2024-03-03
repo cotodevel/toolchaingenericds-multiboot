@@ -184,6 +184,12 @@ $(EXECUTABLE_FNAME)	:	compile
 	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../snemulds/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
 	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../tgdsproject3d/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
 	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../tgdsproject3d/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../snakegl/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../snakegl/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../aquariumgl/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../aquariumgl/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../batallionnds/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../batallionnds/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
 	-@echo '-'
 	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../armv4core/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
 	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../armv4core/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
@@ -219,6 +225,12 @@ $(EXECUTABLE_FNAME)	:	compile
 	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../snemulds/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
 	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../tgdsproject3d/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
 	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../tgdsproject3d/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../snakegl/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../snakegl/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../aquariumgl/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../aquariumgl/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../batallionnds/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../batallionnds/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
 	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------
