@@ -247,7 +247,7 @@ __attribute__ ((optnone))
 #endif
 int main(int argc, char **argv) {
 	//Reload ARM7 payload
-	reloadARM7Payload((u32)0x023D0000, 64*1024);
+	reloadARM7Payload((u32)0x06000000, 64*1024);
 	
 	//Libnds compatibility: If (recv) mainARGV fat:/ change to 0:/
 	char tempARGV[MAX_TGDSFILENAME_LENGTH];
