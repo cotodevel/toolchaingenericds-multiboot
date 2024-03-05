@@ -163,6 +163,10 @@ int ReloadNDSBinaryFromContext(char * filename, int isNTRTWLBinary) {
 	REG_IE = 0;
 	REG_IF = 0;
 	
+	//Bios can now be changed @ ARM9 (from ARM7, keep reading)
+	//BIOS NTR/TWL switch (backwards compatibility mode): ARM9 has 4004000h - DSi9 - SCFG_A9ROM - ROM Status (R) [0000h] bits as read-only. 
+	//Needs to be set on ARM7 side
+	
 	if (*((vu32*)(arm9EntryAddress + 0xEC)) == 0xEAFFFFFE){ // b #0; //loop
         *((vu32*)(arm9EntryAddress + 0xEC)) = 0xE3A00000; // mov r0, #0
 	}
@@ -178,6 +182,7 @@ int ReloadNDSBinaryFromContext(char * filename, int isNTRTWLBinary) {
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
 	setValueSafe(&fifomsg[0], (u32)arm7EntryAddress);
 	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
+	setValueSafe(&fifomsg[2], (u32)isNTRTWLBinary);
 	SendFIFOWords(FIFO_TGDSMBRELOAD_SETUP, 0xFF);
 	while (getValueSafe(&fifomsg[0]) == (u32)arm7EntryAddress){
 		swiDelay(1);
