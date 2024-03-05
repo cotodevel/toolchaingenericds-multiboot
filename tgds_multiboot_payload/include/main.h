@@ -38,6 +38,7 @@ extern int main(int argc, char **argv);
 extern u8 argvIntraTGDSMB[256];
 extern void reloadARM7Payload(u32 arm7entryaddress, int arm7BootCodeSize);
 extern char * getPayloadName();
+extern int ReloadNDSBinaryFromContext(char * filename, int isNTRTWLBinary);
 
 #ifdef __cplusplus
 }

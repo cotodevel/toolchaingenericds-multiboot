@@ -86,12 +86,18 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int ReloadNDSBinaryFromContext(char * filename) {
+int ReloadNDSBinaryFromContext(char * filename, int isNTRTWLBinary) {
+	//Todo: Support isNDSBinaryV1Slot2 binary (Slot2 Passme v1 .ds.gba homebrew)
+	if(isNTRTWLBinary == isNDSBinaryV1Slot2){
+		u8 fwNo = *(u8*)(0x02300000);
+		int stage = 0;
+		handleDSInitError(stage, (u32)fwNo);	
+	}
+
 	if(getTGDSDebuggingState() == true){
 		GUI_printf("tgds_multiboot_payload:ReloadNDSBinaryFromContext()");
 		GUI_printf("fname:[%s]", filename);
 	}
-	int isNTRTWLBinary = isNTROrTWLBinary(filename);
 	FILE * fh = NULL;
 	fh = fopen(filename, "r");
 	int headerSize = sizeof(struct sDSCARTHEADER);
@@ -237,7 +243,7 @@ void reloadARM7Payload(u32 arm7entryaddress, int arm7BootCodeSize){
 }
 #endif
 
-//This payload has all the ARM9 core hardware, TGDS Services, so SWI/SVC can work here.
+//This payload has all the ARM9 core TGDS Services working.
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -249,7 +255,7 @@ int main(int argc, char **argv) {
 	//Reload ARM7 payload
 	reloadARM7Payload((u32)0x06000000, 64*1024);
 	
-	//Libnds compatibility: If (recv) mainARGV fat:/ change to 0:/
+	//Libnds compatibility: If libnds homebrew implemented TGDS-MB support for some reason, and uses a TGDS-MB payload, then swap "fat:/" to "0:/"
 	char tempARGV[MAX_TGDSFILENAME_LENGTH];
 	memset(tempARGV, 0, sizeof(tempARGV));
 	strcpy(tempARGV, argv[1]);
@@ -276,7 +282,7 @@ int main(int argc, char **argv) {
 	}
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
-	bool isTGDSCustomConsole = true;	//set default console or custom console: default console
+	bool isTGDSCustomConsole = false;	//set default console or custom console: default console
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
 	
@@ -306,7 +312,7 @@ int main(int argc, char **argv) {
 	//If NTR/TWL Binary
 	int isNTRTWLBinary = isNTROrTWLBinary(tempARGV);
 	//Trying to boot a TWL binary in NTR mode? 
-	if(!(isNTRTWLBinary == isNDSBinaryV1) && !(isNTRTWLBinary == isNDSBinaryV2) && !(isNTRTWLBinary == isNDSBinaryV3) && !(isNTRTWLBinary == isTWLBinary)){
+	if(!(isNTRTWLBinary == isNDSBinaryV1) && !(isNTRTWLBinary == isNDSBinaryV2) && !(isNTRTWLBinary == isNDSBinaryV3) && !(isNTRTWLBinary == isTWLBinary) && !(isNTRTWLBinary == isNDSBinaryV1Slot2)){
 		char * TGDSMBPAYLOAD = getPayloadName();
 		clrscr();
 		GUI_printf("----");
@@ -325,5 +331,5 @@ int main(int argc, char **argv) {
 		GUI_printf(tempARGV);
 		GUI_printf(" Loading... ");
 	}
-	return ReloadNDSBinaryFromContext((char*)tempARGV);	//Boot NDS file	
+	return ReloadNDSBinaryFromContext((char*)tempARGV, isNTRTWLBinary);	//Boot NDS file.
 }

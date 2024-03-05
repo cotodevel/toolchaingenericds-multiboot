@@ -40,8 +40,6 @@ extern "C" {
 extern int main(int argc, char **argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
 extern struct FileClassList * thisFileList;
-extern int ReloadNDSBinaryFromContext(char * filename);
-
 extern char args[argvItems][MAX_TGDSFILENAME_LENGTH]; //used by remoteboot
 extern char *argvs[argvItems];
 extern int handleRemoteBoot(char * ipToConnect, int portToConnect);

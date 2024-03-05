@@ -85,8 +85,6 @@ _start:
 	msr	cpsr, r0
 	ldr	sp, =sp_SYS
 	
-	@so far OK
-
 	/* copy the VMA sections to each LMA sections for hardware RAM not initialized at self boot crt0 stage*/
 	ldr                 r1,=__itcm_vma_start                 /* point our source register to the start of the .itcm section (VMA)*/
 	ldr                 r2,=_itcm_start                 /* point our destination register to the I-TCM dedicated to our writable data (LMA)*/
@@ -105,14 +103,10 @@ _start:
 	add                 r3,r3,#(144)                  /* point r3 after the last byte we will be writing (LMA)*/
 	bl                  copy
 	
-@so far OK
-	
 	ldr r0,=(0x02300000)	@(uint8)Firmware Type: 
 	blx getValueSafe
 	and r0,r0,#0xFF
 	bl IRQInit	@ARM7 and ARM9 already has irqs running up to this point, so just reinit hardware
-	
-@so far OK
 	
 	ldr                 r1,=argvIntraTGDSMB                /* point our source register to the start of the .dtcm section (VMA)*/
 	ldr                 r2,=0x02FFFE70                 /* point our destination register to the D-TCM dedicated to our writable data (LMA)*/
