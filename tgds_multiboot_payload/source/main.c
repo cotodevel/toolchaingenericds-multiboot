@@ -184,9 +184,19 @@ int ReloadNDSBinaryFromContext(char * filename, int isNTRTWLBinary) {
 	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
 	setValueSafe(&fifomsg[2], (u32)isNTRTWLBinary);
 	SendFIFOWords(FIFO_TGDSMBRELOAD_SETUP, 0xFF);
+
+	u16 * SCFG_ROM = 0x04004000;
+	if(isNTRTWLBinary == isTWLBinary){
+		while ((u16)getValueSafe(SCFG_ROM) != ((u16)1)){}
+	}
+	else{
+		while ((u16)getValueSafe(SCFG_ROM) != ((u16)3)){}
+	}
+
 	while (getValueSafe(&fifomsg[0]) == (u32)arm7EntryAddress){
 		swiDelay(1);
 	}
+	
 	if(getTGDSDebuggingState() == true){
 		GUI_printf("ARM7: %x - ARM9: %x", arm7EntryAddress, arm9EntryAddress);
 	}
