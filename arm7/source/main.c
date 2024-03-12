@@ -22,13 +22,29 @@ USA
 #include "spifwTGDS.h"
 #include "posixHandleTGDS.h"
 #include "wifi_arm7.h"
+#include "dldi.h"
+#include "ipcfifoTGDSUser.h"
+
+//TGDS-MB v3 bootloader
+void bootfile(){
+
+}
 
 //---------------------------------------------------------------------------------
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 int main(int argc, char **argv)  {
 //---------------------------------------------------------------------------------
 	/*			TGDS 1.6 Standard ARM7 Init code start	*/
 	installWifiFIFO();
 	/*			TGDS 1.6 Standard ARM7 Init code end	*/
+	
+	while(!(*(u8*)0x04000240 & 2) ){} //wait for VRAM_D block
+	ARM7InitDLDI(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, TGDSDLDI_ARM7_ADDRESS);
 	
     while (1) {
 		//up to this point, is free to reload the EWRAM code		
