@@ -62,6 +62,10 @@ export BINSTRIP_RULE_COMPRESSED_9 :=	$(DECOMPRESSOR_BOOTCODE_9).bin
 export BINSTRIP_RULE_COMPRESSED_9i :=	$(DECOMPRESSOR_BOOTCODE_9i).bin
 
 export TARGET_LIBRARY_CRT0_FILE_7 = nds_arm_ld_crt0
+
+#for 0x02380000 -> 0x06000000 arm7bootldr payload
+export TARGET_LIBRARY_CRT0_FILE_7custom = nds_arm_ld_crt0custom
+
 export TARGET_LIBRARY_CRT0_FILE_9 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9 = nds_arm_ld_crt0
 
@@ -69,6 +73,9 @@ export TARGET_LIBRARY_LINKER_FILE_7i = $(TARGET_LIBRARY_CRT0_FILE_7).S
 export TARGET_LIBRARY_LINKER_FILE_7 = ../$(TARGET_LIBRARY_CRT0_FILE_7).S
 export TARGET_LIBRARY_LINKER_FILE_9 = ../$(TARGET_LIBRARY_CRT0_FILE_9).S
 export TARGET_LIBRARY_LINKER_FILE_COMPRESSED_9 = ../$(DECOMPRESSOR_BOOTCODE_9)/$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).S
+
+#for 0x02380000 -> 0x06000000 arm7bootldr payload
+export TARGET_LIBRARY_LINKER_FILE_7custom = $(TARGET_LIBRARY_CRT0_FILE_7custom).S
 
 export TARGET_LIBRARY_TGDS_NTR_7 = toolchaingen7
 export TARGET_LIBRARY_TGDS_NTR_9 = toolchaingen9
@@ -140,7 +147,7 @@ endif
 	$(MAKE)	-R	-C	$(DIR_ARM9)/
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
-	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/$(BINSTRIP_RULE_7)	-e7  0x03800000	-9 $(CURDIR)/arm9/$(BINSTRIP_RULE_9) -e9  0x02000000	-b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
+	$(NDSTOOL)	-v	-c $@	-7  $(CURDIR)/arm7/$(BINSTRIP_RULE_7)	-e7  0x02380000	-9 $(CURDIR)/arm9/$(BINSTRIP_RULE_9) -e9  0x02000000	-b	icon.bmp "ToolchainGenericDS SDK;$(TGDSPROJECTNAME) NDS Binary; "
 	-mv $(EXECUTABLE_FNAME)	release/arm7dldi-ntr
 	-mv $(CURDIR)/arm9/data/tgds_multiboot_payload.bin $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
 	-mv $(CURDIR)/arm9/data/tgds_multiboot_payload_twl.bin $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
@@ -180,6 +187,16 @@ $(EXECUTABLE_FNAME)	:	compile
 	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
 	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
 	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../snemulds/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../snemulds/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../tgdsproject3d/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../tgdsproject3d/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../snakegl/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../snakegl/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../aquariumgl/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../aquariumgl/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
+	-cp $(CURDIR)/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin $(CURDIR)/../batallionnds/release/arm7dldi-ntr/tgds_multiboot_payload_ntr.bin
+	-cp $(CURDIR)/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds} $(CURDIR)/../batallionnds/release/arm7dldi-ntr/${EXECUTABLE_FNAME:.nds=.nds}
 	-@echo '-'
 	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../armv4core/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
 	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../armv4core/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
@@ -211,6 +228,16 @@ $(EXECUTABLE_FNAME)	:	compile
 	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
 	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
 	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../snemulds/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../snemulds/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../tgdsproject3d/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../tgdsproject3d/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../snakegl/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../snakegl/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../aquariumgl/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../aquariumgl/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
+	-cp $(CURDIR)/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin $(CURDIR)/../batallionnds/release/arm7dldi-twl/tgds_multiboot_payload_twl.bin
+	-cp $(CURDIR)/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl} $(CURDIR)/../batallionnds/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
 	-@echo 'ndstool end: built: $@'
 	
 #---------------------------------------------------------------------------------

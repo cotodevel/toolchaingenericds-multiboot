@@ -58,11 +58,12 @@ and toolchaingenericds-multiboot-config.txt (update here, the computer's IP you 
 
 
 /release folder has the latest binary precompiled for your convenience.
-
 Latest stable release: https://bitbucket.org/Coto88/ToolchainGenericDS-multiboot/get/TGDS1.65.zip
 
+
+
+
 Notes/Issues: 
-- Ntr mode: NTR Binaries booting all TGDS ones and older passme devkitARM ones, use moonshell2 through tgds-multiboot to load the ones that don't work (because these use newer passme code).
-- TWL mode: NTR binaries actually booting TGDS NTR homebrew. Older passme code in NTR devkitARM loops, thus, skipping the loop instruction makes them bootable in TGDS-MB TWL. And for newer passme code, these don't work.
-- TWL mode: TGDS TWL Binaries booting OK / devkitARM TWL binaries: WIP.
+https://bitbucket.org/Coto88/toolchaingenericds-multiboot/issues/9/integrate-open-source-ntr-twl-bootloader
+
 Coto

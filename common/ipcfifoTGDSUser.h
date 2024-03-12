@@ -32,6 +32,10 @@ USA
 #include "dsregs_asm.h"
 #include "ipcfifoTGDS.h"
 
+#ifdef ARM9
+#include "posixHandleTGDS.h"
+#endif
+
 //---------------------------------------------------------------------------------
 typedef struct sIPCSharedTGDSSpecific{
 	
@@ -52,6 +56,10 @@ extern  struct sIPCSharedTGDSSpecific* getsIPCSharedTGDSSpecific();
 //NOT weak symbols : the implementation of these is project-defined (here)
 extern void HandleFifoNotEmptyWeakRef(uint32 cmd1, uint32 cmd2);
 extern void HandleFifoEmptyWeakRef(uint32 cmd1, uint32 cmd2);
+
+#ifdef ARM9
+extern void fcopy(FILE *f1, FILE *f2);
+#endif
 
 #ifdef __cplusplus
 }

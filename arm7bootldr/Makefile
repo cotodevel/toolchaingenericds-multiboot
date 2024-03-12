@@ -26,7 +26,7 @@ DIRLIBS_SRC = $(foreach dirres,$(DIRS_ARM7_SRC),-I "$(CURDIR)/$(RELATIVE_PATH)$(
 
 file_arm7_src_c=  $(foreach dir,$(DIRS_ARM7_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.c))  )
 file_arm7_src_o=  $(foreach dir,$(BUILD), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.o))  )
-file_arm7_src_o_out = $(filter-out $(TARGET_LIBRARY_CRT0_FILE_7).o, $(file_arm7_src_o))
+file_arm7_src_o_out = $(filter-out $(TARGET_LIBRARY_CRT0_FILE_7custom).o, $(file_arm7_src_o))
 file_arm7_src_s=  $(foreach dir,$(DIRS_ARM7_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.s))  )
 file_arm7_src_SUPP=  $(foreach dir,$(DIRS_ARM7_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.S))  )
 file_arm7_src_cpp=  $(foreach dir,$(DIRS_ARM7_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.cpp))  )
@@ -40,26 +40,28 @@ d_objs_arm7:=	${file_arm7_src_c:.c=.d}	${file_arm7_src_s:.s=.d}	${file_arm7_src_
 #ARM7 specific definitions.	-fno-common so we force initialized data to rodata
 MAPFILE = $(DIR_ARM7).map
 AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_7)	$(SPECIFIC_AS_COMPILER_FLAGS_7)		$(GLOBAL_AS_COMPILER_FLAGS)
-CC_ASFLAGS		=	-march=armv4t	-mthumb-interwork	-marm	-Os	-fno-short-enums	-fno-exceptions		-nostdlib	 -ffunction-sections -fdata-sections	-DARM7	-Dappver='$(EXECUTABLE_VERSION)'	-DIGNORELIBS
-CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	-fno-rtti
+CC_ASFLAGS		=	-march=armv4t	-mthumb-interwork	-marm	-mfloat-abi=soft	-Os	-DARM7	-fno-exceptions	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-tree-loop-distribute-patterns -ffunction-sections	-fdata-sections	-Dappver='$(EXECUTABLE_VERSION)'	-DIGNORELIBS
+CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	
 BUILD			= 	$(BUILD_ARM7)
 DIR_SRC			=	$(DIRS_ARM7_SRC)	$(DIRS_ARM7_HEADER)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm7.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	:=	-specs=nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),-z,defs,--fix-v4bx
-LDFLAGS_DSI	:=	-specs=nds_arm7_ld.specs	-Wl,--no-gc-sections,-Map,arm7-nonstripped_dsi.map
-LIBRARIES_NTR =	-l$(TARGET_LIBRARY_TGDS_NTR_7)	-lhardware7		-lstdc++	-lcnano7	-lgcc
-LIBRARIES_TWL =	-l$(TARGET_LIBRARY_TGDS_TWL_7)	-lhardware7i	-lstdc++	-lcnano7	-lgcc
+LDFLAGS	:=	-specs=dsi_arm7_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE),--fix-v4bx,-z,defs
+LDFLAGS_DSI	:=	-specs=dsi_arm7_ld.specs	-Wl,--gc-sections,-Map,arm7-nonstripped_dsi.map,--fix-v4bx,-z,defs
+LIBRARIES_NTR =	-lutils7	-l$(TARGET_LIBRARY_TGDS_NTR_7)	-lhardware7		-lstdc++	-lcnano7	-lgcc
+LIBRARIES_TWL =	-lutils7i	-l$(TARGET_LIBRARY_TGDS_TWL_7)	-lhardware7i	-lstdc++	-lcnano7	-lgcc
+
 ################################################################################################
 
 #Dont modify anything else if not necessary ..
-OBJECTS = 	$(objs_arm7)	$(file_arm7_src_o_out)
+OBJECTS:= 	$(objs_arm7)	$(file_arm7_src_o_out)
 OBJDIR 	=	./$(BUILD)
-VPATH 	=	$(DIR_SRC)	
+VPATH 	=	$(DIR_SRC)
 OBJPROG = 	$(addprefix $(OBJDIR)/, $(NONSTRIPELF_ARM7))
 
-all: makebuild	$(TARGET_LIBRARY_CRT0_FILE_7).o	$(BINSTRIP_RULE_arm7bootldr)
+
+all: makebuild	$(TARGET_LIBRARY_CRT0_FILE_7custom).o	$(BINSTRIP_RULE_arm7bootldr)
 #all: debug
 
 makebuild:
@@ -68,8 +70,8 @@ makebuild:
 #convert a TGA BMP16 into a native 3D texture unit format (GL_COLOR 16bpp)
 $(OBJDIR)/%.o : %.tga
 	-$(GRITTOOL) ${<:.o=.c} -ftc -o $@ -gu32 -gb -gB16
-	$(CC) $(DEP_CFLAGS) $(CFLAGS) $(DIRLIBS_HDR) $(DIRLIBS_SRC)	-c -o $@ ${@:.o=.c}	
-
+	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o $@ -c ${@:.o=.c}
+	
 #rule for reading *.bin in /data folder, converts to .C source code, which then gets compiled as object so it can be linked later
 $(OBJDIR)/%.o : %.bin
 	-@echo 'trying to convert .BIN ($<) -> .C output: ${@:.o=.c} : arrayName: $(subst build/,,${@:.o=})'
@@ -105,9 +107,9 @@ $(OBJDIR)/%.o : %.S
 	-@echo 'S Compile end: $@'
 
 #Special rule: compile crt0 for arm7 entrypoint
-$(TARGET_LIBRARY_CRT0_FILE_7).o:	$(TARGET_LIBRARY_LINKER_FILE_7)
+$(TARGET_LIBRARY_CRT0_FILE_7custom).o:	$(TARGET_LIBRARY_LINKER_FILE_7custom)
 	-@echo 'S Compile start: crt0s'
-	rm -fr $(BUILD)/$(TARGET_LIBRARY_CRT0_FILE_7).o
+	rm -fr $(BUILD)/$(TARGET_LIBRARY_CRT0_FILE_7custom).o
 	$(CPP)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o	$(OBJDIR)/$@	-c	$<
 	-@echo 'S Compile end: crt0s'
 
@@ -115,7 +117,7 @@ $(TARGET_LIBRARY_CRT0_FILE_7).o:	$(TARGET_LIBRARY_LINKER_FILE_7)
 $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 	-@echo 'Entering Linking phase'
 	-$(CC) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_NTR)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
-	-$(CC) $^	$(LDFLAGS_DSI)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_TWL)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o ${@:.elf=_dsi.elf}
+	-$(CC) $^	$(LDFLAGS_DSI)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_TWL)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o	${@:.elf=_dsi.elf}
 	-@echo 'Leaving Linking phase. Output: $@'
 
 #xxxx-nonstripped.elf -> xxxx.elf STRIP operation
@@ -123,6 +125,7 @@ $(ELF_ARM7): $(OBJPROG)
 	-@echo '$@ Unstripped. STRIP Start!'
 	-mv build/${@:.elf=-nonstripped_dsi.elf}	$(CURDIR)
 	$(OBJSTRIP)	-s -R .comment -R .gnu.version	$<
+	$(OBJSTRIP)	-s -R .comment -R .gnu.version	${@:.elf=-nonstripped_dsi.elf}
 	-mv	$<	$@
 	
 $(BINSTRIP_RULE_arm7bootldr): $(ELF_ARM7)
@@ -136,4 +139,4 @@ $(BINSTRIP_RULE_arm7bootldr): $(ELF_ARM7)
 	
 clean:
 	-@echo 'cleanup $(DIR_ARM7)'
-	-@rm -fr $(BINSTRIP_RULE_arm7bootldr)	$(CURDIR)/arm7-nonstripped_dsi.elf $(CURDIR)/arm7-nonstripped_dsi.map	$(MAPFILE)	$(BUILD_ARM7)
+	-@rm -fr $(BINSTRIP_RULE_arm7bootldr)	$(MAPFILE)	${BINSTRIP_RULE_arm7bootldr:.bin=_twl.bin}	$(BUILD)	$(CURDIR)/arm7-nonstripped_dsi.elf $(CURDIR)/arm7-nonstripped_dsi.map

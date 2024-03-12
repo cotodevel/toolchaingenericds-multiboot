@@ -105,6 +105,23 @@ void freeSoundCustomDecoder(u32 srcFrmt){
 
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void fcopy(FILE *f1, FILE *f2){
+    char            buffer[BUFSIZ];
+    size_t          n;
+    while ((n = fread(buffer, sizeof(char), sizeof(buffer), f1)) > 0){
+        if (fwrite(buffer, sizeof(char), n, f2) != n){
+            
+		}
+    }
+}
+
 #endif
 
 //Libutils setup: TGDS project doesn't use any libutils extensions.
@@ -160,7 +177,7 @@ void setupLibUtils(){
 		NULL, //ARM7: void TIMER1Handler()
 		NULL, //ARM7: void stopSound()
 		NULL, //ARM7: void setupSound()
-		NULL, //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
+		(initMallocARM7LibUtils_fn)&initARM7Malloc, //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
 		NULL, //ARM7 & ARM9: DeInitWIFI()
 		NULL  //ARM7: micInterrupt()
 		#endif

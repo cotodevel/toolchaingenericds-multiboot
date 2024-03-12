@@ -44,6 +44,20 @@ _start:
 	mov r1,#0
 	str r1,[r0]
 	
+	.extern _io_dldi_stub
+	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	@initialize ARM7DLDI: 
+	@ 1) ARM9 passes its DLDI section to ARM7
+	ldr r0,=_io_dldi_stub
+	ldr r1,=0x02FFDFE8	@ARM7_ARM9_DLDI_STATUS
+	str r0,[r1]
+	
+	@ 2) Give VRAM_D to ARM7 @0x06000000
+	ldr	r3, =0x04000200
+	ldr	r2, =0x7d	@ u8 vrambits = (VRAM_D_0x06000000_ARM7 | VRAM_ENABLE);
+	strb	r2, [r3, #0x43]
+	@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	
 	mov	r0, #0xdf		@ sys
 	msr	cpsr, r0
 	ldr 	sp, =(0x027FF000 + 0x1000)
@@ -71,8 +85,6 @@ _start:
 	msr	cpsr, r0
 	ldr	sp, =sp_SYS
 	
-	@so far OK
-
 	/* copy the VMA sections to each LMA sections for hardware RAM not initialized at self boot crt0 stage*/
 	ldr                 r1,=__itcm_vma_start                 /* point our source register to the start of the .itcm section (VMA)*/
 	ldr                 r2,=_itcm_start                 /* point our destination register to the I-TCM dedicated to our writable data (LMA)*/
@@ -91,13 +103,10 @@ _start:
 	add                 r3,r3,#(144)                  /* point r3 after the last byte we will be writing (LMA)*/
 	bl                  copy
 	
-@so far OK
-	blx ARM7ReadFWVersionFromFlashByFIFOIRQ	@r0 = DS Hardware model: @ARM7 and ARM9 already has irqs running up to this point, so just reinit hardware
-	bl IRQInit
-	
-	ldr	lr, =exception_sysexit
-	
-@so far OK
+	ldr r0,=(0x02FFDFE4)	@DS Firmware Type: ARM7_ARM9_SAVED_DSFIRMWARE
+	blx getValueSafe
+	and r0,r0,#0xFF
+	bl initHardware
 	
 	ldr                 r1,=argvIntraTGDSMB                /* point our source register to the start of the .dtcm section (VMA)*/
 	ldr                 r2,=0x02FFFE70                 /* point our destination register to the D-TCM dedicated to our writable data (LMA)*/
@@ -111,7 +120,8 @@ _start:
 	push {r1}
 	bl getGlobalArgc
 	pop {r1}
-	b	main			@entrypoint
+	bl	main			@entrypoint
+	b exception_sysexit
 
 .ltorg
 
