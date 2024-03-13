@@ -26,6 +26,7 @@ USA
 #include "loader.h"
 #include "dldi.h"
 #include "exceptionTGDS.h"
+#include "dmaTGDS.h"
 
 ////////////////////////////////TGDS-MB v3 VRAM Bootcode start////////////////////////////////
 FATFS fileHandle;					// Petit-FatFs work area 
@@ -304,11 +305,11 @@ __attribute__((optimize("Os")))
 __attribute__ ((optnone))
 #endif
 void bootfile(){
-	//Wait for 96K ARM7 mapped @ 0x037f8000 ~ 0x03810000 & clean it
+	//Wait for 96K ARM7 mapped @ 0x037f8000 ~ 0x03810000 & Clean IWRAM
 	while( !(WRAM_CR & WRAM_0KARM9_32KARM7) ){
 		swiDelay(1);
 	}
-	memset((void *)0x037f8000, 0x0, (96*1024));
+	dmaFillHalfWord(0, 0, ((uint32)0x037f8000), (uint32)(96*1024));
 	
 	uint8_t fresult;
 	FATFS * currentFH = &fileHandle;
@@ -348,6 +349,9 @@ void bootfile(){
 			}
 			
 			setupDisabledExceptionHandler();
+			
+			//Clean EWRAM except where tgds_multiboot_payload.bin is running currently (NTR Mirror)
+			dmaFillHalfWord(0, 0, ((uint32)0x02000000), (uint32)  (4*1024*1024) - (0x02400000 - ((int)TGDS_MB_V3_PAYLOAD_ADDR)) );
 			
 			UINT nbytes_read;
 			pf_lseek(0, currentFH);
