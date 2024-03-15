@@ -496,6 +496,29 @@ int main(int argc, char **argv) {
 			strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
 			addARGV(3, (char*)&thisArgv);
 			int isNTRTWLBinary = isNTROrTWLBinary(curChosenBrowseFile);
+			/*
+			//debug start
+			if(isNTRTWLBinary == isTWLBinary){
+				printf("i'm TWL binary");
+			}
+			else if(isNTRTWLBinary == isNDSBinaryV1){
+				printf("i'm isNDSBinaryV1");
+			}
+			else if(isNTRTWLBinary == isNDSBinaryV2){
+				printf("i'm isNDSBinaryV2");
+			}
+			else if(isNTRTWLBinary == isNDSBinaryV3){
+				printf("i'm isNDSBinaryV3");
+			}
+			else if(isNTRTWLBinary == isNDSBinaryV1Slot2){
+				printf("i'm isNDSBinaryV1Slot2");
+			}
+			else{
+				printf("Not TWL/NTR Binary.");
+			}
+			while (1==1){}
+			//debug start
+			*/
 			if( 
 				(isNTRTWLBinary == isNDSBinaryV1Slot2)
 				||
