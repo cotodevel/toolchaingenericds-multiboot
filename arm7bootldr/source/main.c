@@ -385,7 +385,23 @@ void bootfile(){
 			
 			int arm9BootCodeSize = NDSHdr->arm9size;
 			u32 arm9BootCodeOffsetInFile = NDSHdr->arm9romoffset + dsiARM9headerOffset;
-			u32 arm9EntryAddress = NDSHdr->arm9entryaddress;	
+			int arm9BaseOffsetRAM = 0; 
+			
+			//Check ARM9: If NTRv3, inspect if an ARM branch opcode exist there. If yes, restore arm9BaseOffsetRAM, otherwise there's the secure section, and needs to be copied on base memory
+			if((isNTRTWLBinary == isNDSBinaryV3) || (isNTRTWLBinary == isTWLBinary)){
+				pf_lseek(arm9BootCodeOffsetInFile, currentFH);
+				pf_read((u8*)0x02000000, 4, &nbytes_read, currentFH);
+				u32 opcode = ((u32)*(u32*)0x02000000);
+				if(
+					!(opcode == 0)
+					&&
+					!(opcode == 0xFFFFFFFF)
+				){
+					arm9BaseOffsetRAM = (NDSHdr->arm9entryaddress & 0x3FFFFF);
+				}
+			}
+			
+			u32 arm9EntryAddress = (((int)(NDSHdr->arm9entryaddress & 0xFF000000)) + arm9BaseOffsetRAM);
 			memset((void *)arm9EntryAddress, 0x0, arm9BootCodeSize);
 			pf_lseek(arm9BootCodeOffsetInFile, currentFH);
 			pf_read((u8*)arm9EntryAddress, arm9BootCodeSize, &nbytes_read, currentFH);
