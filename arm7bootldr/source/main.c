@@ -350,9 +350,6 @@ void bootfile(){
 			
 			setupDisabledExceptionHandler();
 			
-			//Clean EWRAM except where tgds_multiboot_payload.bin is running currently (NTR Mirror)
-			dmaFillHalfWord(0, 0, ((uint32)0x02000000), (uint32)  (4*1024*1024) - (0x02400000 - ((int)TGDS_MB_V3_PAYLOAD_ADDR)) );
-			
 			UINT nbytes_read;
 			pf_lseek(0, currentFH);
 			memset(&NDSHeaderStruct, 0, sizeof(NDSHeaderStruct));
@@ -363,19 +360,13 @@ void bootfile(){
 			//- ARM7 handles/reloads everything in memory
 			//- ARM7 gives permission to ARM9 to reload and ARM7 reloads as well
 			//ARM7 reloads here
-			int arm7BootCodeSize = NDSHdr->arm7size;
+			int arm7BootCodeSize = (int)((NDSHdr->arm7size + 1) & ~1); //2 byte alignment (thumb / ARM code)
 			u32 arm7BootCodeOffsetInFile = NDSHdr->arm7romoffset;
 			u32 arm7EntryAddress = NDSHdr->arm7entryaddress;	
+			u32 arm7ramaddress = NDSHdr->arm7ramaddress;
 			
-			//TWL extended Header: secure section (TWL9 only)
-			int dsiARM9headerOffset = 0;
-			if(
-				(__dsimode == true) 
-				&&
-				(isNTRTWLBinary == isTWLBinary)
-			){
-				dsiARM9headerOffset = 0x800;
-			}
+			//Clear arm7 ram
+			dmaFillHalfWord(0, 0, ((uint32)arm7ramaddress), ((uint32)arm7BootCodeSize) );
 			
 			//ARM9
 			//Wait until ARM9 arrives at TGDS_MB_payload first
@@ -383,28 +374,16 @@ void bootfile(){
 				
 			}
 			
-			int arm9BootCodeSize = NDSHdr->arm9size;
-			u32 arm9BootCodeOffsetInFile = NDSHdr->arm9romoffset + dsiARM9headerOffset;
-			int arm9BaseOffsetRAM = 0; 
+			int arm9BootCodeSize = (int)((NDSHdr->arm9size + 1) & ~1); //2 byte alignment (thumb / ARM code)
+			u32 arm9BootCodeOffsetInFile = NDSHdr->arm9romoffset;
+			u32 arm9EntryAddress = NDSHdr->arm9entryaddress;
+			u32 arm9ramaddress = NDSHdr->arm9ramaddress;
 			
-			//Check ARM9: If NTRv3, inspect if an ARM branch opcode exist there. If yes, restore arm9BaseOffsetRAM, otherwise there's the secure section, and needs to be copied on base memory
-			if((isNTRTWLBinary == isNDSBinaryV3) || (isNTRTWLBinary == isTWLBinary)){
-				pf_lseek(arm9BootCodeOffsetInFile, currentFH);
-				pf_read((u8*)0x02000000, 4, &nbytes_read, currentFH);
-				u32 opcode = ((u32)*(u32*)0x02000000);
-				if(
-					!(opcode == 0)
-					&&
-					!(opcode == 0xFFFFFFFF)
-				){
-					arm9BaseOffsetRAM = (NDSHdr->arm9entryaddress & 0x3FFFFF);
-				}
-			}
+			//Clear arm9 ram
+			dmaFillHalfWord(0, 0, ((uint32)arm9ramaddress), ((uint32)arm9BootCodeSize) );
 			
-			u32 arm9EntryAddress = (((int)(NDSHdr->arm9entryaddress & 0xFF000000)) + arm9BaseOffsetRAM);
-			memset((void *)arm9EntryAddress, 0x0, arm9BootCodeSize);
 			pf_lseek(arm9BootCodeOffsetInFile, currentFH);
-			pf_read((u8*)arm9EntryAddress, arm9BootCodeSize, &nbytes_read, currentFH);
+			pf_read((u8*)arm9ramaddress, arm9BootCodeSize, &nbytes_read, currentFH);
 			if( ((int)nbytes_read) != ((int)arm9BootCodeSize) ){
 				int stage = 10;
 				strcpy(debugBuf7, "TGDS-MB: arm7bootldr/bootfile():[");
@@ -418,7 +397,7 @@ void bootfile(){
 				int stage = 10;
 				char buffer[sizeof(int) * 10 + 1];
 				
-				itoa(arm9EntryAddress, buffer, 16);
+				itoa(arm9ramaddress, buffer, 16);
 				
 				strcpy(debugBuf7, "TGDS-MB: arm7bootldr/bootfile():");
 				strcat(debugBuf7, "ARM9 payload[");
@@ -438,7 +417,7 @@ void bootfile(){
 			//so far ok (arm9 twl & arm twl size)
 			
 			pf_lseek(arm7BootCodeOffsetInFile, currentFH);
-			pf_read((u8*)arm7EntryAddress, arm7BootCodeSize, &nbytes_read, currentFH);
+			pf_read((u8*)arm7ramaddress, arm7BootCodeSize, &nbytes_read, currentFH);
 			if( ((int)nbytes_read) != ((int)arm7BootCodeSize) ){
 				int stage = 10;
 				strcpy(debugBuf7, "TGDS-MB: arm7bootldr/bootfile():[");
@@ -452,7 +431,7 @@ void bootfile(){
 				int stage = 10;
 				char buffer[sizeof(int) * 10 + 1];
 				
-				itoa(arm7EntryAddress, buffer, 16);
+				itoa(arm7ramaddress, buffer, 16);
 				
 				strcpy(debugBuf7, "TGDS-MB: arm7bootldr/bootfile():");
 				strcat(debugBuf7, "ARM7 payload[");
@@ -554,8 +533,8 @@ void bootfile(){
 			setValueSafe((u32*)ARM7_BOOT_SIZE, (u32)arm7BootCodeSize);
 			setValueSafe((u32*)ARM7_BOOTCODE_OFST, (u32)arm7BootCodeOffsetInFile);
 			setValueSafe((u32*)ARM9_BOOTCODE_OFST, (u32)arm9BootCodeOffsetInFile);
-			setValueSafe((u32*)0x02FFFE34, (u32)arm7EntryAddress);
-			setValueSafe((u32*)0x02FFFE24, (u32)arm9EntryAddress); //ARM9 go
+			setValueSafe((u32*)0x02FFFE34, (u32)arm7ramaddress);
+			setValueSafe((u32*)0x02FFFE24, (u32)arm9ramaddress); //ARM9 go (nopsled on NTR v3/TWL ARM9(i) secure section)
 			
 			//Reload ARM7 core
 			swiSoftReset();
