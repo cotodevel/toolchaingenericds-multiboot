@@ -415,8 +415,6 @@ void bootfile(){
 			}
 			*/
 			
-			//so far ok (arm9 twl & arm twl size)
-			
 			pf_lseek(arm7BootCodeOffsetInFile, currentFH);
 			pf_read((u8*)arm7ramaddress, arm7BootCodeSize, &nbytes_read, currentFH);
 			if( ((int)nbytes_read) != ((int)arm7BootCodeSize) ){
@@ -449,8 +447,6 @@ void bootfile(){
 			}
 			*/
 			
-			//so far ok (arm7 twl & arm7 twl size)
-			
 			//Turn off IRQs right now because an interrupt calling to ARM7 exception handler (through bios) crashes ARM7 
 			REG_IME = 0;
 			REG_IE = 0;
@@ -464,7 +460,7 @@ void bootfile(){
 			}
 			
 			//Bios can now be changed @ ARM7
-			if(isNTRTWLBinary == isTWLBinary){
+			if( (__dsimode == true) && (isNTRTWLBinary == isTWLBinary) ){
 				//- DSi7 - SCFG_ROM - ROM Control (R/W, Set-Once)
 				u16 * SCFG_ROM = 0x04004000;
 				//4004000h - DSi7 - SCFG_ROM - ROM Control (R/W, Set-Once)
@@ -563,33 +559,50 @@ void bootfile(){
 				u32 arm7iBootCodeOffsetInFile = *(u32*)&NDSHeaderStruct[0x1D0];	//0x1D0 DSi7 ROM offset
 				u32 arm7iRamAddress = *(u32*)&NDSHeaderStruct[0x1D8];	//0x1D8   DSi7 RAM address
 				int arm7iBootCodeSize = *(u32*)&NDSHeaderStruct[0x1DC];	//0x1DC   DSi7 code size
-				pf_lseek(arm7iBootCodeOffsetInFile, currentFH);
-				pf_read((u8*)arm7iRamAddress, arm7iBootCodeSize, &nbytes_read, currentFH);
-				if( ((int)nbytes_read) != ((int)arm7iBootCodeSize) ){
-					int stage = 10;
-					strcpy(debugBuf7, "TGDS-MB: arm7bootldr/bootfile():[");
-					strcat(debugBuf7, filename);
-					strcat(debugBuf7, "] ARM7i payload write FAIL...");
-					handleDSInitOutputMessage((char*)&debugBuf7[0]);
-					handleDSInitError7(stage, (u32)savedDSHardware);
+				if((arm7iRamAddress >= ARM_MININUM_LOAD_ADDR) && (arm7iBootCodeSize > 0)){
+					pf_lseek(arm7iBootCodeOffsetInFile, currentFH);
+					pf_read((u8*)arm7iRamAddress, arm7iBootCodeSize, &nbytes_read, currentFH);
+					if( ((int)nbytes_read) != ((int)arm7iBootCodeSize) ){
+						int stage = 10;
+						strcpy(debugBuf7, "TGDS-MB: arm7bootldr/bootfile():[");
+						strcat(debugBuf7, filename);
+						strcat(debugBuf7, "] ARM7i payload write FAIL...");
+						handleDSInitOutputMessage((char*)&debugBuf7[0]);
+						handleDSInitError7(stage, (u32)savedDSHardware);
+					}
 				}
 				
 				u32 arm9iBootCodeOffsetInFile = *(u32*)&NDSHeaderStruct[0x1C0];	//0x1C0   DSi9 ROM offset
 				u32 arm9iRamAddress = *(u32*)&NDSHeaderStruct[0x1C8];	//0x1C8   DSi9 RAM address
 				int arm9iBootCodeSize = *(u32*)&NDSHeaderStruct[0x1CC];	//0x1CC   DSi9 code size
-				pf_lseek(arm9iBootCodeOffsetInFile, currentFH);
-				pf_read((u8*)arm9iRamAddress, arm9iBootCodeSize, &nbytes_read, currentFH);
-				if( ((int)nbytes_read) != ((int)arm9iBootCodeSize) ){
-					int stage = 10;
+				if((arm9iRamAddress >= ARM_MININUM_LOAD_ADDR) && (arm9iBootCodeSize > 0)){
+					pf_lseek(arm9iBootCodeOffsetInFile, currentFH);
+					pf_read((u8*)arm9iRamAddress, arm9iBootCodeSize, &nbytes_read, currentFH);
+					if( ((int)nbytes_read) != ((int)arm9iBootCodeSize) ){
+						int stage = 10;
+						strcpy(debugBuf7, "TGDS-MB: arm7bootldr/bootfile():[");
+						strcat(debugBuf7, filename);
+						strcat(debugBuf7, "] ARM9i payload write FAIL...");
+						handleDSInitOutputMessage((char*)&debugBuf7[0]);
+						handleDSInitError7(stage, (u32)savedDSHardware);
+					}
+				}
+				
+				setValueSafe((u32*)ARM7i_RAM_ADDRESS, (u32)arm7iRamAddress);
+				setValueSafe((u32*)ARM7i_BOOT_SIZE, (u32)arm7iBootCodeSize);
+				setValueSafe((u32*)ARM9i_RAM_ADDRESS, (u32)arm9iRamAddress);
+				setValueSafe((u32*)ARM9i_BOOT_SIZE, (u32)arm9iBootCodeSize);
+			}
+			//NTR hardware trying to boot TWL binaries? Throw exception
+			else if( (__dsimode == false) && (isNTRTWLBinary == isTWLBinary) ){
+				int stage = 10;
 					strcpy(debugBuf7, "TGDS-MB: arm7bootldr/bootfile():[");
 					strcat(debugBuf7, filename);
-					strcat(debugBuf7, "] ARM9i payload write FAIL...");
+					strcat(debugBuf7, "] TWL Binary UNSUPPORTED in NTR Unit.");
 					handleDSInitOutputMessage((char*)&debugBuf7[0]);
 					handleDSInitError7(stage, (u32)savedDSHardware);
-				}
 			}
 			
-			//so far OK
 			/*
 			{
 				int stage = 10;

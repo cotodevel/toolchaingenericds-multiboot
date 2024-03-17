@@ -231,19 +231,36 @@ int main(int argc, char **argv) {
 	while( getValueSafe(0x02FFFE24) == ((u32)0) ){
 		
 	}
+	u32 * arm7EntryAddress = (u32*)getValueSafe((u32*)0x02FFFE34);
 	u32 * arm9EntryAddress = (u32*)getValueSafe((u32*)0x02FFFE24);
 	int arm7BootCodeSize = (int)getValueSafe((u32*)ARM7_BOOT_SIZE);
 	int arm9BootCodeSize = (int)getValueSafe((u32*)ARM9_BOOT_SIZE);
 	u32 arm7OffsetInFile = (u32)getValueSafe((u32*)ARM7_BOOTCODE_OFST);
 	u32 arm9OffsetInFile = (u32)getValueSafe((u32*)ARM9_BOOTCODE_OFST);
+	u32 arm7iRamAddress = (u32)getValueSafe((u32*)ARM7i_RAM_ADDRESS);
+	int arm7iBootCodeSize = (int)getValueSafe((u32*)ARM7i_BOOT_SIZE);
+	u32 arm9iRamAddress = (u32)getValueSafe((u32*)ARM9i_RAM_ADDRESS);
+	int arm9iBootCodeSize = (int)getValueSafe((u32*)ARM9i_BOOT_SIZE);
 	int isNTRTWLBinary = (int)getValueSafe((u32*)ARM9_TWLORNTRPAYLOAD_MODE);
+	
 	//Todo: Support isNDSBinaryV1Slot2 binary (Slot2 Passme v1 .ds.gba homebrew)
 	if(isNTRTWLBinary == isNDSBinaryV1Slot2){
 		u8 fwNo = *(u8*)ARM7_ARM9_SAVED_DSFIRMWARE;
 		int stage = 0;
 		handleDSInitError(stage, (u32)fwNo);	
 	}
-	coherent_user_range_by_size((uint32)arm9EntryAddress, arm9BootCodeSize); //ARM9 memory coherent now
+	
+	coherent_user_range_by_size((uint32)arm7EntryAddress, arm7BootCodeSize); //Make ARM9 
+	coherent_user_range_by_size((uint32)arm9EntryAddress, arm9BootCodeSize); //	 memory	coherent (NTR/TWL)
+	
+	if(isNTRTWLBinary == isTWLBinary){
+		if((arm7iRamAddress >= ARM_MININUM_LOAD_ADDR) && (arm7iBootCodeSize > 0)){
+			coherent_user_range_by_size((uint32)arm7iRamAddress, arm7iBootCodeSize); //		also for TWL binaries 
+		}
+		if((arm9iRamAddress >= ARM_MININUM_LOAD_ADDR) && (arm9iBootCodeSize > 0)){
+			coherent_user_range_by_size((uint32)arm9iRamAddress, arm9iBootCodeSize); //		   if we're launching one
+		}
+	}
 	
 	//DLDI patch it. If TGDS DLDI RAMDISK: Use standalone version, otherwise direct DLDI patch
 	if(strncmp((char*)&dldiGet()->friendlyName[0], "TGDS RAMDISK", 12) == 0){
