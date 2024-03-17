@@ -533,8 +533,8 @@ void bootfile(){
 			setValueSafe((u32*)ARM7_BOOT_SIZE, (u32)arm7BootCodeSize);
 			setValueSafe((u32*)ARM7_BOOTCODE_OFST, (u32)arm7BootCodeOffsetInFile);
 			setValueSafe((u32*)ARM9_BOOTCODE_OFST, (u32)arm9BootCodeOffsetInFile);
-			setValueSafe((u32*)0x02FFFE34, (u32)arm7ramaddress);
-			setValueSafe((u32*)0x02FFFE24, (u32)arm9ramaddress); //ARM9 go (nopsled on NTR v3/TWL ARM9(i) secure section)
+			setValueSafe((u32*)0x02FFFE34, (u32)arm7EntryAddress);
+			setValueSafe((u32*)0x02FFFE24, (u32)arm9EntryAddress); //ARM9 go (skip NTR v3/TWL ARM9(i) secure section)
 			
 			//Reload ARM7 core
 			swiSoftReset();
