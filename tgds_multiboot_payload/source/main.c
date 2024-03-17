@@ -245,6 +245,18 @@ int main(int argc, char **argv) {
 	}
 	coherent_user_range_by_size((uint32)arm9EntryAddress, arm9BootCodeSize); //ARM9 memory coherent now
 	
+	//DLDI patch it. If TGDS DLDI RAMDISK: Use standalone version, otherwise direct DLDI patch
+	if(strncmp((char*)&dldiGet()->friendlyName[0], "TGDS RAMDISK", 12) == 0){
+		GUI_printf("GOT TGDS DLDI: Skipping patch");
+	}
+	else{
+		u32 dldiSrc = (u32)&_io_dldi_stub;
+		bool stat = dldiPatchLoader((data_t *)arm9EntryAddress, (u32)arm9BootCodeSize, dldiSrc);
+		if(stat == true){
+			GUI_printf("DLDI patch success!");
+		}
+	}
+	
 	//give VRAM_A & VRAM_B & VRAM_C & VRAM_D back to ARM9
 	*(u8*)0x04000240 = (VRAM_A_LCDC_MODE | VRAM_ENABLE);	//4000240h  1  VRAMCNT_A - VRAM-A (128K) Bank Control (W)
 	*(u8*)0x04000241 = (VRAM_B_LCDC_MODE | VRAM_ENABLE);	//4000241h  1  VRAMCNT_B - VRAM-B (128K) Bank Control (W)
