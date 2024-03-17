@@ -54,7 +54,7 @@ int isNTROrTWLBinaryTGDSMB7(FATFS * currentFH){
 	int headerSize = sizeof(NDSHeaderStruct);
 	u8 passmeRead[24];
 	memset(passmeRead, 0, sizeof(passmeRead));
-	memset(&NDSHeaderStruct, 0, sizeof(NDSHeaderStruct));
+	memset(&NDSHeaderStruct, 0, headerSize);
 	pf_lseek(0, currentFH);
 	UINT nbytes_read;
 	pf_read((u8*)&NDSHeaderStruct, headerSize, &nbytes_read, currentFH);
@@ -206,6 +206,7 @@ int isNTROrTWLBinaryTGDSMB7(FATFS * currentFH){
 		//(gotDLDISection == true) //some homebrew may have the DLDI section stripped (such as barebones demos without filesystem at the time the translation unit built the ARM9 payload)
 	){
 		mode = isTWLBinary;
+		*ARM7i_HEADER_SCFG_EXT7 = *(u32*)&NDSHeaderStruct[0x1B8];	//0x1B8h 4    ARM7 SCFG_EXT7 setting (bit0,1,2,10,18,31)
 	}
 	
 	//Check for Headerless NTR binary (2004 homebrew on custom devkits, or custom devkits overall)
@@ -463,7 +464,7 @@ void bootfile(){
 			}
 			
 			//Bios can now be changed @ ARM7
-			if(__dsimode == true){
+			if(isNTRTWLBinary == isTWLBinary){
 				//- DSi7 - SCFG_ROM - ROM Control (R/W, Set-Once)
 				u16 * SCFG_ROM = 0x04004000;
 				//4004000h - DSi7 - SCFG_ROM - ROM Control (R/W, Set-Once)
@@ -500,6 +501,89 @@ void bootfile(){
 					strcpy(debugBuf7, "TGDS-MB: arm7bootldr/bootfile():[");
 					strcat(debugBuf7, filename);
 					strcat(debugBuf7, "] Unknown Mode BIOS! ");
+					handleDSInitOutputMessage((char*)&debugBuf7[0]);
+					handleDSInitError7(stage, (u32)savedDSHardware);
+				}
+				
+				
+				//Set SCFG_EXT7
+				//0     Revised ARM7 DMA Circuit       (0=NITRO, 1=Revised) = NTR
+				//1     Revised Sound DMA              (0=NITRO, 1=Revised) = NTR
+				//2     Revised Sound                  (0=NITRO, 1=Revised) = NTR
+				//3-6   Unused (0)
+				//7     Revised Card Interface Circuit (0=NITRO, 1=Revised) (set via ARM9) (R)
+				//8     Extended ARM7 Interrupts      (0=NITRO, 1=Extended) (4000218h) = TWL
+				//9     Extended SPI Clock (8MHz)     (0=NITRO, 1=Extended) (40001C0h) = TGDS Project decides it
+				//10    Extended Sound DMA        ?   (0=NITRO, 1=Extended) (?) = NTR
+				u32 SCFG_EXT7 = *ARM7i_HEADER_SCFG_EXT7;
+				
+				//16    Access to New DMA Controller  (0=Disable, 1=Enable) (40041xxh)
+				SCFG_EXT7 = (SCFG_EXT7 | (1 << 16));
+				
+				//17    Access to AES Unit            (0=Disable, 1=Enable) (40044xxh)
+				SCFG_EXT7 = (SCFG_EXT7 | (1 << 17));
+				
+				//18    Access to SD/MMC registers    (0=Disable, 1=Enable) (40048xxh-40049xxh)
+				SCFG_EXT7 = (SCFG_EXT7 | (1 << 18));
+				
+				//19    Access to SDIO Wifi registers (0=Disable, 1=Enable) (4004Axxh-4004Bxxh)
+				SCFG_EXT7 = (SCFG_EXT7 | (1 << 19));
+				
+				//20    Access to Microphone regs     (0=Disable, 1=Enable) (40046xxh)
+				SCFG_EXT7 = (SCFG_EXT7 | (1 << 20));
+				
+				//21    Access to SNDEXCNT register   (0=Disable, 1=Enable) (40047xxh)
+				SCFG_EXT7 = (SCFG_EXT7 | (1 << 21));
+				
+				//22    Access to I2C registers       (0=Disable, 1=Enable) (40045xxh)
+				SCFG_EXT7 = (SCFG_EXT7 | (1 << 22));
+				
+				//23    Access to GPIO registers      (0=Disable, 1=Enable) (4004Cxxh)
+				SCFG_EXT7 = (SCFG_EXT7 | (1 << 23));
+				
+				//24    Access to 2nd NDS Cart Slot   (0=Disable, 1=Enable) (40021xxh)
+				SCFG_EXT7 = (SCFG_EXT7 | (1 << 24));
+				
+				//25    Access to New Shared WRAM     (0=Disable, 1=Enable) (3xxxxxxh)
+				SCFG_EXT7 = (SCFG_EXT7 | (1 << 25));
+				
+				//26-27 Unused (0)
+				SCFG_EXT7 = (SCFG_EXT7 | (1 << 26) | (1 << 27));
+				
+				//28    Undocumented/Unknown          (0=???, 1=Normal)     (?)
+				SCFG_EXT7 = (SCFG_EXT7 | (1 << 28));
+				
+				//29-30 Unused (0)
+				
+				//31    Access to SCFG/MBK registers  (0=Disable, 1=Enable) (4004000h-4004063h)
+				SCFG_EXT7 = (SCFG_EXT7 | (1 << 31));
+				*(u32*)0x04004008 = SCFG_EXT7;
+				
+				//Copy ARM7i/ARM9i sections since new TWL memory has been correctly set up.
+				u32 arm7iBootCodeOffsetInFile = *(u32*)&NDSHeaderStruct[0x1D0];	//0x1D0 DSi7 ROM offset
+				u32 arm7iRamAddress = *(u32*)&NDSHeaderStruct[0x1D8];	//0x1D8   DSi7 RAM address
+				int arm7iBootCodeSize = *(u32*)&NDSHeaderStruct[0x1DC];	//0x1DC   DSi7 code size
+				pf_lseek(arm7iBootCodeOffsetInFile, currentFH);
+				pf_read((u8*)arm7iRamAddress, arm7iBootCodeSize, &nbytes_read, currentFH);
+				if( ((int)nbytes_read) != ((int)arm7iBootCodeSize) ){
+					int stage = 10;
+					strcpy(debugBuf7, "TGDS-MB: arm7bootldr/bootfile():[");
+					strcat(debugBuf7, filename);
+					strcat(debugBuf7, "] ARM7i payload write FAIL...");
+					handleDSInitOutputMessage((char*)&debugBuf7[0]);
+					handleDSInitError7(stage, (u32)savedDSHardware);
+				}
+				
+				u32 arm9iBootCodeOffsetInFile = *(u32*)&NDSHeaderStruct[0x1C0];	//0x1C0   DSi9 ROM offset
+				u32 arm9iRamAddress = *(u32*)&NDSHeaderStruct[0x1C8];	//0x1C8   DSi9 RAM address
+				int arm9iBootCodeSize = *(u32*)&NDSHeaderStruct[0x1CC];	//0x1CC   DSi9 code size
+				pf_lseek(arm9iBootCodeOffsetInFile, currentFH);
+				pf_read((u8*)arm9iRamAddress, arm9iBootCodeSize, &nbytes_read, currentFH);
+				if( ((int)nbytes_read) != ((int)arm9iBootCodeSize) ){
+					int stage = 10;
+					strcpy(debugBuf7, "TGDS-MB: arm7bootldr/bootfile():[");
+					strcat(debugBuf7, filename);
+					strcat(debugBuf7, "] ARM9i payload write FAIL...");
 					handleDSInitOutputMessage((char*)&debugBuf7[0]);
 					handleDSInitError7(stage, (u32)savedDSHardware);
 				}
