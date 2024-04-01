@@ -42,7 +42,7 @@ typedef struct sIPCSharedTGDSSpecific{
 }  IPCSharedTGDSSpecific	__attribute__((aligned (4)));
 
 //TGDS Memory Layout ARM7/ARM9 Cores
-#define TGDS_ARM7_MALLOCSTART (u32)(0x06010000)
+#define TGDS_ARM7_MALLOCSTART (u32)(0x06018000)
 #define TGDS_ARM7_MALLOCSIZE (int)(16*1024)
 #define TGDSDLDI_ARM7_ADDRESS (u32)(TGDS_ARM7_MALLOCSTART + TGDS_ARM7_MALLOCSIZE)
 

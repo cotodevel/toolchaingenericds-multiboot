@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 /*--------------------------------------------------------------------------
 
