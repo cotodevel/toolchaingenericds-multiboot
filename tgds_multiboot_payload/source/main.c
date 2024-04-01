@@ -39,9 +39,11 @@ USA
 #include "TGDSMemoryAllocator.h"
 #include "debugNocash.h"
 #include "tgds_ramdisk_dldi.h"
+#include "exceptionTGDS.h"
+
+//ARM7 VRAM core
 #include "arm7bootldr.h"
 #include "arm7bootldr_twl.h"
-#include "exceptionTGDS.h"
 
 char bootfileName[MAX_TGDSFILENAME_LENGTH];
 int internalCodecType = SRC_NONE;//Internal because WAV raw decompressed buffers are used if Uncompressed WAV or ADPCM
@@ -68,39 +70,6 @@ void closeSoundUser(){
 	//Stubbed. Gets called when closing an audiostream of a custom audio decoder
 }
 
-#ifdef ARM9
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void executeARM7Payload(u32 arm7entryaddress, int arm7BootCodeSize){
-	reloadStatus = (u32)0xFFFFFFFF;
-	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
-	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
-	//NTR ARM7 payload
-	if(__dsimode == false){
-		coherent_user_range_by_size((u32)&arm7bootldr[0], arm7BootCodeSize);
-		setValueSafe(&fifomsg[0], (u32)&arm7bootldr[0]);
-	}
-	//TWL ARM7 payload
-	else{
-		coherent_user_range_by_size((u32)&arm7bootldr_twl[0], arm7BootCodeSize);
-		setValueSafe(&fifomsg[0], (u32)&arm7bootldr_twl[0]);
-	}
-	//give VRAM_D to ARM7 @0x06000000
-	*(u8*)0x04000243 = (VRAM_D_0x06000000_ARM7 | VRAM_ENABLE);
-	setValueSafe(&fifomsg[1], (u32)arm7BootCodeSize);
-	setValueSafe(&fifomsg[2], (u32)arm7entryaddress);
-	SendFIFOWords(FIFO_ARM7_RELOAD, 0xFF); //ARM9: Execute ARM7 payload-> ARM7
-	while(reloadStatus == (u32)0xFFFFFFFF){
-		swiDelay(1);	
-	}
-}
-#endif
-
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -109,6 +78,21 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 int main(int argc, char **argv) {
+	
+	//Execute Stage 1: IWRAM ARM7 payload: NTR/TWL (0x03800000)
+	executeARM7Payload((u32)0x02380000, 96*1024, (u32*)TGDS_MB_V3_ARM7_STAGE1_ADDR);
+	
+	//Execute Stage 2: VRAM ARM7 payload: NTR/TWL (0x06000000)
+	u32 * payload = NULL;
+	if(__dsimode == false){
+		payload = (u32*)&arm7bootldr[0];	
+	}
+	else{
+		payload = (u32*)&arm7bootldr_twl[0];
+	}
+	executeARM7Payload((u32)0x02380000, 96*1024, payload);
+	
+	
 	//Libnds compatibility: If libnds homebrew implemented TGDS-MB support for some reason, and uses a TGDS-MB payload, then swap "fat:/" to "0:/"
 	char tempARGV[MAX_TGDSFILENAME_LENGTH];
 	memset(tempARGV, 0, sizeof(tempARGV));
@@ -137,9 +121,6 @@ int main(int argc, char **argv) {
 	memset(bootfileName, 0, sizeof(bootfileName));
 	strcpy(bootfileName, tempARGV);
 	
-	//Reload ARM7 payload
-	executeARM7Payload((u32)0x02380000, 64*1024);
-	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
 	bool isTGDSCustomConsole = false;	//set default console or custom console: default console
 	GUI_init(isTGDSCustomConsole);
@@ -158,6 +139,7 @@ int main(int argc, char **argv) {
 	else{
 		GUI_printf(" tgds_multiboot_payload.bin [NTR mode]");
 	}
+	
 	int ret=FS_init();
 	if (ret != 0){
 		GUI_printf("%s: FS Init error: %d >%d", TGDSPROJECTNAME, ret, TGDSPrintfColor_Red);
@@ -262,16 +244,10 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	//DLDI patch it. If TGDS DLDI RAMDISK: Use standalone version, otherwise direct DLDI patch
-	if(strncmp((char*)&dldiGet()->friendlyName[0], "TGDS RAMDISK", 12) == 0){
-		GUI_printf("GOT TGDS DLDI: Skipping patch");
-	}
-	else{
-		u32 dldiSrc = (u32)&_io_dldi_stub;
-		bool stat = dldiPatchLoader((data_t *)arm9EntryAddress, (u32)arm9BootCodeSize, dldiSrc);
-		if(stat == true){
-			GUI_printf("DLDI patch success!");
-		}
+	u32 dldiSrc = (u32)&_io_dldi_stub;
+	bool stat = dldiPatchLoader((data_t *)arm9EntryAddress, (u32)arm9BootCodeSize, dldiSrc);
+	if(stat == true){
+		GUI_printf("DLDI patch success!");
 	}
 	
 	//give VRAM_A & VRAM_B & VRAM_C & VRAM_D back to ARM9
