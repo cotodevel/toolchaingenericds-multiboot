@@ -250,12 +250,6 @@ int main(int argc, char **argv) {
 		GUI_printf("DLDI patch success!");
 	}
 	
-	//give VRAM_A & VRAM_B & VRAM_C & VRAM_D back to ARM9
-	*(u8*)0x04000240 = (VRAM_A_LCDC_MODE | VRAM_ENABLE);	//4000240h  1  VRAMCNT_A - VRAM-A (128K) Bank Control (W)
-	*(u8*)0x04000241 = (VRAM_B_LCDC_MODE | VRAM_ENABLE);	//4000241h  1  VRAMCNT_B - VRAM-B (128K) Bank Control (W)
-	*(u8*)0x04000242 = (VRAM_C_LCDC_MODE | VRAM_ENABLE);	//4000242h  1  VRAMCNT_C - VRAM-C (128K) Bank Control (W)
-	*(u8*)0x04000243 = (VRAM_D_LCDC_MODE | VRAM_ENABLE);	//4000243h  1  VRAMCNT_D - VRAM-D (128K) Bank Control (W)
-	
 	if(__dsimode == true){
 		//NTR / TWL RAM Setup
 		if(
@@ -316,6 +310,12 @@ int main(int argc, char **argv) {
 
 	//Copy ARGV-CMD line
 	memcpy((void *)__system_argv, (const void *)&argvIntraTGDSMB[0], 256);
+	
+	//give VRAM_A & VRAM_B & VRAM_C & VRAM_D back to ARM9
+	*(u8*)0x04000240 = (VRAM_A_LCDC_MODE | VRAM_ENABLE);	//4000240h  1  VRAMCNT_A - VRAM-A (128K) Bank Control (W)
+	*(u8*)0x04000241 = (VRAM_B_LCDC_MODE | VRAM_ENABLE);	//4000241h  1  VRAMCNT_B - VRAM-B (128K) Bank Control (W)
+	*(u8*)0x04000242 = (VRAM_C_LCDC_MODE | VRAM_ENABLE);	//4000242h  1  VRAMCNT_C - VRAM-C (128K) Bank Control (W)
+	*(u8*)0x04000243 = (VRAM_D_LCDC_MODE | VRAM_ENABLE);	//4000243h  1  VRAMCNT_D - VRAM-D (128K) Bank Control (W)
 	
 	//Reload ARM9 core
 	swiSoftReset();
