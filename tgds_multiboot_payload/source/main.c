@@ -209,7 +209,12 @@ int main(int argc, char **argv) {
 	GUI_printf("Booting [%s] ...", (char*)tempARGV);
 	//ARM9 waits & reloads into its new binary.
 	setValueSafe(0x02FFFE24, (u32)0);
-	SendFIFOWords(BOOT_FILE_TGDSMB, 0xFF);
+	
+	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
+	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
+	setValueSafe(&fifomsg[7], (u32)BOOT_FILE_TGDSMB);
+	SendFIFOWords(FIFO_SEND_TGDS_CMD, 0xFF);
+	
 	while( getValueSafe(0x02FFFE24) == ((u32)0) ){
 		
 	}
