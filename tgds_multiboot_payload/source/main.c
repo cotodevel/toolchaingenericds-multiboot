@@ -71,7 +71,7 @@ void closeSoundUser(){
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
+__attribute__((optimize("Ofast")))
 #endif
 
 #if (!defined(__GNUC__) && defined(__clang__))
@@ -248,14 +248,15 @@ int main(int argc, char **argv) {
 			coherent_user_range_by_size((uint32)arm9iRamAddress, arm9iBootCodeSize); //		   if we're launching one
 		}
 	}
-	
-	u32 dldiSrc = (u32)&_io_dldi_stub;
-	bool stat = dldiPatchLoader((data_t *)arm9EntryAddress, (u32)arm9BootCodeSize, dldiSrc);
-	if(stat == true){
-		GUI_printf("DLDI patch success!");
+	else if(isNTRTWLBinary != isNDSBinaryV1Slot2){ //DLDI is for Slot 1 v1/v2/v3 NTR binaries only
+		u32 dldiSrc = (u32)&_io_dldi_stub;
+		bool stat = dldiPatchLoader((data_t *)arm9EntryAddress, (u32)arm9BootCodeSize, dldiSrc);
+		if(stat == true){
+			GUI_printf("DLDI patch success!");
+		}
 	}
 	
-	if(__dsimode == true){
+	if(__dsimode == true){ //can't use "isNTRTWLBinary == isTWLBinary" here because TWL hardware must be backwards compatible with upcoming NTR binaries ready to be ran.
 		//NTR / TWL RAM Setup
 		if(
 			(isNTRTWLBinary == isNDSBinaryV1Slot2)
@@ -316,12 +317,14 @@ int main(int argc, char **argv) {
 	//Copy ARGV-CMD line
 	memcpy((void *)__system_argv, (const void *)&argvIntraTGDSMB[0], 256);
 	
-	//give VRAM_A & VRAM_B & VRAM_C & VRAM_D back to ARM9
-	*(u8*)0x04000240 = (VRAM_A_LCDC_MODE | VRAM_ENABLE);	//4000240h  1  VRAMCNT_A - VRAM-A (128K) Bank Control (W)
-	*(u8*)0x04000241 = (VRAM_B_LCDC_MODE | VRAM_ENABLE);	//4000241h  1  VRAMCNT_B - VRAM-B (128K) Bank Control (W)
-	*(u8*)0x04000242 = (VRAM_C_LCDC_MODE | VRAM_ENABLE);	//4000242h  1  VRAMCNT_C - VRAM-C (128K) Bank Control (W)
-	*(u8*)0x04000243 = (VRAM_D_LCDC_MODE | VRAM_ENABLE);	//4000243h  1  VRAMCNT_D - VRAM-D (128K) Bank Control (W)
+	//give VRAM_A & VRAM_B & VRAM_C & VRAM_D back to ARM9	//can't do this because ARM7 still executes code from VRAM
+	//*(u8*)0x04000240 = (VRAM_A_LCDC_MODE | VRAM_ENABLE);	//4000240h  1  VRAMCNT_A - VRAM-A (128K) Bank Control (W)
+	//*(u8*)0x04000241 = (VRAM_B_LCDC_MODE | VRAM_ENABLE);	//4000241h  1  VRAMCNT_B - VRAM-B (128K) Bank Control (W)
+	//*(u8*)0x04000242 = (VRAM_C_LCDC_MODE | VRAM_ENABLE);	//4000242h  1  VRAMCNT_C - VRAM-C (128K) Bank Control (W)
+	//*(u8*)0x04000243 = (VRAM_D_LCDC_MODE | VRAM_ENABLE);	//4000243h  1  VRAMCNT_D - VRAM-D (128K) Bank Control (W)
 	
-	//Reload ARM9 core
-	swiSoftReset();
+	//Reload ARM9 core. //Note: swiSoftReset(); can't be used here because ARM Core needs to switch to Thumb1 v4t or ARM v4t now
+	typedef void (*t_bootAddr)();
+	t_bootAddr bootARMPayload = (t_bootAddr)arm9EntryAddress;
+	bootARMPayload();
 }
