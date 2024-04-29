@@ -1,22 +1,8 @@
-/*
-
-			Copyright (C) 2017  Coto
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301
-USA
-
-*/
+.section ".text"
+.arch	armv5te
+.cpu	arm946e-s
+.arm
+.align 4
 
 #define PAGE_4K		(0b01011 << 1)
 #define PAGE_8K		(0b01100 << 1)
@@ -52,18 +38,11 @@ USA
 #define DCACHE_ENABLE	(1<<2)
 #define PROTECT_ENABLE	(1<<0)
 
-.arch	armv5te
-.cpu	arm946e-s
-.arm
-
 @Description: Prepares the Memory Protection Unit & boots an ARM9 payload in memory by its entrypoint at 0x02FFFE24
 @void bootarm9payload();
-
-.section ".text"
 .global bootarm9payload
 bootarm9payload:
 @---------------------------------------------------------------------------------
-	/* MPU custom start */
 	@ Switch off MPU
 	mrc	p15, 0, r0, c1, c0, 0
 	bic	r0, r0, #PROTECT_ENABLE
@@ -100,16 +79,16 @@ bootarm9payload:
 	sub	r0, r0, #4              @ IRQ1 Check Bits
 	str 	r1, [r0]
 
-	sub	r0, r0, #256
+	sub	r0, r0, #128
 	bic	r0, r0, #7
 
-	msr	cpsr_c, #0x13      @ svc mode
+	msr	cpsr_c, #0xd3      @ svc mode
 	mov	sp, r0
-	sub	r0, r0, #256
-	msr	cpsr_c, #0x12      @ irq mode
+	sub	r0, r0, #128
+	msr	cpsr_c, #0xd2      @ irq mode
 	mov	sp, r0
-	sub	r0, r0, #256
-	msr	cpsr_c, #0x1f      @ system mode
+	sub	r0, r0, #128
+	msr	cpsr_c, #0xdf      @ system mode
 	mov	sp, r0
 	
 	@ enable cache & tcm
@@ -121,8 +100,6 @@ bootarm9payload:
 	ldr r0,=0x02FFFE24
 	ldr r0, [r0]
 	bx r0
-	
-	.pool
 
 mpu_initial_data:
 	.word 0x00000042  @ p15,0,c2,c0,0..1,r0 ;PU Cachability Bits for Data/Unified+Instruction Protection Region
@@ -138,5 +115,4 @@ mpu_initial_data:
 	.word 0x0300000a  @ p15,0,c9,c1,0,r10   ;TCM Data TCM Base and Virtual Size
 
 .ltorg
-.align
 .end
