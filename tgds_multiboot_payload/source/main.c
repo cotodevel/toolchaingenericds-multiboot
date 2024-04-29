@@ -324,7 +324,5 @@ int main(int argc, char **argv) {
 	//*(u8*)0x04000243 = (VRAM_D_LCDC_MODE | VRAM_ENABLE);	//4000243h  1  VRAMCNT_D - VRAM-D (128K) Bank Control (W)
 	
 	//Reload ARM9 core. //Note: swiSoftReset(); can't be used here because ARM Core needs to switch to Thumb1 v4t or ARM v4t now
-	typedef void (*t_bootAddr)();
-	t_bootAddr bootARMPayload = (t_bootAddr)arm9EntryAddress;
-	bootARMPayload();
+	bootarm9payload();
 }
