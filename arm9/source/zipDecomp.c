@@ -44,6 +44,6 @@ int handleDecompressor(char * zippedFile, char * buf){
 	for(i = 0; i < argCount; i++){	
 		argvs[i] = (char*)&args[i][0];
 	}
-	extern int miniunz_main(int argc,char **argv, char* buf);
+	extern int miniunz_main(int argc,const char *argv[], char* buf);
 	return miniunz_main(argCount, argvs, buf);
 }

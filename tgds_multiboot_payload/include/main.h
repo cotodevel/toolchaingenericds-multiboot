@@ -37,6 +37,7 @@ extern "C" {
 extern char bootfileName[MAX_TGDSFILENAME_LENGTH];
 extern int main(int argc, char **argv);
 extern u8 argvIntraTGDSMB[256];
+extern void bootarm9payload();
 
 #ifdef __cplusplus
 }

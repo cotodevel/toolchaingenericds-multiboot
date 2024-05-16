@@ -279,14 +279,6 @@ int main(int argc, char **argv) {
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 
-	asm("mcr	p15, 0, r0, c7, c10, 4");
-	flush_icache_all();
-	flush_dcache_all();
-	switch_dswnifi_mode(dswifi_idlemode);
-	
-	printf("   ");
-	printf("   ");
-	
 	int ret=FS_init();
 	if (ret != 0){
 		printf("%s: FS Init error: %d >%d", TGDSPROJECTNAME, ret, TGDSPrintfColor_Red);
@@ -294,7 +286,19 @@ int main(int argc, char **argv) {
 			swiDelay(1);
 		}
 	}
+	
+	asm("mcr	p15, 0, r0, c7, c10, 4");
+	flush_icache_all();
+	flush_dcache_all();
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
+	
+	REG_IME = 0;
+	MPUSet();
+	//TGDS-Projects -> legacy NTR TSC compatibility
+	if(__dsimode == true){
+		TWLSetTouchscreenTWLMode();
+	}
+	REG_IME = 1;
 	
 	//load TGDS Logo (NDS BMP Image)
 	//VRAM A Used by console
@@ -662,7 +666,7 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
 	// C split to save mem
 	char cpyBuf[256] = {0};
 	strcpy(cpyBuf, downloadAddr);
-	char * outBuf = (char *)TGDSARM9Malloc(256*10);
+	char * outBuf = (char *)TGDSARM9Malloc(256*20);
 	
 	char * ServerDNSTemp = (char*)((char*)outBuf + (0*256));
 	char * strPathTemp = (char*)((char*)outBuf + (1*256));
@@ -731,7 +735,8 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
     //Send request
 	FILE *file = NULL;
 	char logConsole[256];
-	char * server_reply = (char *)TGDSARM9Malloc(32*1024);
+	int reply_len = 32*1024;
+	char * server_reply = (char *)TGDSARM9Malloc(reply_len);
     int total_len = 0;
 	char message[256]; 
 	sprintf(message, "GET %s HTTP/1.1\r\nHost: %s \r\n\r\n Connection: keep-alive\r\n\r\n Keep-Alive: 300\r\n", strPath,  ServerDNS);
@@ -751,19 +756,19 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
 	}
 	printf("Download start.");
 	int received_len = 0;
-	while( ( received_len = recv(my_socket, server_reply, 32*1024, 0 ) ) != 0 ) { // if recv returns 0, the socket has been closed.
+	while( ( received_len = recv(my_socket, server_reply, reply_len, 0 ) ) != 0 ) { // if recv returns 0, the socket has been closed.
 		if(received_len>0) { // data was received!
 			total_len += received_len;
 			fwrite(server_reply, 1, received_len, file);
 			fsync(fileno(file));
-				
+			
 			clrscr();
 			printf("----");
 			printf("----");
 			printf("----");
 			printf("Received byte size = %d Total length = %d ", received_len, total_len);
 		}
-		swiDelay(1);
+		HaltUntilIRQ(); //Save power until next irq
 	}
 	
 	TGDSARM9Free(server_reply);
