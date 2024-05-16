@@ -674,6 +674,7 @@ int main(int argc, char **argv) {
 	
 	while (1) {
 		handleARM7SVC();	/* Do not remove, handles TGDS services */
+		HaltUntilIRQ(); //Save power until next irq
 	}
 	return 0;
 }
