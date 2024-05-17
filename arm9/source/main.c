@@ -278,7 +278,15 @@ int main(int argc, char **argv) {
 	bool isCustomTGDSMalloc = true;
 	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
-
+	
+	asm("mcr	p15, 0, r0, c7, c10, 4");
+	flush_icache_all();
+	flush_dcache_all();
+	//switch_dswnifi_mode(dswifi_idlemode); //breaks remoteboot, can't be enabled here
+	
+	printf("   ");
+	printf("   ");
+	
 	int ret=FS_init();
 	if (ret != 0){
 		printf("%s: FS Init error: %d >%d", TGDSPROJECTNAME, ret, TGDSPrintfColor_Red);
@@ -287,13 +295,10 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	asm("mcr	p15, 0, r0, c7, c10, 4");
-	flush_icache_all();
-	flush_dcache_all();
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
 	REG_IME = 0;
-	MPUSet();
+	//MPUSet(); //seems to crash reloaded DKARM NTR homebrew if enabled
 	//TGDS-Projects -> legacy NTR TSC compatibility
 	if(__dsimode == true){
 		TWLSetTouchscreenTWLMode();
@@ -666,7 +671,7 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
 	// C split to save mem
 	char cpyBuf[256] = {0};
 	strcpy(cpyBuf, downloadAddr);
-	char * outBuf = (char *)TGDSARM9Malloc(256*20);
+	char * outBuf = (char *)TGDSARM9Malloc(256*10);
 	
 	char * ServerDNSTemp = (char*)((char*)outBuf + (0*256));
 	char * strPathTemp = (char*)((char*)outBuf + (1*256));
