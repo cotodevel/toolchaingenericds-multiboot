@@ -61,9 +61,4 @@ and toolchaingenericds-multiboot-config.txt (update here, the computer's IP you 
 Latest stable release: https://bitbucket.org/Coto88/ToolchainGenericDS-multiboot/get/TGDS1.65.zip
 
 
-
-
-Notes/Issues: 
-https://bitbucket.org/Coto88/toolchaingenericds-multiboot/issues/9/integrate-open-source-ntr-twl-bootloader
-
 Coto
