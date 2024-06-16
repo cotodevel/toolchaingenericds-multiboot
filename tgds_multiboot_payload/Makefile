@@ -62,8 +62,8 @@ DIR_SRC			=	$(DIRS_ARM9_SRC)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	=	-specs=nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE)
-LDFLAGS_DSI	=	-specs=nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(MAPFILE)
+LDFLAGS	=	-specs=nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(BINSTRIP_RULE_COMPRESSED_9).map
+LDFLAGS_DSI	=	-specs=nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(BINSTRIP_RULE_COMPRESSED_9)_twl.map
 LIBRARIES_NTR =	-ltgdsfilesystem9	-lutils9	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lhardware9		-lstdc++	-lcnano9	-lgcc
 LIBRARIES_TWL =	-ltgdsfilesystem9i	-lutils9i	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lhardware9i	-lstdc++	-lcnano9	-lgcc
 
@@ -160,7 +160,7 @@ $(BINSTRIP_RULE_COMPRESSED_9): $(ELF_ARM9)
 	
 clean:
 	-@echo 'cleanup $(BINSTRIP_RULE_COMPRESSED_9)'
-	-@rm -fr $(BINSTRIP_RULE_COMPRESSED_9)	$(MAPFILE)	$(BUILD_ARM9)	data/$(DIR_ARM9).bin	data/arm7bootldr.bin	data/arm7bootldr_twl.bin
+	-@rm -fr $(BINSTRIP_RULE_COMPRESSED_9)	$(BINSTRIP_RULE_COMPRESSED_9).map	$(BINSTRIP_RULE_COMPRESSED_9)_twl.map	$(BUILD_ARM9)	data/$(DIR_ARM9).bin	data/arm7bootldr.bin	data/arm7bootldr_twl.bin
 	
 debug:
 	-@echo 'debug $(objs_arm9)'

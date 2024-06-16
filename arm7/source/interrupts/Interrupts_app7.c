@@ -18,15 +18,16 @@ USA
 
 */
 
-#include "typedefsTGDS.h"
+#include "ipcfifoTGDSUser.h"
 #include "dsregs.h"
 #include "dsregs_asm.h"
+
+#include "InterruptsARMCores_h.h"
 #include "interrupts.h"
-#include "biosTGDS.h"
-#include "ipcfifoTGDSUser.h"
-#include "spifwTGDS.h"
+#include "main.h"
 
 //User Handler Definitions
+
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
@@ -50,30 +51,35 @@ void Timer0handlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void Timer1handlerUser(){
+
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void Timer2handlerUser(){
+	
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void Timer3handlerUser(){
+
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void HblankUser(){
+
 }
 
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
 void VblankUser(){
+	
 
 }
 
@@ -81,6 +87,7 @@ void VblankUser(){
 __attribute__((section(".itcm")))
 #endif
 void VcounterUser(){
+
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
