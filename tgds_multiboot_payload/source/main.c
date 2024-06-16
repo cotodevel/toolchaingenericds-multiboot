@@ -149,6 +149,40 @@ int main(int argc, char **argv) {
 	}
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
+	register int isNTRTWLBinary = (int)isNTROrTWLBinary(bootfileName); //register means save this register and restore it everywhere it's used below
+	
+	//NTR / TWL RAM Setup
+	if(
+		(__dsimode == true)
+		&&
+		(
+		(isNTRTWLBinary == isNDSBinaryV1Slot2)
+		||
+		(isNTRTWLBinary == isNDSBinaryV1)
+		||
+		(isNTRTWLBinary == isNDSBinaryV2)
+		||
+		(isNTRTWLBinary == isNDSBinaryV3)
+		)
+	){
+		//Enable 4M EWRAM (TWL)
+		u32 SFGEXT9 = *(u32*)0x04004008;
+		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
+		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x0 << 14);
+		*(u32*)0x04004008 = SFGEXT9;
+	}
+	else if(
+		(__dsimode == true)
+		&&
+		(isNTRTWLBinary == isTWLBinary)
+	){
+		//Enable 16M EWRAM (TWL)
+		u32 SFGEXT9 = *(u32*)0x04004008;
+		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
+		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
+		*(u32*)0x04004008 = SFGEXT9;
+	}
+	
 	//ARM9 SVCs & loader context initialized:
 	//Copy the file into non-case sensitive "tgdsboot.bin" into ARM7,
 	//since PetitFS only understands 8.3 DOS format filenames
@@ -228,7 +262,6 @@ int main(int argc, char **argv) {
 	int arm7iBootCodeSize = (int)getValueSafe((u32*)ARM7i_BOOT_SIZE);
 	u32 arm9iRamAddress = (u32)getValueSafe((u32*)ARM9i_RAM_ADDRESS);
 	int arm9iBootCodeSize = (int)getValueSafe((u32*)ARM9i_BOOT_SIZE);
-	int isNTRTWLBinary = (int)getValueSafe((u32*)ARM9_TWLORNTRPAYLOAD_MODE);
 	
 	//Todo: Support isNDSBinaryV1Slot2 binary (Slot2 Passme v1 .ds.gba homebrew)
 	if(isNTRTWLBinary == isNDSBinaryV1Slot2){
@@ -257,36 +290,6 @@ int main(int argc, char **argv) {
 	}
 	
 	if(__dsimode == true){ //can't use "isNTRTWLBinary == isTWLBinary" here because TWL hardware must be backwards compatible with upcoming NTR binaries ready to be ran.
-		//NTR / TWL RAM Setup
-		if(
-			(isNTRTWLBinary == isNDSBinaryV1Slot2)
-			||
-			(isNTRTWLBinary == isNDSBinaryV1)
-			||
-			(isNTRTWLBinary == isNDSBinaryV2)
-			||
-			(isNTRTWLBinary == isNDSBinaryV3)
-		){
-			//Enable 4M EWRAM (TWL)
-			u32 SFGEXT9 = *(u32*)0x04004008;
-			//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
-			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x0 << 14);
-			*(u32*)0x04004008 = SFGEXT9;
-		}
-		else if(isNTRTWLBinary == isTWLBinary){
-			//Enable 16M EWRAM (TWL)
-			u32 SFGEXT9 = *(u32*)0x04004008;
-			//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
-			SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
-			*(u32*)0x04004008 = SFGEXT9;
-		}
-		else{
-			handleDSInitOutputMessage("tgds_multiboot_payload.bin[TWL Mode]: RAM cfg fail");
-			u8 fwNo = *(u8*)(0x027FF000 + 0x5D);
-			int stage = 10;
-			handleDSInitError(stage, (u32)fwNo);			
-		}
-		
 		//NTR (Backwards Compatibility mode) / TWL Bios Setup
 		u32 * SCFG_ROM = 0x04004000;
 		if(isNTRTWLBinary == isTWLBinary){
