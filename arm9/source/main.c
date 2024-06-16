@@ -50,6 +50,10 @@ USA
 #include <in.h>
 #include <string.h>
 
+//ARM7 VRAM core
+#include "arm7vram.h"
+#include "arm7vram_twl.h"
+
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
 char lastHomebrewBooted[MAX_TGDSFILENAME_LENGTH];
 
@@ -97,9 +101,8 @@ void closeSoundUser(){
 	//Stubbed. Gets called when closing an audiostream of a custom audio decoder
 }
 
-char args[8][MAX_TGDSFILENAME_LENGTH];
-char *argvs[8];
-
+char args[argvItems][MAX_TGDSFILENAME_LENGTH];	//used by remoteboot
+char *argvs[argvItems];
 char remoteBooterIPAddr[256];
 int remoteBooterPort = 0;
 
@@ -125,6 +128,7 @@ int handleRemoteBoot(char * URLPathRequestedByGetVerb, int portToConnect){
 	}
 	
 	//Downloadfile
+	remove(RemoteBootTGDSPackage);
 	char * fileDownloadDir = "0:/";
 	if(DownloadFileFromServer(URLPathRequestedByGetVerb, portToConnect, fileDownloadDir) == true){
 		printf("Package download OK:");
@@ -133,6 +137,15 @@ int handleRemoteBoot(char * URLPathRequestedByGetVerb, int portToConnect){
 	else{
 		printf("Package download ERROR:");
 		printf("%s", RemoteBootTGDSPackage);
+		
+		printf("Press A to try again.");
+		while(1==1){
+			scanKeys();
+			if(keysDown() & KEY_A){
+				break;
+			}
+		}
+		handleRemoteBoot(URLPathRequestedByGetVerb, portToConnect);
 	}
 	
 	switch_dswnifi_mode(dswifi_idlemode);
@@ -221,6 +234,15 @@ int handleRemoteBoot(char * URLPathRequestedByGetVerb, int portToConnect){
 	}
 	else{
 		printf("Couldn't unpack TGDSPackage.:%s", RemoteBootTGDSPackage);
+		
+		printf("Press A to try again.");
+		while(1==1){
+			scanKeys();
+			if(keysDown() & KEY_A){
+				break;
+			}
+		}
+		handleRemoteBoot(URLPathRequestedByGetVerb, portToConnect);
 		return false;
 	}
 	return 0;
@@ -235,32 +257,35 @@ __attribute__ ((optnone))
 int main(int argc, char **argv) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code start	*/
+	//Save Stage 1: IWRAM ARM7 payload: NTR/TWL (0x03800000)
+	memcpy((void *)TGDS_MB_V3_ARM7_STAGE1_ADDR, (const void *)0x02380000, (int)(96*1024));	//
+	coherent_user_range_by_size((uint32)TGDS_MB_V3_ARM7_STAGE1_ADDR, (int)(96*1024)); //		also for TWL binaries 
+	
+	//Execute Stage 2: VRAM ARM7 payload: NTR/TWL (0x06000000)
+	u32 * payload = NULL;
+	if(__dsimode == false){
+		payload = (u32*)&arm7vram[0];	
+	}
+	else{
+		payload = (u32*)&arm7vram_twl[0];
+	}
+	executeARM7Payload((u32)0x02380000, 96*1024, payload);
+	
 	bool isTGDSCustomConsole = false;	//set default console or custom console: default console
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
-	
-	//xmalloc init removes args, so save them
-	int i = 0;
-	for(i = 0; i < argc; i++){
-		argvs[i] = argv[i];
-	}
 
 	bool isCustomTGDSMalloc = true;
-	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(TGDS_ARM7_MALLOCSTART, TGDS_ARM7_MALLOCSIZE, isCustomTGDSMalloc, TGDSDLDI_ARM7_ADDRESS));
+	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
 	sint32 fwlanguage = (sint32)getLanguage();
 	
-	//argv destroyed here because of xmalloc init, thus restore them
-	for(i = 0; i < argc; i++){
-		argv[i] = argvs[i];
-	}
-
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	flush_icache_all();
-	flush_dcache_all();	
-	switch_dswnifi_mode(dswifi_idlemode);
+	flush_dcache_all();
+	//switch_dswnifi_mode(dswifi_idlemode); //breaks remoteboot, can't be enabled here
 	
-	printf("     ");
-	printf("     ");
+	printf("   ");
+	printf("   ");
 	
 	int ret=FS_init();
 	if (ret != 0){
@@ -272,21 +297,28 @@ int main(int argc, char **argv) {
 	
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
+	REG_IME = 0;
+	//MPUSet(); //seems to crash reloaded DKARM NTR homebrew if enabled
+	//TGDS-Projects -> legacy NTR TSC compatibility
+	if(__dsimode == true){
+		TWLSetTouchscreenTWLMode();
+	}
+	REG_IME = 1;
+	
 	//load TGDS Logo (NDS BMP Image)
 	//VRAM A Used by console
 	//VRAM C Keyboard and/or TGDS Logo
 	
 	//TGDS-MB chainload boot? Boot it then
-	if(argc > 3){		
-		//arg 0: caller binary 
-		//arg 1: this binary (toolchaingenericds-multiboot.nds / toolchaingenericds-multiboot.srl)
-		//arg 2: the NDS/TWL binary we are chainloading into
-		//arg 3: the arg we want to send to the chainloaded binary 
+	if(argc > 2){		
+		//Arg0:	Chainload caller: TGDS-MB
+		//Arg1:	NDS Binary reloaded through ChainLoad
+		//Arg2: NDS Binary reloaded through ChainLoad's ARG0
 		
 		//Libnds compatibility: If (recv) mainARGV fat:/ change to 0:/
 		char thisBinary[MAX_TGDSFILENAME_LENGTH];
 		memset(thisBinary, 0, sizeof(thisBinary));
-		strcpy(thisBinary, argv[2]);
+		strcpy(thisBinary, argv[1]);
 		if(
 			(thisBinary[0] == 'f')
 			&&
@@ -307,17 +339,27 @@ int main(int argc, char **argv) {
 			memset(thisBinary, 0, sizeof(thisBinary));
 			strcpy(thisBinary, thisBinary2);
 		}
-		strcpy(curChosenBrowseFile, (char*)&thisBinary[0]); //Arg1:	NDS Binary reloaded (TGDS format because we load directly now)
+		strcpy(curChosenBrowseFile, thisBinary); //Arg1:	NDS Binary reloaded (TGDS format because we load directly now)
 		char tempArgv[3][MAX_TGDSFILENAME_LENGTH];
+		int tempArgc = 2;
 		memset(tempArgv, 0, sizeof(tempArgv));
 		strcpy(&tempArgv[0][0], (char*)TGDSPROJECTNAME);	
 		strcpy(&tempArgv[1][0], (char*)curChosenBrowseFile);	
-		strcpy(&tempArgv[2][0], argv[3]);
-		addARGV(3, (char*)&tempArgv);	
+		if( (argc > 2) && (argv[2] != NULL)){
+			strcpy(&tempArgv[2][0], argv[2]);
+			tempArgc++;
+		}
+		addARGV(tempArgc, (char*)&tempArgv);	
 		
 		//TGDS-Multiboot chainload:
+		printf("TGDS-Multiboot chainload:");
 		printf("Target: %s", curChosenBrowseFile);
-		printf("Argv1: %s", argv[3]); //TGDS target binary ARGV0
+		if(argv[2] != NULL){
+			printf("Args passed to chainloaded binary: %s ", argv[2]); //TGDS target binary ARGV0
+		}
+		else{
+			printf("No args passed to chainloaded binary."); //TGDS target binary ARGV0
+		}
 		if(FAT_FileExists(curChosenBrowseFile) == FT_NONE){
 			printf("ERROR: Target homebrew >%d", TGDSPrintfColor_Red);
 			printf("%s", curChosenBrowseFile);
@@ -345,55 +387,6 @@ int main(int argc, char **argv) {
 		
 	}
 	
-	//Force ARM7 reload once if TWL mode
-	else if( (argc < 3) && (strncmp(argv[1],"0:/ToolchainGenericDS-multiboot.srl", 35) != 0) && (__dsimode == true)){
-		char startPath[MAX_TGDSFILENAME_LENGTH+1];
-		strcpy(startPath,"/");
-		strcpy(curChosenBrowseFile, "0:/ToolchainGenericDS-multiboot.srl");
-		
-		//Send args
-		if(getTGDSDebuggingState() == true){
-			printf("[Booting %s]", curChosenBrowseFile);
-			printf("Want to send argument?");
-			printf("(A) Yes: (Start) Choose arg.");
-			printf("(B) No. ");
-		}
-		char argv0[MAX_TGDSFILENAME_LENGTH+1];
-		memset(argv0, 0, sizeof(argv0));
-		int argcCount = 0;
-		argcCount++;
-		
-		//Boot .NDS file! (homebrew only)
-		char tmpName[256];
-		char ext[256];
-		strcpy(tmpName, curChosenBrowseFile);
-		separateExtension(tmpName, ext);
-		strlwr(ext);
-		
-		char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-		memset(thisArgv, 0, sizeof(thisArgv));
-		strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
-		strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
-		strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
-		addARGV(3, (char*)&thisArgv);				
-		if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
-			printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
-			printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
-			printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
-			printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
-			while(1==1){
-				scanKeys();
-				if(keysDown()&KEY_A){
-					scanKeys();
-					while(keysDown() & KEY_A){
-						scanKeys();
-					}
-					break;
-				}
-			}
-			menuShow();
-		}
-	}
 	else if(FileExists(TGDSMULTIBOOT_CFG_FILE) == FT_NONE){
 		clrscr();
 		printf("----");
@@ -527,13 +520,47 @@ int main(int argc, char **argv) {
 			strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
 			strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
 			strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
-			addARGV(3, (char*)&thisArgv);				
-			
-			//Save last homebrew 
-			strcpy(lastHomebrewBooted, curChosenBrowseFile);
-			set_config_string("Global", "tgdsmultitbootlasthomebrew", lastHomebrewBooted);
-			save_config_file();
-			
+			addARGV(3, (char*)&thisArgv);
+			int isNTRTWLBinary = isNTROrTWLBinary(curChosenBrowseFile);
+			/*
+			//debug start
+			if(isNTRTWLBinary == isTWLBinary){
+				printf("i'm TWL binary");
+			}
+			else if(isNTRTWLBinary == isNDSBinaryV1){
+				printf("i'm isNDSBinaryV1");
+			}
+			else if(isNTRTWLBinary == isNDSBinaryV2){
+				printf("i'm isNDSBinaryV2");
+			}
+			else if(isNTRTWLBinary == isNDSBinaryV3){
+				printf("i'm isNDSBinaryV3");
+			}
+			else if(isNTRTWLBinary == isNDSBinaryV1Slot2){
+				printf("i'm isNDSBinaryV1Slot2");
+			}
+			else{
+				printf("Not TWL/NTR Binary.");
+			}
+			while (1==1){}
+			//debug start
+			*/
+			if( 
+				(isNTRTWLBinary == isNDSBinaryV1Slot2)
+				||
+				(isNTRTWLBinary == isNDSBinaryV1)
+				||
+				(isNTRTWLBinary == isNDSBinaryV2)
+				||
+				(isNTRTWLBinary == isNDSBinaryV3)
+				||
+				(isNTRTWLBinary == isTWLBinary)
+			){
+				//Save last homebrew 
+				strcpy(lastHomebrewBooted, curChosenBrowseFile);
+				set_config_string("Global", "tgdsmultitbootlasthomebrew", lastHomebrewBooted);
+				save_config_file();
+			}
 			if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
 				printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 				printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
@@ -639,25 +666,6 @@ __attribute__((optimize("O0")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-void fcopy(FILE *f1, FILE *f2){
-    char            buffer[BUFSIZ];
-    size_t          n;
-    while ((n = fread(buffer, sizeof(char), sizeof(buffer), f1)) > 0){
-        if (fwrite(buffer, sizeof(char), n, f2) != n){
-            printf("fcopy: write failed. Halt hardware.");
-			while(1==1){}
-		}
-    }
-}
-
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
 bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPath) {
 	
 	// C split to save mem
@@ -732,7 +740,8 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
     //Send request
 	FILE *file = NULL;
 	char logConsole[256];
-	char * server_reply = (char *)TGDSARM9Malloc(32*1024);
+	int reply_len = 32*1024;
+	char * server_reply = (char *)TGDSARM9Malloc(reply_len);
     int total_len = 0;
 	char message[256]; 
 	sprintf(message, "GET %s HTTP/1.1\r\nHost: %s \r\n\r\n Connection: keep-alive\r\n\r\n Keep-Alive: 300\r\n", strPath,  ServerDNS);
@@ -740,9 +749,7 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
         return false;
     }
     
-	
 	char * tempFile = "0:/temp.pkg";
-	
 	char fullFilePath[256];
 	sprintf(fullFilePath, "%s%s", outputPath, strFilename);
 	remove(fullFilePath);//remove actual file
@@ -754,19 +761,19 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
 	}
 	printf("Download start.");
 	int received_len = 0;
-	while( ( received_len = recv(my_socket, server_reply, 32*1024, 0 ) ) != 0 ) { // if recv returns 0, the socket has been closed.
+	while( ( received_len = recv(my_socket, server_reply, reply_len, 0 ) ) != 0 ) { // if recv returns 0, the socket has been closed.
 		if(received_len>0) { // data was received!
 			total_len += received_len;
 			fwrite(server_reply, 1, received_len, file);
 			fsync(fileno(file));
-				
+			
 			clrscr();
 			printf("----");
 			printf("----");
 			printf("----");
 			printf("Received byte size = %d Total length = %d ", received_len, total_len);
 		}
-		swiDelay(1);
+		HaltUntilIRQ(); //Save power until next irq
 	}
 	
 	TGDSARM9Free(server_reply);

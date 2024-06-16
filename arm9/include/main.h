@@ -40,15 +40,12 @@ extern "C" {
 extern int main(int argc, char **argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
 extern struct FileClassList * thisFileList;
-extern int ReloadNDSBinaryFromContext(char * filename);
-
-extern char args[8][MAX_TGDSFILENAME_LENGTH];
-extern char *argvs[8];
+extern char args[argvItems][MAX_TGDSFILENAME_LENGTH]; //used by remoteboot
+extern char *argvs[argvItems];
 extern int handleRemoteBoot(char * ipToConnect, int portToConnect);
 extern char remoteBooterIPAddr[256];
 extern int remoteBooterPort;
 extern bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPath);
-extern void fcopy(FILE *f1, FILE *f2);
 extern char lastHomebrewBooted[MAX_TGDSFILENAME_LENGTH];
 
 #ifdef __cplusplus
