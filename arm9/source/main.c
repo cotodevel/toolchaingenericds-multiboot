@@ -298,12 +298,14 @@ int main(int argc, char **argv) {
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
 	REG_IME = 0;
+	
 	//MPUSet(); //seems to crash reloaded DKARM NTR homebrew if enabled
 	//TGDS-Projects -> legacy NTR TSC compatibility
 	if(__dsimode == true){
 		TWLSetTouchscreenTWLMode();
 	}
 	REG_IME = 1;
+	setupDisabledExceptionHandler();
 	
 	//load TGDS Logo (NDS BMP Image)
 	//VRAM A Used by console

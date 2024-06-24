@@ -77,7 +77,8 @@ __attribute__((optimize("Ofast")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int main(int argc, char **argv) {
+int main(int argc, char **argv) {	
+	register isNTRTWLBinary = (int)getValueSafe((u32*)ARM9_TWLORNTRPAYLOAD_MODE); //register means save this register and restore it everywhere it's used below. Save it now as it'll get erased
 	
 	//Execute Stage 1: IWRAM ARM7 payload: NTR/TWL (0x03800000)
 	executeARM7Payload((u32)0x02380000, 96*1024, (u32*)TGDS_MB_V3_ARM7_STAGE1_ADDR);
@@ -149,8 +150,6 @@ int main(int argc, char **argv) {
 	}
 	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
-	register int isNTRTWLBinary = (int)isNTROrTWLBinary(bootfileName); //register means save this register and restore it everywhere it's used below
-	
 	//NTR / TWL RAM Setup
 	if(
 		(__dsimode == true)
@@ -188,59 +187,14 @@ int main(int argc, char **argv) {
 	//since PetitFS only understands 8.3 DOS format filenames
 	WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
 	asm("mcr	p15, 0, r0, c7, c10, 4");
-	FIL fPagingFD;
-	int flags = charPosixToFlagPosix("r");
-	BYTE mode = posixToFatfsAttrib(flags);
-	FRESULT result = f_open(&fPagingFD, (const TCHAR*)bootfileName, mode);
-	if(result != FR_OK){
-		printf("tgds_multiboot_payload.bin: read (1)");
-		printf("payload fail [%s]", bootfileName);
-		while(1==1){}
-	}
-	int payloadSize = (int)f_size(&fPagingFD);
-	f_lseek (
-			&fPagingFD,
-			(DWORD)0
-		);
-	u8* workBuffer = (u8*)TGDS_MB_V3_WORKBUFFER;
-	result = f_read(&fPagingFD, workBuffer, (int)payloadSize, (UINT*)&ret);
-	if(ret != payloadSize){
-		printf("tgds_multiboot_payload.bin: read (2)");
-		printf("payload fail [%s]", bootfileName);
-		while(1==1){}
-	}
-	coherent_user_range_by_size((uint32)workBuffer, (int)payloadSize);
-	f_close(&fPagingFD);
-	char * tempFile = "0:/tgdsboot.bin";
-	flags = charPosixToFlagPosix("w+");
-	mode = posixToFatfsAttrib(flags);
-	result = f_open(&fPagingFD, (const TCHAR*)tempFile, mode);
-	if(result != FR_OK){
-		printf("tgds_multiboot_payload.bin: read (3)");
-		printf("payload fail [%s]", tempFile);
-		while(1==1){}
-	}
-	f_lseek (
-			&fPagingFD,
-			(DWORD)0       
-		);
-	int writtenSize=0;
-	result = f_write(&fPagingFD, workBuffer, (int)payloadSize, (UINT*)&writtenSize); //workbuffer is already coherent
-	f_sync(&fPagingFD); //make persistent file in filesystem coherent
-	f_close(&fPagingFD);
-	if (result != FR_OK){
-		printf("tgds_multiboot_payload.bin: read (4)");
-		printf("payload fail [%s]", tempFile);
-		while(1==1){}
-	}
-	strcpy(bootfileName, tempFile);
-	*ARM9_STRING_PTR = (u32)&bootfileName[0];
+	
 	//TWL/NTR Mode bios will change here, so prevent jumps to BIOS exception vector through any interrupts
 	REG_IME = 0;
 	REG_IE = 0;
 	REG_IF = 0;
 	setupDisabledExceptionHandler();
 	GUI_printf("Booting [%s] ...", (char*)tempARGV);
+	
 	//ARM9 waits & reloads into its new binary.
 	setValueSafe(0x02FFFE24, (u32)0);
 	
@@ -252,6 +206,7 @@ int main(int argc, char **argv) {
 	while( getValueSafe(0x02FFFE24) == ((u32)0) ){
 		
 	}
+	
 	u32 * arm7EntryAddress = (u32*)getValueSafe((u32*)0x02FFFE34);
 	u32 * arm9EntryAddress = (u32*)getValueSafe((u32*)0x02FFFE24);
 	int arm7BootCodeSize = (int)getValueSafe((u32*)ARM7_BOOT_SIZE);
