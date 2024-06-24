@@ -54,6 +54,15 @@ USA
 #include "arm7bootldr.h"
 #include "arm7bootldr_twl.h"
 
+u32 * getTGDSMBV3ARM7Bootloader(){
+	if(__dsimode == false){
+		return (u32*)&arm7bootldr[0];	
+	}
+	else{
+		return (u32*)&arm7bootldr_twl[0];
+	}
+}
+
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
 char lastHomebrewBooted[MAX_TGDSFILENAME_LENGTH];
 
@@ -210,7 +219,8 @@ int handleRemoteBoot(char * URLPathRequestedByGetVerb, int portToConnect){
 			strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
 			addARGV(3, (char*)&thisArgv);				
 			
-			if(TGDSMultibootRunNDSPayload(fileBuf) == false){ //should never reach here, nor even return true. Should fail it returns false
+			u32 * payload = getTGDSMBV3ARM7Bootloader();
+			if(TGDSMultibootRunNDSPayload(fileBuf, (u8*)payload) == false){ //should never reach here, nor even return true. Should fail it returns false
 				printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 				printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
 				printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
@@ -369,7 +379,8 @@ int main(int argc, char **argv) {
 			while(1==1){}
 		}
 		
-		if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+		u32 * payload = getTGDSMBV3ARM7Bootloader();
+		if(TGDSMultibootRunNDSPayload(curChosenBrowseFile, (u8*)payload) == false){ //should never reach here, nor even return true. Should fail it returns false
 			printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 			printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
 			printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
@@ -563,7 +574,9 @@ int main(int argc, char **argv) {
 				set_config_string("Global", "tgdsmultitbootlasthomebrew", lastHomebrewBooted);
 				save_config_file();
 			}
-			if(TGDSMultibootRunNDSPayload(curChosenBrowseFile) == false){ //should never reach here, nor even return true. Should fail it returns false
+			
+			u32 * payload = getTGDSMBV3ARM7Bootloader();
+			if(TGDSMultibootRunNDSPayload(curChosenBrowseFile, (u8*)payload) == false){ //should never reach here, nor even return true. Should fail it returns false
 				printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 				printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
 				printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
@@ -590,7 +603,9 @@ int main(int argc, char **argv) {
 				strcpy(&thisArgv[0][0], loaderName);	//Arg0:	NDS Binary loaded
 				strcpy(&thisArgv[1][0], "");				//Arg1: ARGV0
 				addARGV(2, (char*)&thisArgv);
-				TGDSMultibootRunNDSPayload(loaderName);
+				
+				u32 * payload = getTGDSMBV3ARM7Bootloader();
+				TGDSMultibootRunNDSPayload(loaderName, (u8*)payload);
 			}
 			else{
 				clrscr();
@@ -624,8 +639,9 @@ int main(int argc, char **argv) {
 			strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
 			strcpy(&thisArgv[1][0], lastHomebrewBooted);	//Arg1:	NDS Binary reloaded
 			strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
-			addARGV(3, (char*)&thisArgv);				
-			if(TGDSMultibootRunNDSPayload(lastHomebrewBooted) == false){ //should never reach here, nor even return true. Should fail it returns false
+			addARGV(3, (char*)&thisArgv);
+			u32 * payload = getTGDSMBV3ARM7Bootloader();
+			if(TGDSMultibootRunNDSPayload(lastHomebrewBooted, (u8*)payload) == false){ //should never reach here, nor even return true. Should fail it returns false
 				printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
 				printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
 				printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);

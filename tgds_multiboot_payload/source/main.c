@@ -88,19 +88,6 @@ int main(int argc, char **argv) {
 	setupDisabledExceptionHandler();
 	register isNTRTWLBinary = (int)getValueSafe((u32*)ARM9_TWLORNTRPAYLOAD_MODE); //register means save this register and restore it everywhere it's used below. Save it now as it'll get erased
 	
-	//Execute Stage 1: IWRAM ARM7 payload: NTR/TWL (0x03800000)
-	executeARM7Payload((u32)0x02380000, 96*1024, (u32*)TGDS_MB_V3_ARM7_STAGE1_ADDR);
-	
-	//Execute Stage 2: VRAM ARM7 payload: NTR/TWL (0x06000000)
-	u32 * payload = NULL;
-	if(__dsimode == false){
-		payload = (u32*)&arm7bootldr[0];	
-	}
-	else{
-		payload = (u32*)&arm7bootldr_twl[0];
-	}
-	executeARM7Payload((u32)0x02380000, 96*1024, payload);
-	
 	//Libnds compatibility: If libnds homebrew implemented TGDS-MB support for some reason, and uses a TGDS-MB payload, then swap "fat:/" to "0:/"
 	char tempARGV[MAX_TGDSFILENAME_LENGTH];
 	memset(tempARGV, 0, sizeof(tempARGV));
