@@ -71,13 +71,16 @@ void closeSoundUser(){
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("Ofast")))
+__attribute__((optimize("Os")))
 #endif
 
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
 int main(int argc, char **argv) {	
+	memset(0x02000000, 0, (int)512*1024); //clear RAM: Fixes DKARM / Custom Devkit NTR/TWL homebrew relying on RAM state not initialized properly
+	coherent_user_range_by_size((u32)0x02000000, (int)512*1024);
+	
 	//TWL/NTR Mode bios will change here, so prevent jumps to BIOS exception vector through any interrupts
 	REG_IME = 0;
 	REG_IE = 0;
@@ -101,7 +104,7 @@ int main(int argc, char **argv) {
 	//Libnds compatibility: If libnds homebrew implemented TGDS-MB support for some reason, and uses a TGDS-MB payload, then swap "fat:/" to "0:/"
 	char tempARGV[MAX_TGDSFILENAME_LENGTH];
 	memset(tempARGV, 0, sizeof(tempARGV));
-	strcpy(tempARGV, argv[1]);
+	strcpy(tempARGV, "");
 	
 	if(
 		(tempARGV[0] == 'f')
