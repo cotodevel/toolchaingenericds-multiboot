@@ -78,6 +78,11 @@ __attribute__((optimize("Ofast")))
 __attribute__ ((optnone))
 #endif
 int main(int argc, char **argv) {	
+	//TWL/NTR Mode bios will change here, so prevent jumps to BIOS exception vector through any interrupts
+	REG_IME = 0;
+	REG_IE = 0;
+	REG_IF = 0;
+	setupDisabledExceptionHandler();
 	register isNTRTWLBinary = (int)getValueSafe((u32*)ARM9_TWLORNTRPAYLOAD_MODE); //register means save this register and restore it everywhere it's used below. Save it now as it'll get erased
 	
 	//Execute Stage 1: IWRAM ARM7 payload: NTR/TWL (0x03800000)
@@ -92,7 +97,6 @@ int main(int argc, char **argv) {
 		payload = (u32*)&arm7bootldr_twl[0];
 	}
 	executeARM7Payload((u32)0x02380000, 96*1024, payload);
-	
 	
 	//Libnds compatibility: If libnds homebrew implemented TGDS-MB support for some reason, and uses a TGDS-MB payload, then swap "fat:/" to "0:/"
 	char tempARGV[MAX_TGDSFILENAME_LENGTH];
@@ -122,33 +126,15 @@ int main(int argc, char **argv) {
 	memset(bootfileName, 0, sizeof(bootfileName));
 	strcpy(bootfileName, tempARGV);
 	
-	/*			TGDS 1.6 Standard ARM9 Init code start	*/
-	bool isTGDSCustomConsole = false;	//set default console or custom console: default console
-	GUI_init(isTGDSCustomConsole);
-	GUI_clear();
-	
-	bool isCustomTGDSMalloc = true;
-	setTGDSMemoryAllocator(getProjectSpecificMemoryAllocatorSetup(isCustomTGDSMalloc));
-	sint32 fwlanguage = (sint32)getLanguage();
-	
-	GUI_printf(" ---- ");
-	GUI_printf(" ---- ");
+	nocashMessage(" ---- ");
+	nocashMessage(" ---- ");
 	
 	if(__dsimode == true){
-		GUI_printf(" tgds_multiboot_payload.bin [TWL mode]");
+		nocashMessage(" tgds_multiboot_payload.bin [TWL mode]");
 	}
 	else{
-		GUI_printf(" tgds_multiboot_payload.bin [NTR mode]");
+		nocashMessage(" tgds_multiboot_payload.bin [NTR mode]");
 	}
-	
-	int ret=FS_init();
-	if (ret != 0){
-		GUI_printf("%s: FS Init error: %d >%d", TGDSPROJECTNAME, ret, TGDSPrintfColor_Red);
-		while(1==1){
-			swiDelay(1);
-		}
-	}
-	/*			TGDS 1.6 Standard ARM9 Init code end	*/
 	
 	//NTR / TWL RAM Setup
 	if(
@@ -188,12 +174,7 @@ int main(int argc, char **argv) {
 	WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	
-	//TWL/NTR Mode bios will change here, so prevent jumps to BIOS exception vector through any interrupts
-	REG_IME = 0;
-	REG_IE = 0;
-	REG_IF = 0;
-	setupDisabledExceptionHandler();
-	GUI_printf("Booting [%s] ...", (char*)tempARGV);
+	nocashMessage("Booting ...");
 	
 	//ARM9 waits & reloads into its new binary.
 	setValueSafe(0x02FFFE24, (u32)0);
@@ -240,16 +221,16 @@ int main(int argc, char **argv) {
 		u32 dldiSrc = (u32)&_io_dldi_stub;
 		bool stat = dldiPatchLoader((data_t *)arm9EntryAddress, (u32)arm9BootCodeSize, dldiSrc);
 		if(stat == true){
-			GUI_printf("DLDI patch success!");
+			nocashMessage("DLDI patch success!");
 		}
 	}
 	
-	if(__dsimode == true){ //can't use "isNTRTWLBinary == isTWLBinary" here because TWL hardware must be backwards compatible with upcoming NTR binaries ready to be ran.
+	if(__dsimode == true){
 		//NTR (Backwards Compatibility mode) / TWL Bios Setup
 		u32 * SCFG_ROM = 0x04004000;
 		if(isNTRTWLBinary == isTWLBinary){
 			while ((u16)getValueSafe(SCFG_ROM) != ((u16)1)){}
-			//GUI_printf("BIOS mode: [TWL]. ");
+			//BIOS mode: [TWL].
 		}
 		else if( 
 			(isNTRTWLBinary == isNDSBinaryV1Slot2)
@@ -261,7 +242,7 @@ int main(int argc, char **argv) {
 			(isNTRTWLBinary == isNDSBinaryV3)
 		){
 			while ((u16)getValueSafe(SCFG_ROM) != ((u16)3)){}
-			//GUI_printf("BIOS mode: [NTR]. ");
+			//BIOS mode: [NTR]. 
 		}
 		else{
 			handleDSInitOutputMessage("tgds_multiboot_payload.bin[TWL Mode]: BIOS cfg fail");
@@ -281,6 +262,6 @@ int main(int argc, char **argv) {
 	//*(u8*)0x04000242 = (VRAM_C_LCDC_MODE | VRAM_ENABLE);	//4000242h  1  VRAMCNT_C - VRAM-C (128K) Bank Control (W)
 	//*(u8*)0x04000243 = (VRAM_D_LCDC_MODE | VRAM_ENABLE);	//4000243h  1  VRAMCNT_D - VRAM-D (128K) Bank Control (W)
 	
-	//Reload ARM9 core. //Note: swiSoftReset(); can't be used here because ARM Core needs to switch to Thumb1 v4t or ARM v4t now
+	//Reload ARM9 core. //Note: swiSoftReset(); can't be used here because ARM Core needs to switch to Thumb1 or ARM v5te now
 	bootarm9payload();
 }
