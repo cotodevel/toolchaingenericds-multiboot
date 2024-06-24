@@ -51,8 +51,8 @@ USA
 #include <string.h>
 
 //ARM7 VRAM core
-#include "arm7vram.h"
-#include "arm7vram_twl.h"
+#include "arm7bootldr.h"
+#include "arm7bootldr_twl.h"
 
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
 char lastHomebrewBooted[MAX_TGDSFILENAME_LENGTH];
@@ -264,10 +264,10 @@ int main(int argc, char **argv) {
 	//Execute Stage 2: VRAM ARM7 payload: NTR/TWL (0x06000000)
 	u32 * payload = NULL;
 	if(__dsimode == false){
-		payload = (u32*)&arm7vram[0];	
+		payload = (u32*)&arm7bootldr[0];	
 	}
 	else{
-		payload = (u32*)&arm7vram_twl[0];
+		payload = (u32*)&arm7bootldr_twl[0];
 	}
 	executeARM7Payload((u32)0x02380000, 96*1024, payload);
 	
