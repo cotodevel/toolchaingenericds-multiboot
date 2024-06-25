@@ -41,10 +41,6 @@ USA
 #include "tgds_ramdisk_dldi.h"
 #include "exceptionTGDS.h"
 
-//ARM7 VRAM core
-#include "arm7bootldr.h"
-#include "arm7bootldr_twl.h"
-
 char bootfileName[MAX_TGDSFILENAME_LENGTH];
 int internalCodecType = SRC_NONE;//Internal because WAV raw decompressed buffers are used if Uncompressed WAV or ADPCM
 
@@ -156,6 +152,10 @@ int main(int argc, char **argv) {
 		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
 		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
 		*(u32*)0x04004008 = SFGEXT9;
+		
+		//Clear 12MB of TWL EWRAM to prove this memory is ready to be written!
+		dmaFillWord(0, 0, (uint32)0x02000000, (uint32)(12*1024*1024));
+		coherent_user_range_by_size((uint32)0x02000000, (uint32)(12*1024*1024)); //	 memory	coherent (NTR/TWL)
 	}
 	
 	//ARM9 SVCs & loader context initialized:
