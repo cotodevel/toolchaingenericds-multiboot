@@ -162,6 +162,14 @@ int main(int argc, char **argv) {
 	//Copy the file into non-case sensitive "tgdsboot.bin" into ARM7,
 	//since PetitFS only understands 8.3 DOS format filenames
 	WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
+	REG_EXMEMCNT = 0xE880;
+	if(
+		(__dsimode == true)
+		&&
+		(isNTRTWLBinary == isTWLBinary)
+	){
+		initMBKARM9();
+	}
 	asm("mcr	p15, 0, r0, c7, c10, 4");
 	
 	nocashMessage("Booting ...");
