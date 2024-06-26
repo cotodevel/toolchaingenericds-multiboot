@@ -24,7 +24,7 @@ MEMORY
 	DTCM : ORIGIN = 0x0b000000, LENGTH = 16K
 	ITCM : ORIGIN = 0x01FF8000, LENGTH = 32K
 	GBAROM : ORIGIN = 0x08000000, LENGTH = 32M
-	EWRAM : ORIGIN = 0x02FB0000, LENGTH = 2M	/*	TGDS_MB_V3_PAYLOAD_ADDR --> NTR Mirror #2 : 0x023B0000 // --> TWL Linear : 0x02FB0000 (requires copying section)	*/
+	EWRAM : ORIGIN = 0x2F28000, LENGTH = 2M	/*	TGDS_MB_V3_PAYLOAD_ADDR --> NTR Mirror #2 : 0x2328000 // --> TWL Linear : 0x2F28000 (requires copying section)	*/
 }
 
 _itcm_start = ORIGIN(ITCM);

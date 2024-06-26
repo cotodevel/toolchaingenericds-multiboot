@@ -153,9 +153,9 @@ int main(int argc, char **argv) {
 		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
 		*(u32*)0x04004008 = SFGEXT9;
 		
-		//Clear 12MB of TWL EWRAM to prove this memory is ready to be written!
-		dmaFillWord(0, 0, (uint32)0x02000000, (uint32)(12*1024*1024));
-		coherent_user_range_by_size((uint32)0x02000000, (uint32)(12*1024*1024)); //	 memory	coherent (NTR/TWL)
+		//Clear TWL EWRAM to prove this memory is ready to be written!
+		dmaFillWord(0, 0, (uint32)0x02000000, (uint32)TGDS_MB_V3_FREEMEM_TWL);
+		coherent_user_range_by_size((uint32)0x02000000, (uint32)TGDS_MB_V3_FREEMEM_TWL); //	 memory	coherent (NTR/TWL)
 	}
 	
 	//ARM9 SVCs & loader context initialized:
