@@ -596,31 +596,36 @@ int main(int argc, char **argv) {
 		}
 		
 		if (keysDown() & KEY_SELECT){
-			char * loaderName = canGoBackToLoader();
-			if(loaderName != NULL){
-				char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-				memset(thisArgv, 0, sizeof(thisArgv));
-				strcpy(&thisArgv[0][0], loaderName);	//Arg0:	NDS Binary loaded
-				strcpy(&thisArgv[1][0], "");				//Arg1: ARGV0
-				addARGV(2, (char*)&thisArgv);
-				
-				u32 * payload = getTGDSMBV3ARM7Bootloader();
-				TGDSMultibootRunNDSPayload(loaderName, (u8*)payload);
+			if(__dsimode == false){
+				char * loaderName = canGoBackToLoader();
+				if(loaderName != NULL){
+					char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+					memset(thisArgv, 0, sizeof(thisArgv));
+					strcpy(&thisArgv[0][0], loaderName);	//Arg0:	NDS Binary loaded
+					strcpy(&thisArgv[1][0], "");				//Arg1: ARGV0
+					addARGV(2, (char*)&thisArgv);
+					
+					u32 * payload = getTGDSMBV3ARM7Bootloader();
+					TGDSMultibootRunNDSPayload(loaderName, (u8*)payload);
+				}
+				else{
+					clrscr();
+					printf("--");
+					printf("Dldi name: %s ", dldi_tryingInterface());
+					printf("isn't registered.");
+					printf("Press B to exit.");
+					scanKeys();
+					while(1==1){
+						scanKeys();
+						if(keysDown()&KEY_B){
+							break;
+						}
+					}
+					menuShow();
+				}
 			}
 			else{
-				clrscr();
-				printf("--");
-				printf("Dldi name: %s ", dldi_tryingInterface());
-				printf("isn't registered.");
-				printf("Press B to exit.");
-				scanKeys();
-				while(1==1){
-					scanKeys();
-					if(keysDown()&KEY_B){
-						break;
-					}
-				}
-				menuShow();
+				shutdownNDSHardware();
 			}
 		}
 		
