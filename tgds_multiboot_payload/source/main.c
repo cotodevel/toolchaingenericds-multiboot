@@ -41,7 +41,6 @@ USA
 #include "tgds_ramdisk_dldi.h"
 #include "exceptionTGDS.h"
 
-char bootfileName[MAX_TGDSFILENAME_LENGTH];
 int internalCodecType = SRC_NONE;//Internal because WAV raw decompressed buffers are used if Uncompressed WAV or ADPCM
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -73,7 +72,12 @@ __attribute__((optimize("Os")))
 #if (!defined(__GNUC__) && defined(__clang__))
 __attribute__ ((optnone))
 #endif
-int main(int argc, char **argv) {	
+int main(int argc, char **argv) {
+	
+	//Save ARGV-CMD line
+	memcpy((char*)TGDS_ARGV_BUFFER, (void *)argvIntraTGDSMB, 256);
+	coherent_user_range_by_size((uint32)TGDS_ARGV_BUFFER, (int)256);
+	
 	memset(0x02000000, 0, (int)512*1024); //clear RAM: Fixes DKARM / Custom Devkit NTR/TWL homebrew relying on RAM state not initialized properly
 	coherent_user_range_by_size((u32)0x02000000, (int)512*1024);
 	
@@ -83,34 +87,6 @@ int main(int argc, char **argv) {
 	REG_IF = 0;
 	setupDisabledExceptionHandler();
 	register isNTRTWLBinary = (int)getValueSafe((u32*)ARM9_TWLORNTRPAYLOAD_MODE); //register means save this register and restore it everywhere it's used below. Save it now as it'll get erased
-	
-	//Libnds compatibility: If libnds homebrew implemented TGDS-MB support for some reason, and uses a TGDS-MB payload, then swap "fat:/" to "0:/"
-	char tempARGV[MAX_TGDSFILENAME_LENGTH];
-	memset(tempARGV, 0, sizeof(tempARGV));
-	strcpy(tempARGV, "");
-	
-	if(
-		(tempARGV[0] == 'f')
-		&&
-		(tempARGV[1] == 'a')
-		&&
-		(tempARGV[2] == 't')
-		&&
-		(tempARGV[3] == ':')
-		&&
-		(tempARGV[4] == '/')
-		){
-		char tempARGV2[MAX_TGDSFILENAME_LENGTH];
-		memset(tempARGV2, 0, sizeof(tempARGV2));
-		strcpy(tempARGV2, "0:/");
-		strcat(tempARGV2, &tempARGV[5]);
-		
-		//copy back
-		memset(tempARGV, 0, sizeof(tempARGV));
-		strcpy(tempARGV, tempARGV2);
-	}
-	memset(bootfileName, 0, sizeof(bootfileName));
-	strcpy(bootfileName, tempARGV);
 	
 	nocashMessage(" ---- ");
 	nocashMessage(" ---- ");
@@ -258,7 +234,8 @@ int main(int argc, char **argv) {
 	}
 
 	//Copy ARGV-CMD line
-	memcpy((void *)__system_argv, (const void *)&argvIntraTGDSMB[0], 256);
+	memcpy((void *)__system_argv, (const void *)TGDS_ARGV_BUFFER, 256);
+	coherent_user_range_by_size((uint32)__system_argv, (int)256);
 	
 	//give VRAM_A & VRAM_B & VRAM_C & VRAM_D back to ARM9	//can't do this because ARM7 still executes code from VRAM
 	//*(u8*)0x04000240 = (VRAM_A_LCDC_MODE | VRAM_ENABLE);	//4000240h  1  VRAMCNT_A - VRAM-A (128K) Bank Control (W)
