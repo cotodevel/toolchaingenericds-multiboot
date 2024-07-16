@@ -639,6 +639,8 @@ int main(int argc, char **argv) {
 		}
 		
 		if (keysDown() & KEY_Y){
+			printf("[Booting... Please wait] >%d", TGDSPrintfColor_Red);
+			
 			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
 			memset(thisArgv, 0, sizeof(thisArgv));
 			strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded

@@ -153,25 +153,15 @@ int main(int argc, char **argv) {
 		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x2 << 14);
 		*(u32*)0x04004008 = SFGEXT9;
 		
-		//Clear TWL EWRAM to prove this memory is ready to be written!
-		dmaFillWord(0, 0, (uint32)0x02000000, (uint32)TGDS_MB_V3_FREEMEM_TWL);
-		coherent_user_range_by_size((uint32)0x02000000, (uint32)TGDS_MB_V3_FREEMEM_TWL); //	 memory	coherent (NTR/TWL)
+		REG_EXMEMCNT = 0xE880;
+		initMBKARM9();
 	}
 	
 	//ARM9 SVCs & loader context initialized:
 	//Copy the file into non-case sensitive "tgdsboot.bin" into ARM7,
 	//since PetitFS only understands 8.3 DOS format filenames
 	WRAM_CR = WRAM_0KARM9_32KARM7;	//96K ARM7 : 0x037f8000 ~ 0x03810000
-	REG_EXMEMCNT = 0xE880;
-	if(
-		(__dsimode == true)
-		&&
-		(isNTRTWLBinary == isTWLBinary)
-	){
-		initMBKARM9();
-	}
 	asm("mcr	p15, 0, r0, c7, c10, 4");
-	
 	nocashMessage("Booting ...");
 	
 	//ARM9 waits & reloads into its new binary.
@@ -196,12 +186,28 @@ int main(int argc, char **argv) {
 	int arm7iBootCodeSize = (int)getValueSafe((u32*)ARM7i_BOOT_SIZE);
 	u32 arm9iRamAddress = (u32)getValueSafe((u32*)ARM9i_RAM_ADDRESS);
 	int arm9iBootCodeSize = (int)getValueSafe((u32*)ARM9i_BOOT_SIZE);
+	bool isTGDSTWLHomebrew = (bool)getValueSafe((u32*)TGDS_IS_TGDS_HOMEBREW);
 	
 	//Todo: Support isNDSBinaryV1Slot2 binary (Slot2 Passme v1 .ds.gba homebrew)
 	if(isNTRTWLBinary == isNDSBinaryV1Slot2){
 		u8 fwNo = *(u8*)ARM7_ARM9_SAVED_DSFIRMWARE;
 		int stage = 0;
 		handleDSInitError(stage, (u32)fwNo);	
+	}
+	
+	//TGDS TWL ?
+	if(
+		(__dsimode == true)
+		&&
+		(isNTRTWLBinary == isTWLBinary)
+		&&
+		(isTGDSTWLHomebrew == true)
+	){
+		//Enable 4M EWRAM (TWL)
+		u32 SFGEXT9 = *(u32*)0x04004008;
+		//14-15 Main Memory RAM Limit (0..1=4MB/DS, 2=16MB/DSi, 3=32MB/DSiDebugger)
+		SFGEXT9 = (SFGEXT9 & ~(0x3 << 14)) | (0x0 << 14);
+		*(u32*)0x04004008 = SFGEXT9;
 	}
 	
 	coherent_user_range_by_size((uint32)arm7EntryAddress, arm7BootCodeSize); //Make ARM9 
