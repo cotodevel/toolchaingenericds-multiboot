@@ -438,7 +438,8 @@ int main(int argc, char **argv) {
 	
 	//Read last homebrew 
 	char * lastHomebrewBootedReadFromCFG = get_config_string("Global", "tgdsmultitbootlasthomebrew", "");
-	if( (strlen(lastHomebrewBootedReadFromCFG) > 7) && (isNTROrTWLBinary(lastHomebrewBootedReadFromCFG) != notTWLOrNTRBinary) ){  //0:/x.ext
+	bool isTGDSTWLHomebrew = false;
+	if( (strlen(lastHomebrewBootedReadFromCFG) > 7) && (isNTROrTWLBinary(lastHomebrewBootedReadFromCFG, &isTGDSTWLHomebrew) != notTWLOrNTRBinary) ){  //0:/x.ext
 		strcpy(lastHomebrewBooted, lastHomebrewBootedReadFromCFG);
 	}
 	else{
@@ -534,7 +535,8 @@ int main(int argc, char **argv) {
 			strcpy(&thisArgv[1][0], curChosenBrowseFile);	//Arg1:	NDS Binary reloaded
 			strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
 			addARGV(3, (char*)&thisArgv);
-			int isNTRTWLBinary = isNTROrTWLBinary(curChosenBrowseFile);
+			bool isTGDSTWLHomebrew = false;
+			int isNTRTWLBinary = isNTROrTWLBinary(curChosenBrowseFile, &isTGDSTWLHomebrew);
 			/*
 			//debug start
 			if(isNTRTWLBinary == isTWLBinary){

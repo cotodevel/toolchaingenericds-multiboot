@@ -86,7 +86,8 @@ int main(int argc, char **argv) {
 	REG_IE = 0;
 	REG_IF = 0;
 	setupDisabledExceptionHandler();
-	register isNTRTWLBinary = (int)getValueSafe((u32*)ARM9_TWLORNTRPAYLOAD_MODE); //register means save this register and restore it everywhere it's used below. Save it now as it'll get erased
+	register int isNTRTWLBinary = (int)getValueSafe((u32*)ARM9_TWLORNTRPAYLOAD_MODE); //register means save this register and restore it everywhere it's used below. Save it now as it'll get erased
+	bool isTGDSTWLHomebrew = (bool)getValueSafe((u32*)TGDS_IS_TGDS_TWL_HOMEBREW); //is TGDS TWL homebrew? Uses special map
 	
 	nocashMessage(" ---- ");
 	nocashMessage(" ---- ");
@@ -162,7 +163,6 @@ int main(int argc, char **argv) {
 	int arm7iBootCodeSize = (int)getValueSafe((u32*)ARM7i_BOOT_SIZE);
 	u32 arm9iRamAddress = (u32)getValueSafe((u32*)ARM9i_RAM_ADDRESS);
 	int arm9iBootCodeSize = (int)getValueSafe((u32*)ARM9i_BOOT_SIZE);
-	bool isTGDSTWLHomebrew = (bool)getValueSafe((u32*)TGDS_IS_TGDS_HOMEBREW);
 	
 	//Todo: Support isNDSBinaryV1Slot2 binary (Slot2 Passme v1 .ds.gba homebrew)
 	if(isNTRTWLBinary == isNDSBinaryV1Slot2){
