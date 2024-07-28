@@ -88,6 +88,7 @@ int main(int argc, char **argv) {
 	setupDisabledExceptionHandler();
 	register int isNTRTWLBinary = (int)getValueSafe((u32*)ARM9_TWLORNTRPAYLOAD_MODE); //register means save this register and restore it everywhere it's used below. Save it now as it'll get erased
 	bool isTGDSTWLHomebrew = (bool)getValueSafe((u32*)TGDS_IS_TGDS_TWL_HOMEBREW); //is TGDS TWL homebrew? Uses special map
+	int tgds_multiboot_payload_size = (int)getValueSafe((u32*)TGDS_MB_V3_PAYLOAD_SIZE);
 	
 	nocashMessage(" ---- ");
 	nocashMessage(" ---- ");
@@ -111,6 +112,8 @@ int main(int argc, char **argv) {
 		(isNTRTWLBinary == isNDSBinaryV2)
 		||
 		(isNTRTWLBinary == isNDSBinaryV3)
+		||
+		(isTGDSTWLHomebrew == true)
 		)
 	){
 		//Enable 4M EWRAM (TWL)
@@ -123,6 +126,8 @@ int main(int argc, char **argv) {
 		(__dsimode == true)
 		&&
 		(isNTRTWLBinary == isTWLBinary)
+		&&
+		(isTGDSTWLHomebrew == false)
 	){
 		//Enable 16M EWRAM (TWL)
 		u32 SFGEXT9 = *(u32*)0x04004008;
