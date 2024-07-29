@@ -133,32 +133,18 @@ void setupLibUtils(){
 	//Stage 0
 	#ifdef ARM9
 	initializeLibUtils9(
-		#if !defined(IGNORELIBS)
 		(HandleFifoNotEmptyWeakRefLibUtils_fn)&libUtilsFIFONotEmpty, //ARM7 & ARM9
 		(timerWifiInterruptARM9LibUtils_fn)&Timer_50ms, //ARM9 
 		(SoundStreamStopSoundStreamARM9LibUtils_fn)&stopSoundStream,	//ARM9: bool stopSoundStream(struct fd * tgdsStructFD1, struct fd * tgdsStructFD2, int * internalCodecType)
 		(SoundStreamUpdateSoundStreamARM9LibUtils_fn)&updateStream, //ARM9: void updateStream() 
 		(wifiDeinitARM7ARM9LibUtils_fn)&DeInitWIFI, //ARM7 & ARM9: DeInitWIFI()
 		(wifiswitchDsWnifiModeARM9LibUtils_fn)&switch_dswnifi_mode //ARM9: bool switch_dswnifi_mode(sint32 mode)
-		#endif
-		
-		#if defined(IGNORELIBS)
-		NULL, //ARM7 & ARM9
-		NULL, //ARM9 
-		NULL, //ARM9: bool stopSoundStream(struct fd * tgdsStructFD1, struct fd * tgdsStructFD2, int * internalCodecType)
-		NULL,  //ARM9: void updateStream() 
-		NULL, //ARM7 & ARM9: DeInitWIFI()
-		NULL //ARM9: bool switch_dswnifi_mode(sint32 mode)
-		#endif
-		
 	);
 	#endif
 	
 	//Stage 1
 	#ifdef ARM7
 	initializeLibUtils7(
-		
-		#if !defined(IGNORELIBS)
 		(HandleFifoNotEmptyWeakRefLibUtils_fn)&libUtilsFIFONotEmpty, //ARM7 & ARM9
 		(wifiUpdateVBLANKARM7LibUtils_fn)&Wifi_Update, //ARM7
 		(wifiInterruptARM7LibUtils_fn)&Wifi_Interrupt,  //ARM7
@@ -170,21 +156,6 @@ void setupLibUtils(){
 		(MicInterruptARM7LibUtils_fn)&micInterrupt, //ARM7: micInterrupt()
 		(DeInitWIFIARM7LibUtils_fn)&DeInitWIFI, //ARM7: DeInitWIFI()
 		(wifiAddressHandlerARM7LibUtils_fn)&wifiAddressHandler	//ARM7: void wifiAddressHandler( void * address, void * userdata )
-		#endif
-		
-		#if defined(IGNORELIBS)
-		NULL, //ARM7 & ARM9
-		NULL, //ARM7
-		NULL, //ARM7
-		NULL, //ARM7: void TIMER1Handler()
-		NULL, //ARM7: void stopSound()
-		NULL, //ARM7: void setupSound()
-		(initMallocARM7LibUtils_fn)&initARM7Malloc, //ARM7: void initARM7Malloc(u32 ARM7MallocStartaddress, u32 ARM7MallocSize);
-		NULL, //ARM7 & ARM9: DeInitWIFI()
-		NULL,  //ARM7: micInterrupt()
-		NULL,  //ARM7: DeInitWIFI()
-		NULL	//ARM7: void wifiAddressHandler( void * address, void * userdata )
-		#endif
 	);
 	#endif
 }

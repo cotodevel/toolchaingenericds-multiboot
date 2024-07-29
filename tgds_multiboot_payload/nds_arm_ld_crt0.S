@@ -90,8 +90,8 @@ _start:
 	bl                  copy
 		
 	@TGDS-MB intra argv save-restore
-	ldr                 r1,=0x02FFFE70                /* point our source register to the start of the .dtcm section (VMA)*/
-	ldr                 r2,=argvIntraTGDSMB                 /* point our destination register to the D-TCM dedicated to our writable data (LMA)*/
+	ldr                 r1,=0x02FFFE70                /* point our source register to the start (VMA)*/
+	ldr                 r2,=argvIntraTGDSMB                 /* point our destination register to our writable data (LMA)*/
 	add                 r3,r2,#(256)                  /* point r3 after the last byte we will be writing (LMA)*/
 	add                 r3,r3,#(144)                  /* point r3 after the last byte we will be writing (LMA)*/
 	bl                  copy
@@ -99,8 +99,8 @@ _start:
 	mov r0, #0	@do not care about fw version anymore
 	bl IRQInit /*initHardware destroys ARM7 VRAM_D, thus crashes ARM7 procesor when running from VRAM_D */
 	
-	ldr                 r1,=argvIntraTGDSMB                /* point our source register to the start of the .dtcm section (VMA)*/
-	ldr                 r2,=0x02FFFE70                 /* point our destination register to the D-TCM dedicated to our writable data (LMA)*/
+	ldr                 r1,=argvIntraTGDSMB                /* point our source register to the start (VMA)*/
+	ldr                 r2,=0x02FFFE70                 /* point our destination register to our writable data (LMA)*/
 	add                 r3,r2,#(256)                  /* point r3 after the last byte we will be writing (LMA)*/
 	add                 r3,r3,#(144)                  /* point r3 after the last byte we will be writing (LMA)*/
 	bl                  copy
@@ -134,7 +134,7 @@ copy:
 
 .global argvIntraTGDSMB
 argvIntraTGDSMB:
-	.skip 0x190
+	.skip 0x200
 	
 .pool
 .align

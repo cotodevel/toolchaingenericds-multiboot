@@ -21,10 +21,8 @@ TGDS-MB TWL does not require any DLDI patch because it uses the internal SD inst
 ----Don't forget to copy toolchaingenericds-multiboot-config.txt to SD root path or TGDS-multiboot won't boot!!----
 
 ############################################### HOW TO USE TGDS-MULTIBOOT IN TGDS PROJECTS ############################################### 
-1) 1a) There's a standalone NDS Binary of TGDS-multiboot (ToolchainGenericDS-multiboot.nds/ToolchainGenericDS-multiboot.srl) for launching homebrew.
-   1b) TGDS-multiboot is also embedded into TGDS projects: in target's TGDS project, simply call 
-		void TGDSMultibootRunNDSPayload(char * filename);
-	-For both cases it's required to have tgds_multiboot_payload_ntr.bin/tgds_multiboot_payload_twl.bin copied in SD root folder.
+There's a standalone NDS Binary of TGDS-multiboot (ToolchainGenericDS-multiboot.nds/ToolchainGenericDS-multiboot.srl) for launching homebrew.
+It's required to have tgds_multiboot_payload_ntr.bin/tgds_multiboot_payload_twl.bin copied in SD root folder.
 
 
 ____Remoteboot____
