@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
 	//ARM9 waits & reloads into its new binary.
 	setValueSafe(0x02FFFE24, (u32)0);
 	
-	struct sIPCSharedTGDS * TGDSIPC = TGDSIPCStartAddress;
+	struct sIPCSharedTGDS * TGDSIPC = (struct sIPCSharedTGDS *)TGDSIPCStartAddress;
 	uint32 * fifomsg = (uint32 *)&TGDSIPC->fifoMesaggingQueueSharedRegion[0];
 	setValueSafe(&fifomsg[7], (u32)BOOT_FILE_TGDSMB);
 	SendFIFOWords(FIFO_SEND_TGDS_CMD, 0xFF);
