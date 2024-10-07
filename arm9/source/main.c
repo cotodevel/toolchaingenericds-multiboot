@@ -42,6 +42,8 @@ USA
 #include "utilsTGDS.h"
 #include "conf.h"
 #include "zipDecomp.h"
+#include "timerTGDS.h"
+#include "powerTGDS.h"
 
 //TCP
 #include <stdio.h>
@@ -123,6 +125,8 @@ __attribute__((optimize("O0")))
 __attribute__ ((optnone))
 #endif
 int handleRemoteBoot(char * URLPathRequestedByGetVerb, int portToConnect){
+	disableScreenPowerTimeout(); //timeout backlight is disabled when remoteboot is active
+	
 	clrscr();
 	printf("----");
 	printf("----");
@@ -130,130 +134,143 @@ int handleRemoteBoot(char * URLPathRequestedByGetVerb, int portToConnect){
 	printf("----");
 	printf("handleRemoteBoot start [%s]", URLPathRequestedByGetVerb);
 	if(connectDSWIFIAP(DSWNIFI_ENTER_WIFIMODE) == true){
-		printf("Connect OK.");
-	}
-	else{
-		printf("Connect failed. Check AP settings.");
-	}
-	
-	//Downloadfile
-	remove(RemoteBootTGDSPackage);
-	char * fileDownloadDir = "0:/";
-	if(DownloadFileFromServer(URLPathRequestedByGetVerb, portToConnect, fileDownloadDir) == true){
-		printf("Package download OK:");
-		printf("%s", RemoteBootTGDSPackage);
-	}
-	else{
-		printf("Package download ERROR:");
-		printf("%s", RemoteBootTGDSPackage);
 		
-		printf("Press A to try again.");
-		while(1==1){
-			scanKeys();
-			if(keysDown() & KEY_A){
-				break;
+		//Downloadfile
+		remove(RemoteBootTGDSPackage);
+		char * fileDownloadDir = "0:/";
+		if(DownloadFileFromServer(URLPathRequestedByGetVerb, portToConnect, fileDownloadDir) == true){
+			printf("Package download OK:");
+			printf("%s", RemoteBootTGDSPackage);
+			switch_dswnifi_mode(dswifi_idlemode);
+			char logBuf[256];
+			clrscr();
+			printf("----");
+			printf("----");
+			printf("----");
+			printf("NOTE: If the app gets stuck here");
+			printf("you WILL need to reformat your SD card");
+			printf("due to SD fragmentation");
+			remove("0:/descriptor.txt");
+			if(handleDecompressor(RemoteBootTGDSPackage, (char*)&logBuf[0]) == 0){
+				//Descriptor is always at root SD path: 0:/descriptor.txt
+				set_config_file("0:/descriptor.txt");
+				char * baseTargetPath = get_config_string("Global", "baseTargetPath", "");
+				char * mainApp = get_config_string("Global", "mainApp", "");
+				int mainAppCRC32 = get_config_hex("Global", "mainAppCRC32", 0);
+				int TGDSSdkCrc32 = get_config_hex("Global", "TGDSSdkCrc32", 0);
+				printf("TGDSPKG Unpack OK:%s", RemoteBootTGDSPackage);
+				
+				//Boot .NDS file! (homebrew only)
+				char tmpName[256];
+				char ext[256];
+				strcpy(tmpName, mainApp);
+				separateExtension(tmpName, ext);
+				strlwr(ext);
+				if(
+					(strncmp(ext,".nds", 4) == 0)
+					||
+					(strncmp(ext,".srl", 4) == 0)
+				){
+					//Handle special cases
+					
+					//TWL TGDS-Package trying to run in NTR mode? Error
+					if((strncmp(ext,".srl", 4) == 0) && (__dsimode == false)){
+						clrscr();
+						printf("----");
+						printf("----");
+						printf("----");
+						printf("ToolchainGenericDS-multiboot tried to boot >%d", TGDSPrintfColor_Yellow);
+						printf("a TWL mode package.>%d", TGDSPrintfColor_Yellow);
+						printf("[MainApp]: %s >%d", mainApp, TGDSPrintfColor_Green);
+						printf("NTR mode-only packages supported. >%d", TGDSPrintfColor_Red);
+						printf("Turn off the hardware now.");
+						while(1==1){
+							IRQWait(0, IRQ_VBLANK);
+						}				
+					}
+					
+					char fileBuf[256];
+					memset(fileBuf, 0, sizeof(fileBuf));
+					strcpy(fileBuf, "0:/");
+					strcat(fileBuf, baseTargetPath);
+					strcat(fileBuf, mainApp);
+					printf("Boot:[%s][CRC32:%x]", fileBuf, mainAppCRC32);
+					
+					char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
+					memset(thisArgv, 0, sizeof(thisArgv));
+					strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
+					strcpy(&thisArgv[1][0], fileBuf);	//Arg1:	NDS Binary reloaded
+					strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
+					u32 * payload = getTGDSMBV3ARM7Bootloader();
+					if(TGDSMultibootRunNDSPayload(fileBuf, (u8*)payload, 3, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
+						printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
+						printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
+						printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
+						printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+						while(1==1){
+							scanKeys();
+							if(keysDown()&KEY_A){
+								scanKeys();
+								while(keysDown() & KEY_A){
+									scanKeys();
+								}
+								break;
+							}
+						}
+						menuShow();
+					}
+				}
+				else{
+					printf("Invalid remoteboot object. ");	//TGDS App not found
+					
+					printf("Press A to exit.");
+					while(1==1){
+						scanKeys();
+						if(keysDown() & KEY_A){
+							break;
+						}
+					}
+				}	
 			}
-		}
-		handleRemoteBoot(URLPathRequestedByGetVerb, portToConnect);
-	}
-	
-	switch_dswnifi_mode(dswifi_idlemode);
-	char logBuf[256];
-	clrscr();
-	printf("----");
-	printf("----");
-	printf("----");
-	printf("NOTE: If the app gets stuck here");
-	printf("you WILL need to reformat your SD card");
-	printf("due to SD fragmentation");
-	remove("0:/descriptor.txt");
-	if(handleDecompressor(RemoteBootTGDSPackage, (char*)&logBuf[0]) == 0){
-		//Descriptor is always at root SD path: 0:/descriptor.txt
-		set_config_file("0:/descriptor.txt");
-		char * baseTargetPath = get_config_string("Global", "baseTargetPath", "");
-		char * mainApp = get_config_string("Global", "mainApp", "");
-		int mainAppCRC32 = get_config_hex("Global", "mainAppCRC32", 0);
-		int TGDSSdkCrc32 = get_config_hex("Global", "TGDSSdkCrc32", 0);
-		printf("TGDSPKG Unpack OK:%s", RemoteBootTGDSPackage);
-		
-		//Boot .NDS file! (homebrew only)
-		char tmpName[256];
-		char ext[256];
-		strcpy(tmpName, mainApp);
-		separateExtension(tmpName, ext);
-		strlwr(ext);
-		if(
-			(strncmp(ext,".nds", 4) == 0)
-			||
-			(strncmp(ext,".srl", 4) == 0)
-			){
-			//Handle special cases
-			
-			//TWL TGDS-Package trying to run in NTR mode? Error
-			if((strncmp(ext,".srl", 4) == 0) && (__dsimode == false)){
-				clrscr();
-				printf("----");
-				printf("----");
-				printf("----");
-				printf("ToolchainGenericDS-multiboot tried to boot >%d", TGDSPrintfColor_Yellow);
-				printf("a TWL mode package.>%d", TGDSPrintfColor_Yellow);
-				printf("[MainApp]: %s >%d", mainApp, TGDSPrintfColor_Green);
-				printf("NTR mode-only packages supported. >%d", TGDSPrintfColor_Red);
-				printf("Turn off the hardware now.");
-				while(1==1){
-					IRQWait(0, IRQ_VBLANK);
-				}				
-			}
-			
-			char fileBuf[256];
-			memset(fileBuf, 0, sizeof(fileBuf));
-			strcpy(fileBuf, "0:/");
-			strcat(fileBuf, baseTargetPath);
-			strcat(fileBuf, mainApp);
-			printf("Boot:[%s][CRC32:%x]", fileBuf, mainAppCRC32);
-			
-			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
-			memset(thisArgv, 0, sizeof(thisArgv));
-			strcpy(&thisArgv[0][0], TGDSPROJECTNAME);	//Arg0:	This Binary loaded
-			strcpy(&thisArgv[1][0], fileBuf);	//Arg1:	NDS Binary reloaded
-			strcpy(&thisArgv[2][0], "");					//Arg2: NDS Binary ARG0
-			u32 * payload = getTGDSMBV3ARM7Bootloader();
-			if(TGDSMultibootRunNDSPayload(fileBuf, (u8*)payload, 3, (char*)&thisArgv) == false){ //should never reach here, nor even return true. Should fail it returns false
-				printf("Invalid NDS/TWL Binary >%d", TGDSPrintfColor_Yellow);
-				printf("or you are in NTR mode trying to load a TWL binary. >%d", TGDSPrintfColor_Yellow);
-				printf("or you are missing the TGDS-multiboot payload in root path. >%d", TGDSPrintfColor_Yellow);
-				printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+			else{
+				printf("Couldn't unpack TGDSPackage.:%s", RemoteBootTGDSPackage);
+				
+				printf("Press A to exit.");
 				while(1==1){
 					scanKeys();
-					if(keysDown()&KEY_A){
-						scanKeys();
-						while(keysDown() & KEY_A){
-							scanKeys();
-						}
+					if(keysDown() & KEY_A){
 						break;
 					}
 				}
-				menuShow();
 			}
 		}
 		else{
-			printf("TGDS App not found:[%s][CRC32:%x]", mainApp, mainAppCRC32);
-		}	
+			printf("Package download ERROR:");
+			printf("%s", RemoteBootTGDSPackage);
+			
+			printf("Press A to exit.");
+			while(1==1){
+				scanKeys();
+				if(keysDown() & KEY_A){
+					break;
+				}
+			}	
+		}
+		
 	}
 	else{
-		printf("Couldn't unpack TGDSPackage.:%s", RemoteBootTGDSPackage);
-		
-		printf("Press A to try again.");
+		printf("Connect failed. Check Access Point settings.");
+		printf("Press A to exit.");
 		while(1==1){
 			scanKeys();
 			if(keysDown() & KEY_A){
 				break;
 			}
-		}
-		handleRemoteBoot(URLPathRequestedByGetVerb, portToConnect);
-		return false;
+		}	
 	}
-	return 0;
+	
+	enableScreenPowerTimeout(); //timeout backlight is enabled when remoteboot failed
+	return -1;
 }
 
 #if (defined(__GNUC__) && !defined(__clang__))
@@ -314,12 +331,18 @@ int main(int argc, char **argv) {
 	}
 	REG_IME = 1;
 	
+	//VBLANK can't be used to count up screen power timeout because sound stutters. Use timer instead
+	TIMERXDATA(2) = TIMER_FREQ((int)1);
+	TIMERXCNT(2) = TIMER_DIV_1 | TIMER_IRQ_REQ | TIMER_ENABLE;
+	irqEnable(IRQ_TIMER2);
+
 	//load TGDS Logo (NDS BMP Image)
 	//VRAM A Used by console
 	//VRAM C Keyboard and/or TGDS Logo
 	
 	//TGDS-MB chainload boot? Boot it then
-	if(argc > 2){		
+	if(argc > 2){
+		disableScreenPowerTimeout(); //timeout backlight is disabled when loading homebrew
 		//Arg0:	Chainload caller: TGDS-MB
 		//Arg1:	NDS Binary reloaded through ChainLoad
 		//Arg2: NDS Binary reloaded through ChainLoad's ARG0
@@ -461,14 +484,21 @@ int main(int argc, char **argv) {
 			printf("No arguments passed!");
 		}
 	}
+	
 	//Show logo
 	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 	menuShow();
 	bool remoteBootEnabled = false;
-	while (1){		
+
+	powerOFF3DEngine(); //Power off ARM9 3D Engine to save power
+	enableScreenPowerTimeout();
+	bottomScreenIsLit = true;
+
+	while (1){
 		scanKeys();
 		
 		if (keysDown() & KEY_START){
+			disableScreenPowerTimeout(); //Default TGDS filebrowser's backlight timeout disabled when loading homebrew 
 			char startPath[MAX_TGDSFILENAME_LENGTH+1];
 			strcpy(startPath,"/");
 			while( ShowBrowser((char *)startPath, (char *)&curChosenBrowseFile[0]) == true ){	//as long you keep using directories ShowBrowser will be true
@@ -531,29 +561,6 @@ int main(int argc, char **argv) {
 			strcpy(&thisArgv[2][0], argv0);					//Arg2: NDS Binary ARG0
 			bool isTGDSTWLHomebrew = false;
 			int isNTRTWLBinary = isNTROrTWLBinary(curChosenBrowseFile, &isTGDSTWLHomebrew);
-			/*
-			//debug start
-			if(isNTRTWLBinary == isTWLBinary){
-				printf("i'm TWL binary");
-			}
-			else if(isNTRTWLBinary == isNDSBinaryV1){
-				printf("i'm isNDSBinaryV1");
-			}
-			else if(isNTRTWLBinary == isNDSBinaryV2){
-				printf("i'm isNDSBinaryV2");
-			}
-			else if(isNTRTWLBinary == isNDSBinaryV3){
-				printf("i'm isNDSBinaryV3");
-			}
-			else if(isNTRTWLBinary == isNDSBinaryV1Slot2){
-				printf("i'm isNDSBinaryV1Slot2");
-			}
-			else{
-				printf("Not TWL/NTR Binary.");
-			}
-			while (1==1){}
-			//debug start
-			*/
 			if( 
 				(isNTRTWLBinary == isNDSBinaryV1Slot2)
 				||
@@ -587,11 +594,13 @@ int main(int argc, char **argv) {
 						break;
 					}
 				}
+				enableScreenPowerTimeout(); //Default TGDS filebrowser's backlight timeout enabled when loading homebrew failed
 				menuShow();
 			}
 		}
 		
 		if (keysDown() & KEY_SELECT){
+			bottomScreenIsLit = true; //input event triggered
 			if(__dsimode == false){
 				char * loaderName = canGoBackToLoader();
 				if(loaderName != NULL){
@@ -633,6 +642,7 @@ int main(int argc, char **argv) {
 		}
 		
 		if (keysDown() & KEY_Y){
+			disableScreenPowerTimeout(); //timeout backlight is disabled when loading homebrew 
 			printf("[Booting... Please wait] >%d", TGDSPrintfColor_Red);
 			
 			char thisArgv[3][MAX_TGDSFILENAME_LENGTH];
@@ -656,6 +666,7 @@ int main(int argc, char **argv) {
 						break;
 					}
 				}
+				enableScreenPowerTimeout(); //Default TGDS filebrowser's backlight timeout enabled when loading homebrew failed
 				menuShow();
 			}
 			scanKeys();
@@ -663,6 +674,34 @@ int main(int argc, char **argv) {
 				scanKeys();
 			}
 		}
+		
+		//////////////////////////////////////////////////////////////////////////////////////////////
+		
+		//Handle normal input to turn back on bottom screen 
+		u32 pressed = keysDown();
+		if(
+			(pressed&KEY_TOUCH)
+			||
+			(pressed&KEY_A)
+			||
+			(pressed&KEY_B)
+			||
+			(pressed&KEY_UP)
+			||
+			(pressed&KEY_DOWN)
+			||
+			(pressed&KEY_LEFT)
+			||
+			(pressed&KEY_RIGHT)
+			||
+			(pressed&KEY_L)
+			||
+			(pressed&KEY_R)
+			){
+			bottomScreenIsLit = true; //input event triggered
+		}
+		
+		//////////////////////////////////////////////////////////////////////////////////////////////
 		
 		if(remoteBootEnabled == true){
 			char URLPathRequested[256];
@@ -817,4 +856,30 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
 	
 	printf("Download OK @ SD path: %s", fullFilePath);
 	return true;
+}
+
+void enableScreenPowerTimeout(){
+	REG_IE |= IRQ_TIMER2;
+	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+}
+
+void disableScreenPowerTimeout(){
+	REG_IE &= ~(IRQ_TIMER2);
+	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+}
+
+bool bottomScreenIsLit = false;
+static int secondsElapsed = 0;
+void handleTurnOnTurnOffScreenTimeout(){
+	secondsElapsed ++;
+	if (  secondsElapsed == 12300 ){ //2728hz per unit @ 33Mhz
+		setBacklight(0);
+		secondsElapsed = 0;
+	}
+	//turn on bottom screen if input event
+	if(bottomScreenIsLit == true){
+		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+		bottomScreenIsLit = false;
+		secondsElapsed = 0;
+	}
 }

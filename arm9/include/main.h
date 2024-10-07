@@ -49,6 +49,12 @@ extern int remoteBooterPort;
 extern bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPath);
 extern char lastHomebrewBooted[MAX_TGDSFILENAME_LENGTH];
 
+//Handle backlight timeout 
+extern void enableScreenPowerTimeout();
+extern void disableScreenPowerTimeout();
+extern void handleTurnOnTurnOffScreenTimeout();
+extern bool bottomScreenIsLit;
+
 #ifdef __cplusplus
 }
 #endif
