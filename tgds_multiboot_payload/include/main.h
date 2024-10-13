@@ -34,6 +34,7 @@ USA
 extern "C" {
 #endif
 
+extern void IRQInitCustom(u8 DSHardware);
 extern int main(int argc, char **argv);
 extern u8 argvIntraTGDSMB[0x190];
 extern void bootarm9payload();

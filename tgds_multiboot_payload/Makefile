@@ -55,14 +55,14 @@ d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_
 #ARM9 specific definitions. -fno-common so we force initialized data to rodata
 MAPFILE = $(BINSTRIP_RULE_COMPRESSED_9).map
 AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_AS_COMPILER_FLAGS_9)		$(GLOBAL_AS_COMPILER_FLAGS)
-CC_ASFLAGS		=	-march=armv5te	-mthumb-interwork	-marm	-Os	-fno-short-enums	-fno-exceptions		-nostdlib	 -ffunction-sections -fdata-sections	-DARM9	-Dappver='$(EXECUTABLE_VERSION)'	-DIGNORELIBS
+CC_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	-marm	-Os	-fno-short-enums	-mthumb-interwork	-DARM9	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-tree-loop-distribute-patterns -Dappver='$(EXECUTABLE_VERSION)'	-DTGDSPROJECTNAME='"$(TGDSPROJECTNAME)"'	-DIGNORELIBS
 CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	-fno-rtti
 BUILD			= 	$(BUILD_ARM9)
 DIR_SRC			=	$(DIRS_ARM9_SRC)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	=	-specs=nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(BINSTRIP_RULE_COMPRESSED_9).map
+LDFLAGS	=	-specs=nds_arm9_ld_ntr.specs	-Wl,--no-gc-sections,-Map,$(BINSTRIP_RULE_COMPRESSED_9).map,-z,defs
 LDFLAGS_DSI	=	-specs=nds_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(BINSTRIP_RULE_COMPRESSED_9)_twl.map
 LIBRARIES_NTR =	-ltgdsfilesystem9	-lutils9	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lhardware9		-lstdc++	-lcnano9	-lgcc
 LIBRARIES_TWL =	-ltgdsfilesystem9i	-lutils9i	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lhardware9i	-lstdc++	-lcnano9	-lgcc
