@@ -55,11 +55,6 @@ _start:
 	msr	cpsr, r0
 	ldr 	sp, =(0x027FF000 + 0x1000)
 	
-	push {r0-r3,lr}
-	ldr	r3, =set0xFFFF0000FastMPUSettings
-	blx	r3
-	pop {r0-r3,lr}
-	
 	mov	r0, #0x12		@ irq
 	msr	cpsr, r0
 	ldr	sp, =sp_IRQ
@@ -97,7 +92,7 @@ _start:
 	bl                  copy
 	
 	mov r0, #0	@do not care about fw version anymore
-	bl IRQInit /*initHardware destroys ARM7 VRAM_D, thus crashes ARM7 procesor when running from VRAM_D */
+	bl IRQInitCustom /*initHardware destroys ARM7 VRAM_D, thus crashes ARM7 procesor when running from VRAM_D */
 	
 	ldr                 r1,=argvIntraTGDSMB                /* point our source register to the start (VMA)*/
 	ldr                 r2,=0x02FFFE70                 /* point our destination register to our writable data (LMA)*/
