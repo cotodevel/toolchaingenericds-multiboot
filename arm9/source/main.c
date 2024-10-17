@@ -171,24 +171,6 @@ int handleRemoteBoot(char * URLPathRequestedByGetVerb, int portToConnect){
 					||
 					(strncmp(ext,".srl", 4) == 0)
 				){
-					//Handle special cases
-					
-					//TWL TGDS-Package trying to run in NTR mode? Error
-					if((strncmp(ext,".srl", 4) == 0) && (__dsimode == false)){
-						clrscr();
-						printf("----");
-						printf("----");
-						printf("----");
-						printf("ToolchainGenericDS-multiboot tried to boot >%d", TGDSPrintfColor_Yellow);
-						printf("a TWL mode package.>%d", TGDSPrintfColor_Yellow);
-						printf("[MainApp]: %s >%d", mainApp, TGDSPrintfColor_Green);
-						printf("NTR mode-only packages supported. >%d", TGDSPrintfColor_Red);
-						printf("Turn off the hardware now.");
-						while(1==1){
-							IRQWait(0, IRQ_VBLANK);
-						}				
-					}
-					
 					char fileBuf[256];
 					memset(fileBuf, 0, sizeof(fileBuf));
 					strcpy(fileBuf, "0:/");
