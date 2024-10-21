@@ -500,7 +500,7 @@ static void set_config(CONFIG **config, char *data, int length, char *filename) 
    init_config(FALSE);
 
    if (*config) {
-      destroy_config(*config);
+      //destroy_config(*config); //Coto: segfaults, thus, disabled.
       *config = NULL;
    }
 
@@ -565,7 +565,7 @@ static void load_config_file(CONFIG **config, char *filename, char *savefile) {
 
 	if (*config)
 	{
-		destroy_config(*config);
+		//destroy_config(*config);	//Coto: segfaults, thus, disabled.
 		*config = NULL;
 	}
 

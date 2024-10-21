@@ -26,6 +26,7 @@ USA
 #include "interrupts.h"
 #include "utilsTGDS.h"
 #include "spifwTGDS.h"
+#include "powerTGDS.h"
 
 //User Handler Definitions
 
@@ -59,7 +60,7 @@ void Timer1handlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void Timer2handlerUser(){
-
+	handleTurnOnTurnOffScreenTimeout();
 }
 
 #ifdef ARM9
@@ -95,7 +96,7 @@ void VcounterUser(){
 __attribute__((section(".itcm")))
 #endif
 void screenLidHasOpenedhandlerUser(){
-
+	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT); 
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
