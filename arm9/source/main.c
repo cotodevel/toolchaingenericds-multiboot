@@ -44,6 +44,7 @@ USA
 #include "zipDecomp.h"
 #include "timerTGDS.h"
 #include "powerTGDS.h"
+#include "TGDS_threads.h"
 
 //TCP
 #include <stdio.h>
@@ -468,6 +469,20 @@ int main(int argc, char **argv) {
 		}
 	}
 	
+	clrscr();
+	
+	printf("----");
+	printf("----");
+	printf("starting tests");
+	
+	runTests();
+	
+	printf("end tests. Halting");
+	
+	while(1==1){
+		HaltUntilIRQ();
+	}
+	
 	//Show logo
 	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 	menuShow();
@@ -866,3 +881,164 @@ void handleTurnOnTurnOffScreenTimeout(){
 		secondsElapsed = 0;
 	}
 }
+
+
+
+//////////////////////////////////////////////////////// Threading User code start : TGDS Project specific ////////////////////////////////////////////////////////
+//User callback when Task Overflows. Intended for debugging purposes only, as normal user code tasks won't overflow if a task is implemented properly.
+//	u32 * args = This Task context
+void onThreadOverflowUserCode(u32 * args){
+	struct task_def * thisTask = (struct task_def *)args;
+	
+	char threadStatus[64];
+	switch(thisTask->taskStatus){
+		case(INVAL_THREAD):{
+			strcpy(threadStatus, "INVAL_THREAD");
+		}break;
+		
+		case(THREAD_OVERFLOW):{
+			strcpy(threadStatus, "THREAD_OVERFLOW");
+		}break;
+		
+		case(THREAD_EXECUTE_OK_WAIT_FOR_SLEEP):{
+			strcpy(threadStatus, "THREAD_EXECUTE_OK_WAIT_FOR_SLEEP");
+		}break;
+		
+		case(THREAD_EXECUTE_OK_WAKEUP_FROM_SLEEP_GO_IDLE):{
+			strcpy(threadStatus, "THREAD_EXECUTE_OK_WAKEUP_FROM_SLEEP_GO_IDLE");
+		}break;
+	}
+	
+	char debOut2[256];
+	if( thisTask->taskStatus == THREAD_OVERFLOW){
+		sprintf(debOut2, "[%s]. Thread requires at least (%d) ms. ", threadStatus, thisTask->internalRemainingThreadTime);
+	}
+	else{
+		sprintf(debOut2, "[%s]. ", threadStatus);
+	}
+	
+	int TGDSDebuggerStage = 10;
+	u8 fwNo = *(u8*)(0x027FF000 + 0x5D);
+	handleDSInitOutputMessage((char*)debOut2);
+	handleDSInitError(TGDSDebuggerStage, (u32)fwNo);
+	
+	while(1==1){
+		HaltUntilIRQ();
+	}
+}
+
+void taskA(u32 * args){
+    
+	int i = 0;
+	int addRes = 0;
+    for(i = 0; i < 100000; i++){ //1000000 overflows on ARM9 hardware (equals to MAX_THREAD_OVERFLOW_CAPACITY_TIME_MILLISECONDS or higher)
+        addRes += (i + 1 + i);
+    }
+	
+	char debOut2[256];
+	sprintf(debOut2, "Task A -- %s -- has run. (%d) %d", (char*)args, addRes, rand() % 0xFF);
+	printf(debOut2);
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void taskB(u32 * args){
+    
+	int i = 0;
+	int addRes = 0;
+    for(i = 0; i < 1000 ; i++){
+        addRes += (i + 1 + i);
+    }
+	
+	char debOut2[256];
+	sprintf(debOut2, "Task B -- %s -- has run. (%d) %d", (char*)args, addRes, rand() % 0xFF);
+	printf(debOut2);
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void taskC(u32 * args){
+    
+	int i = 0;
+	int addRes = 0;
+    for(i = 0; i < 1000 ; i++){
+        addRes += (i + 1 + i);
+    }
+	
+	char debOut2[256];
+	sprintf(debOut2, "Task C -- %s -- has run. (%d) %d", (char*)args, addRes, rand() % 0xFF);
+	printf(debOut2);
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void runTests(){
+	printf("TGDS Thread System 1.0.");
+
+    int taskATimeMS = 15; //Task execution in milliseconds. This thread requires at least 15ms or thread overflow occurs
+    char taskAarg[256];
+    strcpy(taskAarg, "*Task A's arguments*");
+
+    int taskBTimeMS = 8; //Task execution in milliseconds.  This thread requires at least 8ms or thread overflow occurs
+    char taskBarg[256];
+    strcpy(taskBarg, "*Task B's arguments*");
+	
+	int taskCTimeMS = 8; //Task execution in milliseconds.  This thread requires at least 8ms or thread overflow occurs
+    char taskCarg[256];
+    strcpy(taskCarg, "*Task C's arguments*");
+	
+    //Init + Register 2 tasks to run + run them
+    initThreadSystem(&threadQueue);
+
+    if(registerThread(&threadQueue, (TaskFn)&taskA, (u32*)&taskAarg, taskATimeMS, (TaskFn)&onThreadOverflowUserCode) != THREAD_OVERFLOW){
+        
+    } 
+
+    if(registerThread(&threadQueue, (TaskFn)&taskB, (u32*)&taskBarg, taskBTimeMS, (TaskFn)&onThreadOverflowUserCode) != THREAD_OVERFLOW){
+        
+    }
+	
+	if(registerThread(&threadQueue, (TaskFn)&taskC, (u32*)&taskCarg, taskCTimeMS, (TaskFn)&onThreadOverflowUserCode) != THREAD_OVERFLOW){
+        
+    }
+	
+	while(1==1){
+		int threadsRan = runThreads(&threadQueue);
+		
+		/*
+		clrscr();
+		printf(" ---- ");
+		printf(" ---- ");
+		printf(" ---- ");
+		printf("%d tasks have ran successfuly. ", threadsRan);
+		printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
+		while(1==1){
+			scanKeys();
+			if(keysDown()&KEY_A){
+				scanKeys();
+				while(keysDown() & KEY_A){
+					scanKeys();
+				}
+				break;
+			}
+		}
+		*/
+	}
+}
+
+//////////////////////////////////////////////////////////////////////// Threading User code end /////////////////////////////////////////////////////////////////////////////

@@ -55,6 +55,13 @@ extern void disableScreenPowerTimeout();
 extern void handleTurnOnTurnOffScreenTimeout();
 extern bool bottomScreenIsLit;
 
+//////////////////////////////////////////////////////// Threading User code: TGDS Project specific ////////////////////////////////////////////////////////
+extern void onThreadOverflowUserCode(u32 * args);
+extern void taskA(u32 * args);
+extern void taskB(u32 * args);
+extern void taskC(u32 * args);
+extern void runTests();
+
 #ifdef __cplusplus
 }
 #endif
