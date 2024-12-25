@@ -315,11 +315,6 @@ int main(int argc, char **argv) {
 	}
 	REG_IME = 1;
 	
-	//VBLANK can't be used to count up screen power timeout because sound stutters. Use timer instead
-	TIMERXDATA(2) = TIMER_FREQ((int)1);
-	TIMERXCNT(2) = TIMER_DIV_1 | TIMER_IRQ_REQ | TIMER_ENABLE;
-	irqEnable(IRQ_TIMER2);
-
 	//load TGDS Logo (NDS BMP Image)
 	//VRAM A Used by console
 	//VRAM C Keyboard and/or TGDS Logo
@@ -469,19 +464,12 @@ int main(int argc, char **argv) {
 		}
 	}
 	
-	clrscr();
-	
-	printf("----");
-	printf("----");
-	printf("starting tests");
-	
-	runTests();
-	
-	printf("end tests. Halting");
-	
-	while(1==1){
-		HaltUntilIRQ();
-	}
+	//Register threads.
+	int taskATimeMS = 10; //Task execution in milliseconds. 
+    initThreadSystem(&threadQueue);
+    if(registerThread(&threadQueue, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode) != THREAD_OVERFLOW){
+        
+    }
 	
 	//Show logo
 	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
@@ -707,9 +695,9 @@ int main(int argc, char **argv) {
 			handleRemoteBoot((char*)&URLPathRequested[0], remoteBooterPort);
 			remoteBootEnabled = false;
 		}
-
+		
+		int threadsRan = runThreads(&threadQueue);
 		handleARM9SVC();	/* Do not remove, handles TGDS services */
-		IRQVBlankWait();
 	}
 	return 0;
 }
@@ -857,12 +845,10 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
 }
 
 void enableScreenPowerTimeout(){
-	REG_IE |= IRQ_TIMER2;
 	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 }
 
 void disableScreenPowerTimeout(){
-	REG_IE &= ~(IRQ_TIMER2);
 	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 }
 
@@ -870,7 +856,7 @@ bool bottomScreenIsLit = false;
 static int secondsElapsed = 0;
 void handleTurnOnTurnOffScreenTimeout(){
 	secondsElapsed ++;
-	if (  secondsElapsed == 12300 ){ //2728hz per unit @ 33Mhz
+	if (  (secondsElapsed * 500) >= 12300 ){ //2728hz per unit @ 33Mhz
 		setBacklight(0);
 		secondsElapsed = 0;
 	}
@@ -887,6 +873,13 @@ void handleTurnOnTurnOffScreenTimeout(){
 //////////////////////////////////////////////////////// Threading User code start : TGDS Project specific ////////////////////////////////////////////////////////
 //User callback when Task Overflows. Intended for debugging purposes only, as normal user code tasks won't overflow if a task is implemented properly.
 //	u32 * args = This Task context
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void onThreadOverflowUserCode(u32 * args){
 	struct task_def * thisTask = (struct task_def *)args;
 	
@@ -927,118 +920,15 @@ void onThreadOverflowUserCode(u32 * args){
 	}
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void taskA(u32 * args){
-    
-	int i = 0;
-	int addRes = 0;
-    for(i = 0; i < 100000; i++){ //1000000 overflows on ARM9 hardware (equals to MAX_THREAD_OVERFLOW_CAPACITY_TIME_MILLISECONDS or higher)
-        addRes += (i + 1 + i);
-    }
-	
-	char debOut2[256];
-	sprintf(debOut2, "Task A -- %s -- has run. (%d) %d", (char*)args, addRes, rand() % 0xFF);
-	printf(debOut2);
-}
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void taskB(u32 * args){
-    
-	int i = 0;
-	int addRes = 0;
-    for(i = 0; i < 1000 ; i++){
-        addRes += (i + 1 + i);
-    }
-	
-	char debOut2[256];
-	sprintf(debOut2, "Task B -- %s -- has run. (%d) %d", (char*)args, addRes, rand() % 0xFF);
-	printf(debOut2);
-}
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void taskC(u32 * args){
-    
-	int i = 0;
-	int addRes = 0;
-    for(i = 0; i < 1000 ; i++){
-        addRes += (i + 1 + i);
-    }
-	
-	char debOut2[256];
-	sprintf(debOut2, "Task C -- %s -- has run. (%d) %d", (char*)args, addRes, rand() % 0xFF);
-	printf(debOut2);
-}
-
-#if (defined(__GNUC__) && !defined(__clang__))
-__attribute__((optimize("O0")))
-#endif
-
-#if (!defined(__GNUC__) && defined(__clang__))
-__attribute__ ((optnone))
-#endif
-void runTests(){
-	printf("TGDS Thread System 1.0.");
-
-    int taskATimeMS = 15; //Task execution in milliseconds. This thread requires at least 15ms or thread overflow occurs
-    char taskAarg[256];
-    strcpy(taskAarg, "*Task A's arguments*");
-
-    int taskBTimeMS = 8; //Task execution in milliseconds.  This thread requires at least 8ms or thread overflow occurs
-    char taskBarg[256];
-    strcpy(taskBarg, "*Task B's arguments*");
-	
-	int taskCTimeMS = 8; //Task execution in milliseconds.  This thread requires at least 8ms or thread overflow occurs
-    char taskCarg[256];
-    strcpy(taskCarg, "*Task C's arguments*");
-	
-    //Init + Register 2 tasks to run + run them
-    initThreadSystem(&threadQueue);
-
-    if(registerThread(&threadQueue, (TaskFn)&taskA, (u32*)&taskAarg, taskATimeMS, (TaskFn)&onThreadOverflowUserCode) != THREAD_OVERFLOW){
-        
-    } 
-
-    if(registerThread(&threadQueue, (TaskFn)&taskB, (u32*)&taskBarg, taskBTimeMS, (TaskFn)&onThreadOverflowUserCode) != THREAD_OVERFLOW){
-        
-    }
-	
-	if(registerThread(&threadQueue, (TaskFn)&taskC, (u32*)&taskCarg, taskCTimeMS, (TaskFn)&onThreadOverflowUserCode) != THREAD_OVERFLOW){
-        
-    }
-	
-	while(1==1){
-		int threadsRan = runThreads(&threadQueue);
-		
-		/*
-		clrscr();
-		printf(" ---- ");
-		printf(" ---- ");
-		printf(" ---- ");
-		printf("%d tasks have ran successfuly. ", threadsRan);
-		printf("Press (A) to continue. >%d", TGDSPrintfColor_Yellow);
-		while(1==1){
-			scanKeys();
-			if(keysDown()&KEY_A){
-				scanKeys();
-				while(keysDown() & KEY_A){
-					scanKeys();
-				}
-				break;
-			}
-		}
-		*/
-	}
+	handleTurnOnTurnOffScreenTimeout();
 }
 
 //////////////////////////////////////////////////////////////////////// Threading User code end /////////////////////////////////////////////////////////////////////////////
