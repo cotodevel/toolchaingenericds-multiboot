@@ -66,6 +66,8 @@ u32 * getTGDSMBV3ARM7Bootloader(){
 	}
 }
 
+bool TGDSWirelessAvailable = false;
+
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
 char lastHomebrewBooted[MAX_TGDSFILENAME_LENGTH];
 
@@ -94,9 +96,17 @@ void menuShow(){
 	printf("Button (Start): File browser ");
 	printf("    Button (A) Load TGDS/devkitARM NDS Binary. ");
 	printf("                              ");
-	printf("(X): Remoteboot >%d", TGDSPrintfColor_Yellow);
-	printf("    (Server IP detected: %s [Port:%d]) >%d", remoteBooterIPAddr, remoteBooterPort, TGDSPrintfColor_Yellow);
+	
+	if(TGDSWirelessAvailable == true){
+		printf("(X): Remoteboot >%d", TGDSPrintfColor_Yellow);
+		printf("    (Server IP detected: %s [Port:%d]) >%d", remoteBooterIPAddr, remoteBooterPort, TGDSPrintfColor_Yellow);
+	}
+	else{
+		printf("Remoteboot disabled. >%d", TGDSPrintfColor_Yellow);
+		printf("  - ");
+	}
 	printf("                              ");
+	
 	printf("(Y): Boot last homebrew:  >%d", TGDSPrintfColor_Red);
 	printf("    [%s]) >%d", lastHomebrewBooted, TGDSPrintfColor_Red);
 	printf("                              ");
@@ -471,6 +481,8 @@ int main(int argc, char **argv) {
         
     }
 	
+	TGDSWirelessAvailable = isTGDSWirelessServiceAvailable();
+
 	//Show logo
 	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 	menuShow();
@@ -482,6 +494,19 @@ int main(int argc, char **argv) {
 
 	while (1){
 		scanKeys();
+		
+		/*
+		//GDB debug start
+		if (keysDown() & KEY_R){
+			disableScreenPowerTimeout(); //timeout backlight is disabled when remoteboot is active
+			int TGDSDebuggerStage = 10;
+			u8 fwNo = *(u8*)(0x027FF000 + 0x5D);
+			sprintf((char*)ConsolePrintfBuf, "ARM9: TGDS-multiboot(): debugging enabled. Halt.");
+			handleDSInitOutputMessage((char*)ConsolePrintfBuf);
+			handleDSInitError(TGDSDebuggerStage, (u32)fwNo);
+		}
+		//GDB debug end
+		*/
 		
 		if (keysDown() & KEY_START){
 			disableScreenPowerTimeout(); //Default TGDS filebrowser's backlight timeout disabled when loading homebrew 

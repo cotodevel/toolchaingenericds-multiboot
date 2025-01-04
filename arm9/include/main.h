@@ -48,6 +48,7 @@ extern char remoteBooterIPAddr[256];
 extern int remoteBooterPort;
 extern bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPath);
 extern char lastHomebrewBooted[MAX_TGDSFILENAME_LENGTH];
+extern bool TGDSWirelessAvailable;
 
 //Handle backlight timeout 
 extern void enableScreenPowerTimeout();
