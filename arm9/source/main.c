@@ -475,8 +475,8 @@ int main(int argc, char **argv) {
 	}
 	
 	//Register threads.
-	int taskATimeMS = 10; //Task execution in milliseconds. 
-    initThreadSystem(&threadQueue);
+	int taskATimeMS = 1; //Task execution in unit * milliseconds 
+    initThreadSystem(&threadQueue, tUnitsMilliseconds);
     if(registerThread(&threadQueue, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode) != THREAD_OVERFLOW){
         
     }
@@ -878,18 +878,20 @@ void disableScreenPowerTimeout(){
 }
 
 bool bottomScreenIsLit = false;
-static int secondsElapsed = 0;
+static int millisecondsElapsed = 0;	
+
+//called 100 times per second (when enum timerUnits is a millisecond)
 void handleTurnOnTurnOffScreenTimeout(){
-	secondsElapsed ++;
-	if (  (secondsElapsed * 500) >= 12300 ){ //2728hz per unit @ 33Mhz
+	millisecondsElapsed ++;
+	if (  (millisecondsElapsed * 10) >= 12300 ){
 		setBacklight(0);
-		secondsElapsed = 0;
+		millisecondsElapsed = 0;
 	}
 	//turn on bottom screen if input event
 	if(bottomScreenIsLit == true){
 		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 		bottomScreenIsLit = false;
-		secondsElapsed = 0;
+		millisecondsElapsed = 0;
 	}
 }
 
@@ -907,7 +909,8 @@ __attribute__ ((optnone))
 #endif
 void onThreadOverflowUserCode(u32 * args){
 	struct task_def * thisTask = (struct task_def *)args;
-	
+	struct task_Context * parentTaskCtx = thisTask->parentTaskCtx;	//get parent Task Context node 
+
 	char threadStatus[64];
 	switch(thisTask->taskStatus){
 		case(INVAL_THREAD):{
@@ -928,8 +931,18 @@ void onThreadOverflowUserCode(u32 * args){
 	}
 	
 	char debOut2[256];
+	char timerUnitsMeasurement[32];
 	if( thisTask->taskStatus == THREAD_OVERFLOW){
-		sprintf(debOut2, "[%s]. Thread requires at least (%d) ms. ", threadStatus, thisTask->internalRemainingThreadTime);
+		if(parentTaskCtx->timerFormat == tUnitsMilliseconds){
+			strcpy(timerUnitsMeasurement, "ms");
+		}
+		else if(parentTaskCtx->timerFormat == tUnitsMicroseconds){
+			strcpy(timerUnitsMeasurement, "us");
+		} 
+		else{
+			strcpy(timerUnitsMeasurement, "-");
+		}
+		sprintf(debOut2, "[%s]. Thread requires at least (%d) %s. ", threadStatus, thisTask->internalRemainingThreadTime, timerUnitsMeasurement);
 	}
 	else{
 		sprintf(debOut2, "[%s]. ", threadStatus);
