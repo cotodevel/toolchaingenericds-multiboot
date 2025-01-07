@@ -44,6 +44,7 @@ USA
 #include "zipDecomp.h"
 #include "timerTGDS.h"
 #include "powerTGDS.h"
+#include "TGDS_threads.h"
 
 //TCP
 #include <stdio.h>
@@ -64,6 +65,8 @@ u32 * getTGDSMBV3ARM7Bootloader(){
 		return (u32*)&arm7bootldr_twl[0];
 	}
 }
+
+bool TGDSWirelessAvailable = false;
 
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
 char lastHomebrewBooted[MAX_TGDSFILENAME_LENGTH];
@@ -93,9 +96,17 @@ void menuShow(){
 	printf("Button (Start): File browser ");
 	printf("    Button (A) Load TGDS/devkitARM NDS Binary. ");
 	printf("                              ");
-	printf("(X): Remoteboot >%d", TGDSPrintfColor_Yellow);
-	printf("    (Server IP detected: %s [Port:%d]) >%d", remoteBooterIPAddr, remoteBooterPort, TGDSPrintfColor_Yellow);
+	
+	if(TGDSWirelessAvailable == true){
+		printf("(X): Remoteboot >%d", TGDSPrintfColor_Yellow);
+		printf("    (Server IP detected: %s [Port:%d]) >%d", remoteBooterIPAddr, remoteBooterPort, TGDSPrintfColor_Yellow);
+	}
+	else{
+		printf("Remoteboot disabled. >%d", TGDSPrintfColor_Yellow);
+		printf("  - ");
+	}
 	printf("                              ");
+	
 	printf("(Y): Boot last homebrew:  >%d", TGDSPrintfColor_Red);
 	printf("    [%s]) >%d", lastHomebrewBooted, TGDSPrintfColor_Red);
 	printf("                              ");
@@ -314,11 +325,6 @@ int main(int argc, char **argv) {
 	}
 	REG_IME = 1;
 	
-	//VBLANK can't be used to count up screen power timeout because sound stutters. Use timer instead
-	TIMERXDATA(2) = TIMER_FREQ((int)1);
-	TIMERXCNT(2) = TIMER_DIV_1 | TIMER_IRQ_REQ | TIMER_ENABLE;
-	irqEnable(IRQ_TIMER2);
-
 	//load TGDS Logo (NDS BMP Image)
 	//VRAM A Used by console
 	//VRAM C Keyboard and/or TGDS Logo
@@ -468,6 +474,15 @@ int main(int argc, char **argv) {
 		}
 	}
 	
+	//Register threads.
+	int taskATimeMS = 1; //Task execution in unit * milliseconds 
+    initThreadSystem(&threadQueue, tUnitsMilliseconds);
+    if(registerThread(&threadQueue, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode) != THREAD_OVERFLOW){
+        
+    }
+	
+	TGDSWirelessAvailable = isTGDSWirelessServiceAvailable();
+
 	//Show logo
 	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 	menuShow();
@@ -479,6 +494,19 @@ int main(int argc, char **argv) {
 
 	while (1){
 		scanKeys();
+		
+		/*
+		//GDB debug start
+		if (keysDown() & KEY_R){
+			disableScreenPowerTimeout(); //timeout backlight is disabled when remoteboot is active
+			int TGDSDebuggerStage = 10;
+			u8 fwNo = *(u8*)(0x027FF000 + 0x5D);
+			sprintf((char*)ConsolePrintfBuf, "ARM9: TGDS-multiboot(): debugging enabled. Halt.");
+			handleDSInitOutputMessage((char*)ConsolePrintfBuf);
+			handleDSInitError(TGDSDebuggerStage, (u32)fwNo);
+		}
+		//GDB debug end
+		*/
 		
 		if (keysDown() & KEY_START){
 			disableScreenPowerTimeout(); //Default TGDS filebrowser's backlight timeout disabled when loading homebrew 
@@ -692,9 +720,9 @@ int main(int argc, char **argv) {
 			handleRemoteBoot((char*)&URLPathRequested[0], remoteBooterPort);
 			remoteBootEnabled = false;
 		}
-
+		
+		int threadsRan = runThreads(&threadQueue);
 		handleARM9SVC();	/* Do not remove, handles TGDS services */
-		IRQVBlankWait();
 	}
 	return 0;
 }
@@ -842,27 +870,103 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
 }
 
 void enableScreenPowerTimeout(){
-	REG_IE |= IRQ_TIMER2;
 	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 }
 
 void disableScreenPowerTimeout(){
-	REG_IE &= ~(IRQ_TIMER2);
 	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 }
 
 bool bottomScreenIsLit = false;
-static int secondsElapsed = 0;
+static int millisecondsElapsed = 0;	
+
+//called 100 times per second (when enum timerUnits is a millisecond)
 void handleTurnOnTurnOffScreenTimeout(){
-	secondsElapsed ++;
-	if (  secondsElapsed == 12300 ){ //2728hz per unit @ 33Mhz
+	millisecondsElapsed ++;
+	if (  (millisecondsElapsed * 10) >= 12300 ){
 		setBacklight(0);
-		secondsElapsed = 0;
+		millisecondsElapsed = 0;
 	}
 	//turn on bottom screen if input event
 	if(bottomScreenIsLit == true){
 		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
 		bottomScreenIsLit = false;
-		secondsElapsed = 0;
+		millisecondsElapsed = 0;
 	}
 }
+
+
+
+//////////////////////////////////////////////////////// Threading User code start : TGDS Project specific ////////////////////////////////////////////////////////
+//User callback when Task Overflows. Intended for debugging purposes only, as normal user code tasks won't overflow if a task is implemented properly.
+//	u32 * args = This Task context
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void onThreadOverflowUserCode(u32 * args){
+	struct task_def * thisTask = (struct task_def *)args;
+	struct task_Context * parentTaskCtx = thisTask->parentTaskCtx;	//get parent Task Context node 
+
+	char threadStatus[64];
+	switch(thisTask->taskStatus){
+		case(INVAL_THREAD):{
+			strcpy(threadStatus, "INVAL_THREAD");
+		}break;
+		
+		case(THREAD_OVERFLOW):{
+			strcpy(threadStatus, "THREAD_OVERFLOW");
+		}break;
+		
+		case(THREAD_EXECUTE_OK_WAIT_FOR_SLEEP):{
+			strcpy(threadStatus, "THREAD_EXECUTE_OK_WAIT_FOR_SLEEP");
+		}break;
+		
+		case(THREAD_EXECUTE_OK_WAKEUP_FROM_SLEEP_GO_IDLE):{
+			strcpy(threadStatus, "THREAD_EXECUTE_OK_WAKEUP_FROM_SLEEP_GO_IDLE");
+		}break;
+	}
+	
+	char debOut2[256];
+	char timerUnitsMeasurement[32];
+	if( thisTask->taskStatus == THREAD_OVERFLOW){
+		if(parentTaskCtx->timerFormat == tUnitsMilliseconds){
+			strcpy(timerUnitsMeasurement, "ms");
+		}
+		else if(parentTaskCtx->timerFormat == tUnitsMicroseconds){
+			strcpy(timerUnitsMeasurement, "us");
+		} 
+		else{
+			strcpy(timerUnitsMeasurement, "-");
+		}
+		sprintf(debOut2, "[%s]. Thread requires at least (%d) %s. ", threadStatus, thisTask->internalRemainingThreadTime, timerUnitsMeasurement);
+	}
+	else{
+		sprintf(debOut2, "[%s]. ", threadStatus);
+	}
+	
+	int TGDSDebuggerStage = 10;
+	u8 fwNo = *(u8*)(0x027FF000 + 0x5D);
+	handleDSInitOutputMessage((char*)debOut2);
+	handleDSInitError(TGDSDebuggerStage, (u32)fwNo);
+	
+	while(1==1){
+		HaltUntilIRQ();
+	}
+}
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void taskA(u32 * args){
+	handleTurnOnTurnOffScreenTimeout();
+}
+
+//////////////////////////////////////////////////////////////////////// Threading User code end /////////////////////////////////////////////////////////////////////////////
