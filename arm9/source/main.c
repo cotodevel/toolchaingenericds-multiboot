@@ -476,8 +476,9 @@ int main(int argc, char **argv) {
 	
 	//Register threads.
 	int taskATimeMS = 1; //Task execution in unit * milliseconds 
-    initThreadSystem(&threadQueue, tUnitsMilliseconds);
-    if(registerThread(&threadQueue, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode) != THREAD_OVERFLOW){
+    initThreadSystem(&threadQueue);
+    
+	if(registerThread(&threadQueue, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode, tUnitsMilliseconds) != THREAD_OVERFLOW){
         
     }
 	
@@ -880,10 +881,10 @@ void disableScreenPowerTimeout(){
 bool bottomScreenIsLit = false;
 static int millisecondsElapsed = 0;	
 
-//called 100 times per second (when enum timerUnits is a millisecond)
+//called 100 times per second
 void handleTurnOnTurnOffScreenTimeout(){
 	millisecondsElapsed ++;
-	if (  (millisecondsElapsed * 10) >= 12300 ){
+	if (  millisecondsElapsed >= 500 ){
 		setBacklight(0);
 		millisecondsElapsed = 0;
 	}
@@ -933,16 +934,16 @@ void onThreadOverflowUserCode(u32 * args){
 	char debOut2[256];
 	char timerUnitsMeasurement[32];
 	if( thisTask->taskStatus == THREAD_OVERFLOW){
-		if(parentTaskCtx->timerFormat == tUnitsMilliseconds){
+		if(thisTask->timerFormat == tUnitsMilliseconds){
 			strcpy(timerUnitsMeasurement, "ms");
 		}
-		else if(parentTaskCtx->timerFormat == tUnitsMicroseconds){
+		else if(thisTask->timerFormat == tUnitsMicroseconds){
 			strcpy(timerUnitsMeasurement, "us");
 		} 
 		else{
 			strcpy(timerUnitsMeasurement, "-");
 		}
-		sprintf(debOut2, "[%s]. Thread requires at least (%d) %s. ", threadStatus, thisTask->internalRemainingThreadTime, timerUnitsMeasurement);
+		sprintf(debOut2, "[%s]. Thread requires at least (%d) %s. ", threadStatus, thisTask->remainingThreadTime, timerUnitsMeasurement);
 	}
 	else{
 		sprintf(debOut2, "[%s]. ", threadStatus);
