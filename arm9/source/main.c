@@ -475,10 +475,9 @@ int main(int argc, char **argv) {
 	}
 	
 	//Register threads.
-	int taskATimeMS = 1; //Task execution in unit * milliseconds 
-    initThreadSystem(&threadQueue);
-    
-	if(registerThread(&threadQueue, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode, tUnitsMilliseconds) != THREAD_OVERFLOW){
+	struct task_Context * TGDSThreads = getTGDSThreadSystem();
+	int taskATimeMS = 1; //Task execution requires at least 1ms
+	if(registerThread(TGDSThreads, (TaskFn)&taskA, (u32*)NULL, taskATimeMS, (TaskFn)&onThreadOverflowUserCode, tUnitsMilliseconds) != THREAD_OVERFLOW){
         
     }
 	
@@ -722,8 +721,7 @@ int main(int argc, char **argv) {
 			remoteBootEnabled = false;
 		}
 		
-		int threadsRan = runThreads(&threadQueue);
-		handleARM9SVC();	/* Do not remove, handles TGDS services */
+		int threadsRan = runThreads(TGDSThreads);
 	}
 	return 0;
 }
