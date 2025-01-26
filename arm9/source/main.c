@@ -721,7 +721,8 @@ int main(int argc, char **argv) {
 			remoteBootEnabled = false;
 		}
 		
-		int threadsRan = runThreads(TGDSThreads);
+		bool waitForVblank = false;
+		int threadsRan = runThreads(TGDSThreads, waitForVblank);
 	}
 	return 0;
 }
