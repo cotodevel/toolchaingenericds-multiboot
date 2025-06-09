@@ -314,7 +314,7 @@ int main(int argc, char **argv) {
 	u32 arm9iRamAddress = (u32)getValueSafe((u32*)ARM9i_RAM_ADDRESS);
 	int arm9iBootCodeSize = (int)getValueSafe((u32*)ARM9i_BOOT_SIZE);
 	
-	//Slot2 Passme v1 .ds.gba homebrew is unsupported. See: https://bitbucket.org/Coto88/toolchaingenericds-multiboot/issues/9/integrate-open-source-ntr-twl-bootloader
+	//Slot2 Passme v1 .ds.gba homebrew is unsupported. See: https://github.com/cotodevel/toolchaingenericds-multiboot/issues/8
 	if(isNTRTWLBinary == isNDSBinaryV1Slot2){
 		u8 fwNo = *(u8*)ARM7_ARM9_SAVED_DSFIRMWARE;
 		int stage = 0;
