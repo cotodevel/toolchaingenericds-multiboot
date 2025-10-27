@@ -59,11 +59,12 @@ USA
 
 u32 * getTGDSMBV3ARM7Bootloader(){
 	if(__dsimode == false){
-		return (u32*)&arm7bootldr[0];	
+		swiDecompressLZSSWram((u8*)&arm7bootldr[0], (u8*)TGDS_MB_V3_ARM7_SCRATCHPAD_LZSS_DECOMP_BUF);
 	}
 	else{
-		return (u32*)&arm7bootldr_twl[0];
+		swiDecompressLZSSWram((u8*)&arm7bootldr_twl[0], (u8*)TGDS_MB_V3_ARM7_SCRATCHPAD_LZSS_DECOMP_BUF);
 	}
+	return (u32*)TGDS_MB_V3_ARM7_SCRATCHPAD_LZSS_DECOMP_BUF;
 }
 
 bool TGDSWirelessAvailable = false;
@@ -280,13 +281,7 @@ int main(int argc, char **argv) {
 	coherent_user_range_by_size((uint32)TGDS_MB_V3_ARM7_STAGE1_ADDR, (int)(96*1024)); //		also for TWL binaries 
 	
 	//Execute Stage 2: VRAM ARM7 payload: NTR/TWL (0x06000000)
-	u32 * payload = NULL;
-	if(__dsimode == false){
-		payload = (u32*)&arm7bootldr[0];	
-	}
-	else{
-		payload = (u32*)&arm7bootldr_twl[0];
-	}
+	u32 * payload = getTGDSMBV3ARM7Bootloader();
 	executeARM7Payload((u32)0x02380000, 96*1024, payload);
 	
 	bool isTGDSCustomConsole = false;	//set default console or custom console: default console
