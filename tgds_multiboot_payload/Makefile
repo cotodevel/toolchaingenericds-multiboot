@@ -150,9 +150,11 @@ $(ELF_ARM9): $(OBJPROG)
 $(BINSTRIP_RULE_COMPRESSED_9): $(ELF_ARM9)
 	-@echo 'STRIP End: Remove ELF header and build baremetal Binary executable: $<	->	$@ !'
 	$(OBJCOPY) 	-S -O binary	$<	$@
-	$(OBJCOPY) 	-S -O binary	${<:.elf=-nonstripped_dsi.elf}	${@:.bin=_twl.bin}
+	$(OBJCOPY) 	-S -O binary	${<:.elf=-nonstripped_dsi.elf}	${@:.binlzss=_twl.binlzss}
+	$(BIN2LZSS)	-ewo	${@:.binlzss=.binlzss}
+	$(BIN2LZSS)	-ewo	${@:.binlzss=_twl.binlzss}
 	-mv	$@ ../arm9/data
-	-mv	${@:.bin=_twl.bin} ../arm9/data
+	-mv	${@:.binlzss=_twl.binlzss} ../arm9/data
 	-rm	$<
 	-rm	${<:.elf=-nonstripped_dsi.elf}
 	
@@ -160,7 +162,7 @@ $(BINSTRIP_RULE_COMPRESSED_9): $(ELF_ARM9)
 	
 clean:
 	-@echo 'cleanup $(BINSTRIP_RULE_COMPRESSED_9)'
-	-@rm -fr $(BINSTRIP_RULE_COMPRESSED_9)	$(BINSTRIP_RULE_COMPRESSED_9).map	$(BINSTRIP_RULE_COMPRESSED_9)_twl.map	$(BUILD_ARM9)	data/$(DIR_ARM9).bin	data/arm7bootldr.bin	data/arm7bootldr_twl.bin
+	-@rm -fr $(BINSTRIP_RULE_COMPRESSED_9)	$(BINSTRIP_RULE_COMPRESSED_9).map	$(BINSTRIP_RULE_COMPRESSED_9)_twl.map	$(BUILD_ARM9)	data/$(DIR_ARM9).binlzss	data/arm7bootldr.binlzss	data/arm7bootldr_twl.binlzss
 	
 debug:
 	-@echo 'debug $(objs_arm9)'
