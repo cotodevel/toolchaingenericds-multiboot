@@ -44,6 +44,7 @@ USA
 #include "zipDecomp.h"
 #include "timerTGDS.h"
 #include "TGDS_threads.h"
+#include "powerTGDS.h"
 
 //TCP
 #include <stdio.h>
@@ -66,8 +67,8 @@ u32 * getTGDSMBV3ARM7Bootloader(){
 	return (u32*)TGDS_MB_V3_ARM7_SCRATCHPAD_LZSS_DECOMP_BUF;
 }
 
+bool recoveryFileExists = false;
 bool TGDSWirelessAvailable = false;
-
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
 char lastHomebrewBooted[MAX_TGDSFILENAME_LENGTH];
 
@@ -107,6 +108,11 @@ void menuShow(){
 	}
 	printf("                              ");
 	
+	if(recoveryFileExists == true){
+		printf("(B): Restore from %s >%d", RECOVERY_FILENAME, TGDSPrintfColor_Orange);
+		printf("                              ");
+	}
+
 	printf("(Y): Boot last homebrew:  >%d", TGDSPrintfColor_Red);
 	printf("    [%s]) >%d", lastHomebrewBooted, TGDSPrintfColor_Red);
 	printf("                              ");
@@ -323,6 +329,13 @@ int main(int argc, char **argv) {
 	//VRAM A Used by console
 	//VRAM C Keyboard and/or TGDS Logo
 	
+	if(FileExists(RECOVERY_FILENAME) == FT_NONE){
+		recoveryFileExists = false;
+	}
+	else{
+		recoveryFileExists = true;
+	}	
+
 	//TGDS-MB chainload boot? Boot it then
 	if(argc > 2){
 		disableScreenPowerTimeout(); //timeout backlight is disabled when loading homebrew
@@ -680,6 +693,45 @@ int main(int argc, char **argv) {
 			}
 		}
 		
+		if(recoveryFileExists == true){
+			
+
+			if (keysDown() & KEY_B){
+				scanKeys();
+				while(keysHeld() & KEY_B){
+					scanKeys();
+				}
+
+				disableScreenPowerTimeout(); //timeout backlight is disabled when loading homebrew 
+				GUI_clear();
+				switch_dswnifi_mode(dswifi_idlemode);
+				
+				printf("                     ");
+				printf("                     ");
+				
+				printf("[Restore File: %s started] >%d", RECOVERY_FILENAME, TGDSPrintfColor_Orange);
+				printf("                     ");
+				char logBuf[256];
+				if(handleDecompressor(RECOVERY_FILENAME, (char*)&logBuf[0]) == 0){
+					printf("[Restore File: %s OK] >%d", RECOVERY_FILENAME, TGDSPrintfColor_Green);
+				}
+				else{
+					printf("[Restore File: %s ERROR] >%d", RECOVERY_FILENAME, TGDSPrintfColor_Red);
+				}
+				printf("                     ");
+				printf("Press Start to turn off the DS. >%d",  TGDSPrintfColor_Orange);
+				
+				while(1==1){
+					scanKeys();
+					if(keysDown() & KEY_START){
+						shutdownNDSHardware();
+					}
+				}
+				
+			}
+
+		}
+
 		//////////////////////////////////////////////////////////////////////////////////////////////
 		
 		//Handle normal input to turn back on bottom screen 

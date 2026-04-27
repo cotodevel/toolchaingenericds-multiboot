@@ -30,8 +30,8 @@ USA
 
 #define TGDSMULTIBOOT_CFG_FILE ((char*)"0:/toolchaingenericds-multiboot-config.txt")
 #define RemoteBootTGDSPackage ((char*)"0:/remotepackage.zip")
-
 #define TGDS_PROJECT_LIT_SCREENS (POWMAN_BACKLIGHT_BOTTOM_BIT | POWMAN_BACKLIGHT_TOP_BIT)
+#define RECOVERY_FILENAME ((char*)"0:/tgds-zlib-backup.zip")
 
 #endif
 
@@ -40,6 +40,7 @@ USA
 extern "C" {
 #endif
 
+extern bool recoveryFileExists;
 extern u32 * getTGDSMBV3ARM7Bootloader();
 extern int main(int argc, char **argv);
 extern char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
