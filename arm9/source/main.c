@@ -43,7 +43,6 @@ USA
 #include "conf.h"
 #include "zipDecomp.h"
 #include "timerTGDS.h"
-#include "powerTGDS.h"
 #include "TGDS_threads.h"
 
 //TCP
@@ -865,11 +864,11 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
 }
 
 void enableScreenPowerTimeout(){
-	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+	setBacklight(TGDS_PROJECT_LIT_SCREENS);
 }
 
 void disableScreenPowerTimeout(){
-	setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+	setBacklight(TGDS_PROJECT_LIT_SCREENS);
 }
 
 bool bottomScreenIsLit = false;
@@ -884,7 +883,7 @@ void handleTurnOnTurnOffScreenTimeout(){
 	}
 	//turn on bottom screen if input event
 	if(bottomScreenIsLit == true){
-		setBacklight(POWMAN_BACKLIGHT_BOTTOM_BIT);
+		setBacklight(TGDS_PROJECT_LIT_SCREENS);
 		bottomScreenIsLit = false;
 		millisecondsElapsed = 0;
 	}
