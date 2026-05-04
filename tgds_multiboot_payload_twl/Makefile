@@ -16,12 +16,28 @@
 #USA
 #
 
+export DIRS_ARM9_SRC = data/	\
+	source/gui	\
+	source/TGDSMemoryAllocator	\
+	source/	\
+	source/interrupts/	\
+	../common/	\
+	../common/templateCode/data/arm9/	\
+	../common/templateCode/source/
+	
 
-# relative path (if you are outside arm9 folder then $(DIR_ARM9), arm7 is $(DIR_ARM7))
+export DIRS_ARM9_HEADER = source/	\
+	source/gui	\
+	source/TGDSMemoryAllocator	\
+	build/	\
+	include/	\
+	../common/
+
+# relative path (if you are outside arm9 folder then $(DIR_ARM9), arm7 is $(DIR_ARM9))
 RELATIVE_PATH =	
 
 #Prepare ARM9 dirs
-DIRLIBS_HDR = $(foreach dirres,$(DIRS_ARM9_HEADER),-I "$(RELATIVE_PATH)$(dirres)" )	$(DIRLIBS_ALLOWED)	$(TARGET_LIBRARY_HEADERS_9_INC)	-I	$(TARGET_LIBRARY_PATH)/includeWoopsi/	-I	$(TARGET_LIBRARY_PATH)/includeWoopsi/fonts
+DIRLIBS_HDR = $(foreach dirres,$(DIRS_ARM9_HEADER),-I "$(RELATIVE_PATH)$(dirres)" )	$(DIRLIBS_ALLOWED)	$(TARGET_LIBRARY_HEADERS_9_INC)
 DIRLIBS_SRC = $(foreach dirres,$(DIRS_ARM9_SRC),-I "$(CURDIR)/$(RELATIVE_PATH)$(dirres)" )
 
 file_arm9_src_c=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.c))  )
@@ -31,40 +47,33 @@ file_arm9_src_s=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_P
 file_arm9_src_SUPP=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.S))  )
 file_arm9_src_cpp=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.cpp))  )
 file_arm9_src_bin=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.bin))  )
-file_arm9_src_binlzss=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.binlzss))  )
-file_arm9_src_tga=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.tga))  )
-file_arm9_src_pcx=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.pcx))  )
-file_arm9_src_bmp=  $(foreach dir,$(DIRS_ARM9_SRC), $(subst $(CURDIR)/$(RELATIVE_PATH)/$(dir)/,,$(wildcard $(CURDIR)/$(RELATIVE_PATH)/$(dir)/*.bmp))  )
 
 # Object Target
-objs_arm9:=		${file_arm9_src_bmp:.bmp=.o}	${file_arm9_src_pcx:.pcx=.o}	${file_arm9_src_tga:.tga=.o}	${file_arm9_src_bin:.bin=.o}	${file_arm9_src_binlzss:.binlzss=.o}	${file_arm9_src_c:.c=.o}	${file_arm9_src_s:.s=.o}	${file_arm9_src_SUPP:.S=.o}		${file_arm9_src_cpp:.cpp=.o}
+objs_arm9:=		${file_arm9_src_bin:.bin=.o}	${file_arm9_src_c:.c=.o}	${file_arm9_src_s:.s=.o}	${file_arm9_src_SUPP:.S=.o}		${file_arm9_src_cpp:.cpp=.o}
 d_objs_arm9:=	${file_arm9_src_c:.c=.d}	${file_arm9_src_s:.s=.d}	${file_arm9_src_SUPP:.S=.d}	${file_arm9_src_cpp:.cpp=.d}
 
-#ARM9 specific definitions.	-fno-common so we force initialized data to rodata
-MAPFILE = $(DIR_ARM9).map
+#ARM9 specific definitions. -fno-common so we force initialized data to rodata
+MAPFILE = $(BINSTRIP_RULE_COMPRESSED_9i).map
 AS_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	$(SPECIFIC_AS_COMPILER_FLAGS_9)		$(GLOBAL_AS_COMPILER_FLAGS)
-CC_ASFLAGS		=	$(GLOBAL_SHARED_FLAGS_9)	-marm	-Os	-fno-short-enums	-mthumb-interwork	-DARM9	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-tree-loop-distribute-patterns -Dappver='$(EXECUTABLE_VERSION)'	-DTGDSPROJECTNAME='"$(TGDSPROJECTNAME)"'
-CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	
+CC_ASFLAGS		=	-march=armv5te	-mthumb-interwork	-marm	-Os	-fno-short-enums	-fno-exceptions		-nostdlib	 -ffunction-sections -fdata-sections	-DARM9	-Dappver='$(EXECUTABLE_VERSION)'	-DIGNORELIBS
+CPP_FLAGS		=	$(CC_ASFLAGS)	-nostdinc++	-fno-rtti
 BUILD			= 	$(BUILD_ARM9)
-DIR_SRC			=	$(DIRS_ARM9_SRC)	$(DIRS_ARM9_HEADER)
+DIR_SRC			=	$(DIRS_ARM9_SRC)
 
 #--gc-sections: allows relocatable sections linked (already) to be included, otherwise unused sections are discarded.
 #check arm9.map "Discarded input sections" to see --gc-sections in action.
-LDFLAGS	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm9_ld.specs	-Wl,--gc-sections,-Map,$(MAPFILE),-z,defs
-LDFLAGS_DSI	:=	-specs=$(TARGET_LIBRARY_LINKER_PATH_LD)/nds_arm9_ld.specs	-Wl,--gc-sections,-Map,arm9-nonstripped_dsi.map
-LIBRARIES_NTR =	-ltgdsfilesystem9	-lutils9	-l$(TARGET_LIBRARY_TGDS_NTR_9)	-lhardware9		-lwoopsi	-lstdc++	-lcnano9	-lgcc
-LIBRARIES_TWL =	-ltgdsfilesystem9i	-lutils9i	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lhardware9i	-lwoopsi	-lstdc++	-lcnano9	-lgcc
+LDFLAGS_DSI	=	-specs=twl_arm9_ld.specs	-Wl,--no-gc-sections,-Map,$(BINSTRIP_RULE_COMPRESSED_9i).map
+LIBRARIES_TWL =	-ltgdsfilesystem9i	-lutils9i	-l$(TARGET_LIBRARY_TGDS_TWL_9)	-lhardware9i	-lstdc++	-lcnano9	-lgcc
 
 ################################################################################################
 
 #Dont modify anything else if not necessary ..
-OBJECTS = 	$(objs_arm9)	$(file_arm9_src_o_out)
+OBJECTS:=	$(objs_arm9)	$(file_arm9_src_o_out)
 OBJDIR 	=	./$(BUILD)
-VPATH 	=	$(DIR_SRC)	
-OBJPROG = 	$(addprefix $(OBJDIR)/, $(NONSTRIPELF_ARM9))
+VPATH 	=	$(DIR_SRC)
+OBJPROG =	$(addprefix $(OBJDIR)/, $(NONSTRIPELF_ARM9))
 
-
-all: makebuild	$(TARGET_LIBRARY_CRT0_FILE_9).o	$(BINSTRIP_RULE_9)
+all: makebuild	$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9i).o	$(BINSTRIP_RULE_COMPRESSED_9i)
 #all: debug
 
 makebuild:
@@ -81,23 +90,7 @@ $(OBJDIR)/%.o : %.bin
 	$(BIN2C)	$<	${@:.o=.c}	$(subst build/,,${@:.o=})
 	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_PROHIBITED)	-o $@ -c ${@:.o=.c}
 
-#rule for creating LZSS compressed *.bin from /data folder, converts to .C source code, which then gets compiled as object so it can be linked later
-$(OBJDIR)/%.o : %.binlzss
-	-@echo 'LZSS Compressing .BIN (${<:.binlzss=.lzss}) -> .C output: ${@:.o=.c} : arrayName: $(subst build/,,${@:.o=})'
-	-cp	$<	${<:.binlzss=.lzss}
-	$(BIN2LZSS)	-ewo	${<:.binlzss=.lzss}
-	$(BIN2C)	${<:.binlzss=.lzss}	${@:.o=.c}	$(subst build/,,${@:.o=})
-	$(CC)	$(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_PROHIBITED)	-o $@ -c ${@:.o=.c}
-	-@rm -fr	${<:.binlzss=.lzss}
-
-#BMP format: BMP24/16/8 to PCX texture, which will be converted on-the-fly to native texture (Format 7: Direct Color Texture mode)
-$(OBJDIR)/%.o : %.bmp	
-	-@echo 'trying to convert .BIN ($<) -> .C output: ${@:.o=.c} : arrayName: $(subst build/,,${@:.o=})'
-	$(TGDSFFMPEG) -i $< -pix_fmt rgb8 -y ${@:.o=.pcx}
-	$(BIN2C)	${@:.o=.pcx}	${@:.o=.c}	$(subst build/,,${@:.o=})
-	$(CC) $(CC_ASFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	-o $@ -c ${@:.o=.c}	
-
-#Direct pcx format: RGB8 (Blender 3D export -> native DS Callist + PCX texture will be converted on-the-fly to native texture (Format 7: Direct Color Texture mode))
+#pcx parsing (Blender 3D export -> native DS Callist + texture)
 $(OBJDIR)/%.o : %.pcx	
 	-@echo 'trying to convert .BIN ($<) -> .C output: ${@:.o=.c} : arrayName: $(subst build/,,${@:.o=})'
 	$(BIN2C)	$<	${@:.o=.c}	$(subst build/,,${@:.o=})
@@ -132,36 +125,37 @@ $(OBJDIR)/%.o : %.S
 	-@echo 'S Compile end: $@'
 
 #Special rule: compile crt0 for arm9 entrypoint
-$(TARGET_LIBRARY_CRT0_FILE_9).o:	$(TARGET_LIBRARY_LINKER_FILE_9)
+$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9i).o:	$(TARGET_LIBRARY_LINKER_FILE_COMPRESSED_9i)
 	-@echo 'S Compile start: crt0s'
-	rm -fr $(BUILD)/$(TARGET_LIBRARY_CRT0_FILE_9).o
+	rm -fr $(BUILD)/$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9i).o
 	$(CPP)	-x assembler-with-cpp	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(CC_ASFLAGS)	-o	$(OBJDIR)/$@	-c	$<
-	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm9_ld.ld $(CURDIR)
-	cp	-r $(TARGET_LIBRARY_LINKER_PATH_LD)nds_arm9_ld.specs $(CURDIR)
 	-@echo 'S Compile end: crt0s'
 
-#Linkage. 
+#Linkage.
 $(OBJPROG): $(addprefix $(OBJDIR)/, $(OBJECTS))
 	-@echo 'Entering Linking phase'
-	-$(CC) $^	$(LDFLAGS)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_NTR)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o $@
 	-$(CC) $^	$(LDFLAGS_DSI)	$(DIRLIBS_HDR)	$(DIRLIBS_SRC)	$(DIRLIBS_SHARED)	-L	$(TARGET_LIBRARY_PATH)/	-L	$(TOOLCHAIN_PATH)/		$(LIBRARIES_TWL)	-L	$(TARGET_LIBRARY_LINKER_PATH_LD)	-o ${@:.elf=_dsi.elf}
 	-@echo 'Leaving Linking phase. Output: $@'
 
 #xxxx-nonstripped.elf -> xxxx.elf STRIP operation
 $(ELF_ARM9): $(OBJPROG)
 	-@echo '$@ Unstripped. STRIP Start!'
-	$(OBJSTRIP)	-s -R .comment -R .gnu.version	$<
-	$(OBJSTRIP)	-s -R .comment -R .gnu.version	${<:.elf=_dsi.elf}
 	-mv build/${@:.elf=-nonstripped_dsi.elf}	$(CURDIR)
-	-mv	$<	$@
+	$(OBJSTRIP)	-s -R .comment -R .gnu.version	${@:.elf=-nonstripped_dsi.elf}
+	-mv	${@:.elf=-nonstripped_dsi.elf}	$@
 	
-$(BINSTRIP_RULE_9): $(ELF_ARM9)
+$(BINSTRIP_RULE_COMPRESSED_9i): $(ELF_ARM9)
 	-@echo 'STRIP End: Remove ELF header and build baremetal Binary executable: $<	->	$@ !'
-	$(OBJCOPY) 	-S -O binary	$<	$@
+	$(OBJCOPY) 	-S -O binary	$<	${@:.elf=-nonstripped_dsi.elf}
+	$(BIN2LZSS)	-ewo	${@:.binlzss=.binlzss}
+	-mv	${@:.binlzss=.binlzss} ../arm9/data
 	-rm	$<
-	$(OBJCOPY) 	-S -O binary	${<:.elf=-nonstripped_dsi.elf}	${@:.bin=_twl.bin}
+	
 ################################################################################################
-
+	
 clean:
-	-@echo 'cleanup $(DIR_ARM9)'
-	-@rm -fr $(BINSTRIP_RULE_9)	$(MAPFILE)	${BINSTRIP_RULE_9:.bin=_twl.bin}	$(CURDIR)/nds_arm9_ld.specs	$(CURDIR)/nds_arm9_ld.ld	$(CURDIR)/arm9-nonstripped_dsi.elf $(CURDIR)/arm9-nonstripped_dsi.map	$(CURDIR)/data/tgds_multiboot_payload.binlzss	$(CURDIR)/data/tgds_multiboot_payload_twl.binlzss
+	-@echo 'cleanup $(BINSTRIP_RULE_COMPRESSED_9i)_twl'
+	-@rm -fr	$(BINSTRIP_RULE_COMPRESSED_9i).map	$(BUILD_ARM9)	data/$(DIR_ARM9).bin	data/arm7bootldr_twl.binlzss
+	
+debug:
+	-@echo 'debug $(objs_arm9)'
