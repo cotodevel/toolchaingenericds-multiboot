@@ -18,28 +18,22 @@ USA
 
 */
 
-#ifndef __main9_h__
-#define __main9_h__
+#ifndef __TGDSMemoryAllocator_h__
+#define __TGDSMemoryAllocator_h__
 
-#include "typedefsTGDS.h"
-#include "dsregs.h"
 #include "posixHandleTGDS.h"
 
-#define TGDSPROJECTNAME ((char*)"tgds_multiboot_payload")
-
 #endif
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern void IRQInitCustom(u8 DSHardware);
-extern int main(int argc, char **argv);
-extern u8 argvIntraTGDSMB[0x190];
-extern void bootarm9payload();
+	////////[Custom Memory implementation is selected]////////
+
+//Definition that overrides the weaksymbol expected from toolchain to init ARM9's TGDS memory allocation
+extern struct AllocatorInstance * getProjectSpecificMemoryAllocatorSetup(bool isCustomTGDSMalloc);
 
 #ifdef __cplusplus
 }
 #endif
-

@@ -18,28 +18,29 @@ USA
 
 */
 
-#ifndef __main9_h__
-#define __main9_h__
+#ifndef __interrupts7_h__
+#define __interrupts7_h__
 
 #include "typedefsTGDS.h"
 #include "dsregs.h"
-#include "posixHandleTGDS.h"
-
-#define TGDSPROJECTNAME ((char*)"tgds_multiboot_payload")
 
 #endif
-
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-extern void IRQInitCustom(u8 DSHardware);
-extern int main(int argc, char **argv);
-extern u8 argvIntraTGDSMB[0x190];
-extern void bootarm9payload();
+extern void IpcSynchandlerUser(uint8 ipcByte);
+extern void Timer0handlerUser();
+extern void Timer1handlerUser();
+extern void Timer2handlerUser();
+extern void Timer3handlerUser();
+extern void HblankUser();
+extern void VblankUser();
+extern void VcounterUser();
+extern void screenLidHasOpenedhandlerUser();
+extern void screenLidHasClosedhandlerUser();
 
 #ifdef __cplusplus
 }
 #endif
-

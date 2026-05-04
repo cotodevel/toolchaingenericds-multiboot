@@ -18,18 +18,11 @@ USA
 
 */
 
-#include "InterruptsARMCores_h.h"
-#include "ipcfifoTGDSUser.h"
+#include "typedefsTGDS.h"
+#include "dsregs.h"
 #include "dsregs_asm.h"
-#include "main.h"
-#include "keypadTGDS.h"
-#include "interrupts.h"
-#include "utilsTGDS.h"
-#include "spifwTGDS.h"
-#include "powerTGDS.h"
 
 //User Handler Definitions
-
 #ifdef ARM9
 __attribute__((section(".itcm")))
 #endif
@@ -81,7 +74,7 @@ void HblankUser(){
 __attribute__((section(".itcm")))
 #endif
 void VblankUser(){
-
+	
 }
 
 #ifdef ARM9
@@ -96,7 +89,7 @@ void VcounterUser(){
 __attribute__((section(".itcm")))
 #endif
 void screenLidHasOpenedhandlerUser(){
-	setBacklight(TGDS_PROJECT_LIT_SCREENS); 
+
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
@@ -104,5 +97,5 @@ void screenLidHasOpenedhandlerUser(){
 __attribute__((section(".itcm")))
 #endif
 void screenLidHasClosedhandlerUser(){
-	
+
 }

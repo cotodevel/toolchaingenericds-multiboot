@@ -20,6 +20,15 @@ Simply DLDI patch ToolchainGenericDS-multiboot.nds, if the loader used to boot t
 TGDS-MB TWL does not require any DLDI patch because it uses the internal SD instead.
 ----Don't forget to copy toolchaingenericds-multiboot-config.txt to SD root path or TGDS-multiboot won't boot!!----
 
+TGDS-multiboot v3 compatibility:
+
+-Boots Slot 1 v1 NTR binaries	(TGDS-multiboot v3: NTR Mode / TWL Mode)
+-Boots Slot 1 v2 NTR binaries	(TGDS-multiboot v3: NTR Mode / TWL Mode)
+-Boots Slot 1 v3 NTR binaries 	(TGDS-multiboot v3: NTR Mode / TWL Mode)
+-Boots ToolchainGenericDS Slot 1 TWL binaries	(TGDS-multiboot v3: TWL Mode)
+-Boots DevkitARM Slot 1 NTR/Hybrid/TWL binaries (TGDS-multiboot v3: NTR Mode / TWL Mode)
+
+
 ############################################### HOW TO USE TGDS-MULTIBOOT IN TGDS PROJECTS ############################################### 
 There's a standalone NDS Binary of TGDS-multiboot (ToolchainGenericDS-multiboot.nds/ToolchainGenericDS-multiboot.srl) for launching homebrew.
 It's required to have tgds_multiboot_payload_ntr.binlzss/tgds_multiboot_payload_twl.binlzss copied in SD root folder.

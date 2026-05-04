@@ -62,10 +62,12 @@ export BINSTRIP_RULE_COMPRESSED_9i :=	$(DECOMPRESSOR_BOOTCODE_9i).binlzss
 export TARGET_LIBRARY_CRT0_FILE_7 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_9 = nds_arm_ld_crt0
 export TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9 = nds_arm_ld_crt0
+export TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9i = nds_arm_ld_crt0
 
 export TARGET_LIBRARY_LINKER_FILE_7 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_7).S
 export TARGET_LIBRARY_LINKER_FILE_9 = $(TARGET_LIBRARY_PATH)$(TARGET_LIBRARY_LINKER_SRC)/$(TARGET_LIBRARY_CRT0_FILE_9).S
 export TARGET_LIBRARY_LINKER_FILE_COMPRESSED_9 = ../$(DECOMPRESSOR_BOOTCODE_9)/$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).S
+export TARGET_LIBRARY_LINKER_FILE_COMPRESSED_9i = ../$(DECOMPRESSOR_BOOTCODE_9i)/$(TARGET_LIBRARY_CRT0_FILE_COMPRESSED_9).S
 
 export TARGET_LIBRARY_TGDS_NTR_7 = toolchaingen7
 export TARGET_LIBRARY_TGDS_NTR_9 = toolchaingen9
@@ -114,6 +116,8 @@ export DIRS_ARM9_SRC = data/	\
 export DIRS_ARM9_HEADER = data/	\
 			build/	\
 			include/	\
+			source/	\
+			source/interrupts/	\
 			source/gui/	\
 			source/TGDSMemoryAllocator/	\
 			../common/	\
@@ -137,11 +141,14 @@ compile	:
 	-cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC7_NOFPIC)	$(CURDIR)/common/templateCode/stage1_7/
 	$(MAKE)	-R	-C	$(CURDIR)/common/templateCode/stage1_7/
 	$(MAKE)	-R	-C	$(CURDIR)/common/templateCode/arm7bootldr/
+	-mv $(CURDIR)/common/templateCode/arm7bootldr/arm7vram.bin	$(DIR_ARM9)/data/arm7vram.bin
+	-mv $(CURDIR)/common/templateCode/arm7bootldr/arm7vram_twl.bin	$(DIR_ARM9)/data/arm7vram_twl.bin
 	
 ifeq ($(SOURCE_MAKEFILE9),default)
 	cp	-r	$(TARGET_LIBRARY_MAKEFILES_SRC9_NOFPIC)	$(CURDIR)/$(DIR_ARM9)
 endif
 	$(MAKE)	-R	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/
+	$(MAKE)	-R	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9i)/
 	$(MAKE)	-R	-C	$(DIR_ARM9)/
 $(EXECUTABLE_FNAME)	:	compile
 	-@echo 'ndstool begin'
@@ -247,6 +254,7 @@ clean:
 	$(MAKE) clean	-C	$(CURDIR)/common/templateCode/arm7bootldr/
 #--------------------------------------------------------------------	
 	$(MAKE) clean	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/
+	$(MAKE) clean	-C	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9i)/
 	$(MAKE)	clean	-C	$(DIR_ARM9)/
 	$(MAKE) clean	-C	$(PosIndCodeDIR_FILENAME)/$(DIR_ARM9)/
 ifeq ($(SOURCE_MAKEFILE9),default)
@@ -285,7 +293,8 @@ endif
 	-@rm -rf $(CURDIR)/../ToolchainGenericDS-UnitTest/release/arm7dldi-twl/tgds_multiboot_payload_twl.binlzss $(CURDIR)/../ToolchainGenericDS-UnitTest/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
 	-@rm -rf $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-twl/tgds_multiboot_payload_twl.binlzss $(CURDIR)/../ToolchainGenericDS-wmbhost/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
 	-@rm -rf $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-twl/tgds_multiboot_payload_twl.binlzss $(CURDIR)/../ToolchainGenericDS-zlib-example/release/arm7dldi-twl/${EXECUTABLE_FNAME:.nds=.srl}
-	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl		$(CURDIR)/common/templateCode/	tgds_multiboot_payload/data/arm7bootldr.binlzss	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	release/arm7dldi-ntr/$(EXECUTABLE_FNAME)	release/arm7dldi-ntr/tgds_multiboot_payload_ntr.binlzss	release/arm7dldi-twl/tgds_multiboot_payload_twl.binlzss	release/arm7dldi-twl/ToolchainGenericDS-multiboot.srl
+	-@rm -fr $(EXECUTABLE_FNAME)	$(TGDSPROJECTNAME).srl		$(CURDIR)/common/templateCode/	tgds_multiboot_payload/data/arm7bootldr.bin	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9)/$(BINSTRIP_RULE_COMPRESSED_9)	$(CURDIR)/$(DECOMPRESSOR_BOOTCODE_9i)/$(BINSTRIP_RULE_COMPRESSED_9i)	release/arm7dldi-ntr/$(EXECUTABLE_FNAME)	release/arm7dldi-ntr/tgds_multiboot_payload_ntr.binlzss	release/arm7dldi-twl/tgds_multiboot_payload_twl.binlzss	release/arm7dldi-twl/ToolchainGenericDS-multiboot.srl
+	-@rm -rf	$(DIR_ARM9)/data/arm7vram.bin	$(DIR_ARM9)/data/arm7vram_twl.bin
 	
 rebase:
 	git reset --hard HEAD
