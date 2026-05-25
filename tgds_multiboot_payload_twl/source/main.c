@@ -79,8 +79,8 @@ int main(int argc, char **argv) {
 	memcpy((char*)TGDS_ARGV_BUFFER, (void *)argvIntraTGDSMB, 256);
 	coherent_user_range_by_size((uint32)TGDS_ARGV_BUFFER, (int)256);
 	
-	memset(0x02000000, 0, (int)512*1024); //clear RAM: Fixes DKARM / Custom Devkit NTR/TWL homebrew relying on RAM state not initialized properly
-	coherent_user_range_by_size((u32)0x02000000, (int)512*1024);
+	memset(0x02000000, 0, (int)2*1024*1024); //clear RAM: Fixes DKARM / Custom Devkit NTR/TWL homebrew relying on RAM state not initialized properly
+	coherent_user_range_by_size((u32)0x02000000, (int)2*1024*1024);
 	
 	//TWL/NTR Mode bios will change here, so prevent jumps to BIOS exception vector through any interrupts
 	REG_IME = 0;
