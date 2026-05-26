@@ -57,6 +57,12 @@ USA
 #include "arm7bootldr.h"
 #include "arm7bootldr_twl.h"
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 u32 * getTGDSMBV3ARM7Bootloader(){
 	if(__dsimode == false){
 		swiDecompressLZSSWram((u8*)&arm7bootldr[0], (u8*)TGDS_MB_V3_ARM7_SCRATCHPAD_LZSS_DECOMP_BUF);
@@ -74,6 +80,12 @@ char lastHomebrewBooted[MAX_TGDSFILENAME_LENGTH];
 
 //Back to loader, based on Whitelisted DLDI names
 static char curLoaderNameFromDldiString[MAX_TGDSFILENAME_LENGTH+1];
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 static inline char * canGoBackToLoader(){
 	char * dldiName = dldi_tryingInterface();
 	if(dldiName != NULL){
@@ -89,6 +101,12 @@ static inline char * canGoBackToLoader(){
 	return NULL;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void menuShow(){
 	clrscr();
 	printf("                              ");
@@ -943,10 +961,22 @@ bool DownloadFileFromServer(char * downloadAddr, int ServerPort, char * outputPa
 	return true;
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void enableScreenPowerTimeout(){
 	setBacklight(TGDS_PROJECT_LIT_SCREENS);
 }
 
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void disableScreenPowerTimeout(){
 	setBacklight(TGDS_PROJECT_LIT_SCREENS);
 }
@@ -955,6 +985,12 @@ bool bottomScreenIsLit = false;
 static int millisecondsElapsed = 0;	
 
 //called 100 times per second
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
 void handleTurnOnTurnOffScreenTimeout(){
 	millisecondsElapsed ++;
 	if (  millisecondsElapsed >= 500 ){
