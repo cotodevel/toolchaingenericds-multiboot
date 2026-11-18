@@ -40,6 +40,9 @@ extern void VblankUser();
 extern void VcounterUser();
 extern void screenLidHasOpenedhandlerUser();
 extern void screenLidHasClosedhandlerUser();
+extern float camDist;
+extern float rotateX;
+extern float rotateY;
 
 #ifdef __cplusplus
 }

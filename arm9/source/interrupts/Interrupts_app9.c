@@ -28,6 +28,12 @@ USA
 #include "spifwTGDS.h"
 #include "powerTGDS.h"
 
+#include "videoGL.h"
+
+#include "imagepcx.h"
+#include "Cube.h"	//Mesh Generated from Blender 2.49b
+//#include "Texture_Cube.h"	//Textures of it
+
 //User Handler Definitions
 
 #ifdef ARM9
@@ -84,11 +90,9 @@ void VblankUser(){
 
 }
 
-#ifdef ARM9
-__attribute__((section(".itcm")))
-#endif
-void VcounterUser(){
 
+void VcounterUser(){
+	xrot+=1.0f;
 }
 
 //Note: this event is hardware triggered from ARM7, on ARM9 a signal is raised through the FIFO hardware
