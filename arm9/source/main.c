@@ -45,6 +45,7 @@ USA
 #include "timerTGDS.h"
 #include "TGDS_threads.h"
 #include "powerTGDS.h"
+#include "videoGL.h"
 
 //TCP
 #include <stdio.h>
@@ -52,6 +53,9 @@ USA
 #include <netdb.h>
 #include <in.h>
 #include <string.h>
+#include "imagepcx.h"
+#include "Texture_Cube.h"
+#include "GXPayload.h"
 
 //ARM7 VRAM core
 #include "arm7bootldr.h"
@@ -73,6 +77,9 @@ u32 * getTGDSMBV3ARM7Bootloader(){
 	return (u32*)TGDS_MB_V3_ARM7_SCRATCHPAD_LZSS_DECOMP_BUF;
 }
 
+float camDist = -0.3*4;
+float rotateX = 0.0;
+float rotateY = 0.0;
 bool recoveryFileExists = false;
 bool TGDSWirelessAvailable = false;
 char curChosenBrowseFile[MAX_TGDSFILENAME_LENGTH];
@@ -294,6 +301,382 @@ int handleRemoteBoot(char * URLPathRequestedByGetVerb, int portToConnect){
 	return -1;
 }
 
+/// Sets up the OpenGL state machine environment
+
+GLfloat boxcol[5][3]=
+{
+	{1.0f,0.0f,0.0f},{1.0f,0.5f,0.0f},{1.0f,1.0f,0.0f},{0.0f,1.0f,0.0f},{0.0f,1.0f,1.0f}
+};
+
+GLfloat topcol[5][3]=
+{
+	{.5f,0.0f,0.0f},{0.5f,0.25f,0.0f},{0.5f,0.5f,0.0f},{0.0f,0.5f,0.0f},{0.0f,0.5f,0.5f}
+};
+
+GLuint	box=-1;				// Storage For The Box Display List
+GLuint	top=-1;				// Storage For The Top Display List
+
+GLfloat	xrot=0.0;				// Rotates Cube On The X Axis
+GLfloat	yrot=0.0;				// Rotates Cube On The Y Axis
+
+#ifdef WIN32
+GLuint	texture[1];			// Storage For 1 Texture
+#endif
+
+#ifdef ARM9
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__((optnone))
+#endif
+#endif
+GLvoid BuildLists()
+{
+	box=glGenLists(2);									// Generate 2 Different Lists
+	glNewList(box,GL_COMPILE);							// Start With The Box List
+		glBegin(GL_QUADS);
+			// Bottom Face
+			glNormal3f( 0.0f,-1.0f, 0.0f);
+			glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f, -1.0f, -1.0f);
+			glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
+			// Front Face
+			glNormal3f( 0.0f, 0.0f, 1.0f);
+			glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);
+			glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
+			// Back Face
+			glNormal3f( 0.0f, 0.0f,-1.0f);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
+			glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);
+			glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);
+			// Right face
+			glNormal3f( 1.0f, 0.0f, 0.0f);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f, -1.0f);
+			glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f( 1.0f,  1.0f,  1.0f);
+			glTexCoord2f(0.0f, 0.0f); glVertex3f( 1.0f, -1.0f,  1.0f);
+			// Left Face
+			glNormal3f(-1.0f, 0.0f, 0.0f);
+			glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, -1.0f);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f(-1.0f, -1.0f,  1.0f);
+			glTexCoord2f(1.0f, 1.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
+		glEnd();
+	glEndList();
+	top=box+1;											// Storage For "Top" Is "Box" Plus One
+	glNewList(top,GL_COMPILE);							// Now The "Top" Display List
+		glBegin(GL_QUADS);
+			// Top Face
+			glNormal3f( 0.0f, 1.0f, 0.0f);
+			glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, -1.0f);
+			glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f,  1.0f,  1.0f);
+			glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f,  1.0f,  1.0f);
+			glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, -1.0f);
+		glEnd();
+	glEndList();
+
+	glEnable(GL_TEXTURE_2D); // Enable Texture Mapping 
+	glEnable(GL_BLEND);
+
+}
+
+#ifdef ARM9
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__((optnone))
+#endif
+#endif
+void setupTGDSProjectOpenGLDisplayLists(){
+	
+	//#1: Load a texture and map each one to a texture slot
+	u32 arrayOfTextures[1];
+	arrayOfTextures[0] = (u32)&Texture_Cube;  
+	int texturesInSlot = LoadLotsOfGLTextures((u32*)&arrayOfTextures, (sizeof(arrayOfTextures)/sizeof(u32)) ); //Implements both glBindTexture and glTexImage2D 
+	int i = 0;
+	for(i = 0; i < texturesInSlot; i++){
+		//printf("Tex. index: %d: Tex. name[%d]", i, getTextureNameFromIndex(i));
+	}
+	//printf("Free Mem: %d KB", ((int)TGDSARM9MallocFreeMemory()/1024));
+	glCallListGX((u32*)&GXPayload); //Run this payload once to force cache flushes on DMA GXFIFO
+
+	BuildLists();
+}
+
+/// All hints, culling, fog, light models, depth testing, polygon model
+/// and blending are set up here
+
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__((optnone))
+#endif
+GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// resizes the window (GLUT & TGDS GL)
+{
+	if (height==0)										// Prevent A Divide By Zero By
+	{
+		height=1;										// Making Height Equal One
+	}
+
+	glViewport(0,0,width,height);						// Reset The Current Viewport
+
+	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
+	glLoadIdentity();									// Reset The Projection Matrix
+
+	// Calculate The Aspect Ratio Of The Window
+	gluPerspective(45.0f,(GLfloat)width/(GLfloat)height,0.1f,100.0f);
+
+	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
+	glLoadIdentity();									// Reset The Modelview Matrix
+}
+
+#ifdef ARM9
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__((optnone))
+#endif
+#endif
+int InitGL(int argc, char *argv[]){
+	glShadeModel(GL_SMOOTH);
+
+	// depth testing used on with less than testing
+	int TGDSOpenGLDisplayListWorkBufferSize = (256*1024);
+	glInit(TGDSOpenGLDisplayListWorkBufferSize); //NDSDLUtils: Initializes a new videoGL context
+	
+	glClearColor(255,255,255);		// White Background
+	glClearDepth(0x7FFF);		// Depth Buffer Setup
+	glEnable(GL_ANTIALIAS|GL_TEXTURE_2D|GL_BLEND); // Enable Texture Mapping + light #0 enabled per scene
+
+	glDisable(GL_LIGHT0|GL_LIGHT1|GL_LIGHT2|GL_LIGHT3);
+	REG_IE |= IRQ_VBLANK;
+	glClearColor(0,35,195);		// blue green background colour
+
+	/* TGDS 1.65 OpenGL 1.1 Initialization */
+	ReSizeGLScene(255, 191);
+	glMaterialShinnyness();
+
+	glDisable(GL_CULL_FACE); 
+	glCullFace (GL_NONE);
+	glColorMaterial(GL_FRONT, GL_DIFFUSE); 
+	
+	glEnable(GL_COLOR_MATERIAL);	//allow to mix both glColor3f + light sources (glVertex + glNormal3f)
+
+	setupTGDSProjectOpenGLDisplayLists();
+	return 0;
+}
+
+int widthScene;	/// the width of the window
+int heightScene;	/// the height of the window
+
+// light 0 colours
+
+//https://www.glprogramming.com/red/chapter05.html
+//The GL_DIFFUSE parameter probably most closely correlates with what you naturally think of as "the color of a light." 
+//It defines the RGBA color of the diffuse light that a particular light source adds to a scene. By default, GL_DIFFUSE is (1.0, 1.0, 1.0, 1.0) for GL_LIGHT0, 
+//which produces a bright, white light as shown in the left side of "Plate 13" in Appendix I. 
+//The default value for any other light (GL_LIGHT1, ... , GL_LIGHT7) is (0.0, 0.0, 0.0, 0.0).
+GLfloat light_diffuse0Scene[4]	= {0.9f, 0.9f, 0.4f, 1.01f}; //WIN32
+
+GLfloat light_ambient0Scene[4]	= {0.1f, 0.1f, 0.1f, 1.0f}; //WIN32
+GLfloat light_specular0Scene[4]	= {0.6f, 0.6f, 0.6f, 1.0f}; //WIN32
+GLfloat light_position0Scene[4]	= {-1.0f, -1.0f, 1.0f, 0.0f}; //WIN32
+
+// light 1 colours
+GLfloat light_ambient1Scene[4]	= {0.1f, 0.1f, 0.1f, 1.0f};
+GLfloat light_diffuse1Scene[4]	= {0.45f, 0.45f, 0.45f, 1.0f};
+GLfloat light_specular1Scene[4]	= {0.5f, 0.5f, 0.5f, 1.0f};
+GLfloat light_position1Scene[4]	= {-2.0f, -5.0f, -5.0f, -1.0f};
+
+//material
+GLfloat mat_ambient[]    = { 8.0f, 8.0f, 8.0f, 0.0f }; 
+GLfloat mat_diffuse[]    = { 16.0f, 16.0f, 16.0f, 0.0f }; 
+GLfloat mat_specular[]   = { 8.0f, 8.0f, 8.0f, 0.0f }; 
+GLfloat mat_emission[]   = { 5.0f, 5.0f, 5.0f, 0.0f }; 
+GLfloat high_shininess[] = { 128.0f };
+
+
+/// Renders a single frame of the scene
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__ ((optnone))
+#endif
+void drawScene(){
+	glMatrixMode(GL_TEXTURE); //GX 3D hardware needs this to enable texturing on a frame basis
+	glLoadIdentity();
+	glMatrixMode(GL_MODELVIEW);
+	
+	// draw element(s) in the scene + light source(s)
+	glMaterialShinnyness();		
+	updateGXLights(); //Update GX 3D light scene!
+	glColor3f(1.0, 1.0, 1.0); //clear last scene color/light vectors
+
+	if(1 == 0){
+	}
+	else{
+		int yloop = 0;
+		int xloop= 0;
+
+		float rotateX = 0.0;
+		float rotateY = 0.0;
+
+#ifdef ARM9
+		scanKeys();
+		int pen_delta[2];
+		bool isTSCActive = get_pen_delta( &pen_delta[0], &pen_delta[1] );
+		if( isTSCActive == false ){
+			rotateX = 0.0;
+			rotateY = 0.0;
+		}
+		else{
+			rotateX = pen_delta[0];
+			rotateY = pen_delta[1];
+			if(yrot > 0){
+				yrot-=rotateY;
+			}
+			else{
+				yrot+=rotateY;
+			}
+		
+			if(xrot > 0){
+				xrot-=rotateX;
+			}
+			else{
+				xrot+=rotateX;
+			}
+		}
+#endif
+		//DS doesn't support filtering.
+		#ifdef WIN32
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		#endif
+		
+#ifdef ARM9
+	//Clear The Screen And The Depth Buffer
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	todo: implement https://stackoverflow.com/questions/28137027/why-do-i-need-glcleargl-depth-buffer-bit through cuboid tests and rendering into OpenGL
+	
+	//Set initial view to look at
+	gluPerspective(18, 256.0 / 192.0, 0.1, 40);
+
+	static float Xread = 2.0f;
+
+	//Camera perspective from there
+	gluLookAt(	0.0, 0.0, 4.0,		//camera possition 
+				0.0, 0.0, 0.0,		//look at
+				0.0, 20.0, 0.0		//up
+	);
+
+	
+	scanKeys();
+	u32 keysRd= keysDown();
+	if(keysRd & KEY_LEFT){
+		xrot+=1.0f;
+	}
+	if(keysRd & KEY_RIGHT){
+		xrot-=1.0f;
+	}
+#endif
+
+		for (yloop=1;yloop<2;yloop++)
+		{
+			for (xloop=0;xloop<yloop;xloop++)
+			{
+				// enable texturing
+				glEnable(GL_TEXTURE_2D);
+	
+				glBindTexture(
+			#ifdef WIN32		
+					GL_TEXTURE_2D, texture[0]
+			#endif
+			#ifdef ARM9
+				0, textureSizePixelCoords[Texture_MetalCubeID].textureIndex
+			#endif	
+				);
+
+				glLoadIdentity();							// Reset The View
+				glTranslatef(1.4f+(((float)xloop)*2.8f)-(((float)yloop)*1.4f),((6.0f-((float)yloop))*2.4f)-7.0f, -20.0f);
+				glRotatef(45.0f-(2.0f*yloop)+xrot,1.0f,0.0f,0.0f);
+				glRotatef(45.0f+yrot,0.0f,1.0f,0.0f);
+
+				glLightfv(GL_LIGHT0, GL_AMBIENT,  light_ambient0Scene);
+				glLightfv(GL_LIGHT0, GL_DIFFUSE,  light_diffuse0Scene);
+				glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular0Scene);
+				glLightfv(GL_LIGHT0, GL_POSITION, light_position0Scene);
+	
+				glLightfv(GL_LIGHT1, GL_AMBIENT, light_ambient1Scene);
+				glLightfv(GL_LIGHT1, GL_DIFFUSE, light_diffuse1Scene);
+				glLightfv(GL_LIGHT1, GL_SPECULAR, light_specular1Scene);
+				glLightfv(GL_LIGHT1, GL_POSITION, light_position1Scene);
+
+				#ifdef ARM9
+				glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT,   mat_ambient); 
+				glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE,   mat_diffuse);
+				glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR,  mat_specular);
+				glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION,  mat_emission);
+				glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, high_shininess);
+				#endif
+				glScalef(6.0,6.0,6.0);
+				glCallList(box);
+				glCallList(top);
+			}
+		}
+	}
+	
+	#ifdef WIN32
+	glutSwapBuffers();
+	#endif
+
+	#ifdef ARM9
+    glFlush();
+	#endif
+}
+
+//true: pen touch
+//false: no tsc activity
+#ifdef ARM9
+#if (defined(__GNUC__) && !defined(__clang__))
+__attribute__((optimize("O0")))
+#endif
+#if (!defined(__GNUC__) && defined(__clang__))
+__attribute__((optnone))
+#endif
+#endif
+bool get_pen_delta( int *dx, int *dy ){
+	static int prev_pen[2] = { 0x7FFFFFFF, 0x7FFFFFFF };
+	
+	// TSC Test.
+	struct touchPosition touch;
+	XYReadScrPosUser(&touch);
+	
+	if( (touch.px == 0) && (touch.py == 0) ){
+		prev_pen[0] = prev_pen[1] = 0x7FFFFFFF;
+		*dx = *dy = 0;
+		return false;
+	}
+	else{
+		if( prev_pen[0] != 0x7FFFFFFF ){
+			*dx = (prev_pen[0] - touch.px);
+			*dy = (prev_pen[1] - touch.py);
+		}
+		prev_pen[0] = touch.px;
+		prev_pen[1] = touch.py;
+	}
+	return true;
+}
+
 #if (defined(__GNUC__) && !defined(__clang__))
 __attribute__((optimize("O0")))
 #endif
@@ -311,7 +694,7 @@ int main(int argc, char **argv) {
 	u32 * payload = getTGDSMBV3ARM7Bootloader();
 	executeARM7Payload((u32)0x02380000, 96*1024, payload);
 	
-	bool isTGDSCustomConsole = false;	//set default console or custom console: default console
+	bool isTGDSCustomConsole = true;	//set default console or custom console: default console
 	GUI_init(isTGDSCustomConsole);
 	GUI_clear();
 
@@ -514,15 +897,26 @@ int main(int argc, char **argv) {
 	TGDSWirelessAvailable = isTGDSWirelessServiceAvailable();
 	
 	//Show logo
-	RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
+	//RenderTGDSLogoMainEngine((uint8*)&TGDSLogoLZSSCompressed[0], TGDSLogoLZSSCompressed_size);
 	menuShow();
 	bool remoteBootEnabled = false;
 	
-	powerOFF3DEngine(); //Power off ARM9 3D Engine to save power
+	//gl start
+	InitGL(0, NULL);
+
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
+	glEnable(GL_LIGHT2);
+	glEnable(GL_LIGHT3);
+	glMaterialShinnyness();
+	//gl end
+
+	//powerOFF3DEngine(); //Power off ARM9 3D Engine to save power
 	enableScreenPowerTimeout();
 	bottomScreenIsLit = true;
 	
-	while (1){		
+	while (1){
 		scanKeys();
 		
 		/*
@@ -813,7 +1207,8 @@ int main(int argc, char **argv) {
 			remoteBootEnabled = false;
 		}
 
-		bool waitForVblank = false;
+		drawScene();
+		bool waitForVblank = true;
 		int threadsRan = runThreads(TGDSThreads, waitForVblank);
 	}
 	return 0;
@@ -1078,3 +1473,37 @@ void taskA(u32 * args){
 }
 
 //////////////////////////////////////////////////////////////////////// Threading User code end /////////////////////////////////////////////////////////////////////////////
+
+void glMaterialfCustom(int mode, rgb color)
+{
+  static uint32 diffuse_ambient = 0;
+  static uint32 specular_emission = 0;
+
+  switch(mode) {
+    case GL_AMBIENT:
+      diffuse_ambient = (color << 16) | (diffuse_ambient & 0xFFFF);
+      break;
+    case GL_DIFFUSE:
+      diffuse_ambient = color | (diffuse_ambient & 0xFFFF0000);
+      break;
+    case GL_AMBIENT_AND_DIFFUSE:
+      diffuse_ambient= color + (color << 16);
+      break;
+    case GL_SPECULAR:
+      specular_emission = color | (specular_emission & 0xFFFF0000);
+      break;
+    case GL_SHININESS:
+      break;
+    case GL_EMISSION:
+      specular_emission = (color << 16) | (specular_emission & 0xFFFF);
+      break;
+  }
+  
+  GFX_DIFFUSE_AMBIENT = diffuse_ambient;
+  GFX_SPECULAR_EMISSION = specular_emission;
+}
+
+void glViewPort(uint8 x1, uint8 y1, uint8 x2, uint8 y2)
+{
+  GFX_VIEWPORT = (x1) + (y1 << 8) + (x2 << 16) + (y2 << 24);
+}
